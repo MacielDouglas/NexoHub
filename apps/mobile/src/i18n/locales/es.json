@@ -1,0 +1,82 @@
+{
+  "common": {
+    "appName": "Nexohub",
+    "appTagline": "Gestor de Reuniones",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "add": "Agregar",
+    "edit": "Editar",
+    "remove": "Quitar",
+    "delete": "Eliminar",
+    "docs": "Docs"
+  },
+  "language": {
+    "pt": "Português",
+    "es": "Español",
+    "label": "Idioma"
+  },
+  "login": {
+    "signInWithGoogle": "Iniciar sesión con Google",
+    "signingIn": "Iniciando...",
+    "terms": "Al continuar, aceptas los términos de uso y la política de privacidad."
+  },
+  "nav": {
+    "home": "Inicio",
+    "explore": "Explorar",
+    "settings": "Ajustes",
+    "signOut": "Salir"
+  },
+  "home": {
+    "welcome": "Bienvenido",
+    "subtitle": "Sigue las reuniones de tu congregación",
+    "statMidweek": "Entre Semana",
+    "statWeekend": "Fin de Semana"
+  },
+  "explore": {
+    "title": "Explorar",
+    "subtitle": "Esta aplicación de inicio incluye código de ejemplo para ayudarte a comenzar.",
+    "docs": "Documentación de Expo",
+    "fileRouting": "Enrutamiento basado en archivos",
+    "fileRoutingContent1": "Esta aplicación tiene dos pantallas: {{first}} y {{second}}",
+    "fileRoutingContent2": "El archivo de diseño en {{layout}} configura el navegador de pestañas.",
+    "platforms": "Compatibilidad con Android, iOS y web",
+    "platformsContent": "Puedes abrir este proyecto en Android, iOS y web. Para abrir la versión web, presiona {{key}} en la terminal que ejecuta este proyecto.",
+    "images": "Imágenes",
+    "imagesContent": "Para imágenes estáticas, puedes usar los sufijos {{first}} y {{second}} para proporcionar archivos para diferentes densidades de pantalla.",
+    "themes": "Componentes de tema claro",
+    "themesContent": "Esta plantilla tiene soporte de tema claro. El hook {{hook}} te permite inspeccionar el esquema de colores actual del usuario y ajustar los colores de la interfaz en consecuencia.",
+    "animations": "Animaciones",
+    "animationsContent": "Esta plantilla incluye un ejemplo de componente animado. El componente {{component}} usa la biblioteca {{library}} para animar la apertura de esta sugerencia.",
+    "learnMore": "Aprende más",
+    "expoDocs": "Documentación de Expo"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "subtitle": "Gestiona las reuniones de la congregación",
+    "newConfig": "Nueva Configuración",
+    "cancel": "Cancelar",
+    "meetingType": {
+      "midweek": "Entre Semana",
+      "weekend": "Fin de Semana"
+    },
+    "days": {
+      "sunday": "Domingo",
+      "monday": "Lunes",
+      "tuesday": "Martes",
+      "wednesday": "Miércoles",
+      "thursday": "Jueves",
+      "friday": "Viernes",
+      "saturday": "Sábado"
+    },
+    "noConfigs": "Aún no hay configuración.",
+    "at": "a las",
+    "dayOfWeek": "Día de la Semana (0-6)",
+    "startTime": "Hora (HH:mm)",
+    "duration": "Duración (min)",
+    "create": "Crear",
+    "remove": "Quitar",
+    "loading": "Cargando..."
+  }
+}

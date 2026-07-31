@@ -1,0 +1,52 @@
+# dependencies (bun install)
+node_modules
+
+# output
+out
+dist
+*.tgz
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+# dotenv environment variable files
+.env
+.env.*
+!.env.example
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IntelliJ based IDEs
+.idea
+
+# Finder (MacOS) folder config
+.DS_Store
+
+# next.js
+.next/
+
+# turbo
+.turbo/
+
+# meeting program sample files (do not publish)
+apps/jwpub/
+
+# generated prisma client
+src/generated/prisma/
+apps/web/src/generated/prisma/
+
+# AI tooling config
+.opencode/
+.claude/
+.agents/
+.windsurf/
+.cursor/

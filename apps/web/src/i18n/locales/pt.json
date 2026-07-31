@@ -1,0 +1,72 @@
+{
+  "common": {
+    "appName": "Nexohub",
+    "appTagline": "Gerenciador de Reuniões",
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "create": "Criar",
+    "add": "Adicionar",
+    "edit": "Editar",
+    "remove": "Remover",
+    "delete": "Excluir",
+    "search": "Buscar"
+  },
+  "language": {
+    "pt": "Português",
+    "es": "Español",
+    "label": "Idioma"
+  },
+  "login": {
+    "signInWithGoogle": "Entrar com Google",
+    "signingIn": "Entrando...",
+    "terms": "Ao continuar, você concorda com os termos de uso e política de privacidade.",
+    "subtitle": "Organize reuniões e designações da sua congregação com praticidade e segurança.",
+    "greeting": "Bem-vindo de volta"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "settings": "Configurações",
+    "signOut": "Sair",
+    "home": "Início"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Bem-vindo, {{name}}",
+    "subtitle": "Acompanhe as atividades da congregação",
+    "statMeetings": "Reuniões",
+    "statConfigs": "Configurações ativas",
+    "statParts": "Partes"
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Gerencie as reuniões da congregação",
+    "meetingConfig": "Configurações de Reuniões",
+    "newConfig": "Nova Configuração",
+    "editConfig": "Editar Configuração",
+    "type": "Tipo",
+    "dayOfWeek": "Dia da Semana",
+    "startTime": "Horário",
+    "duration": "Duração (min)",
+    "meetingType": {
+      "midweek": "Reunião de Meio de Semana",
+      "weekend": "Reunião de Fim de Semana"
+    },
+    "days": {
+      "sunday": "Domingo",
+      "monday": "Segunda",
+      "tuesday": "Terça",
+      "wednesday": "Quarta",
+      "thursday": "Quinta",
+      "friday": "Sexta",
+      "saturday": "Sábado"
+    },
+    "noConfigs": "Nenhuma configuração de reunião ainda.",
+    "at": "às",
+    "parts": "Partes",
+    "noParts": "Nenhuma parte definida.",
+    "newPart": "Nome da parte",
+    "minShort": "min",
+    "minutes": "{{count}}min"
+  }
+}

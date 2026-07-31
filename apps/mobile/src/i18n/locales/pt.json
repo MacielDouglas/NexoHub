@@ -1,0 +1,82 @@
+{
+  "common": {
+    "appName": "Nexohub",
+    "appTagline": "Gerenciador de Reuniões",
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "create": "Criar",
+    "add": "Adicionar",
+    "edit": "Editar",
+    "remove": "Remover",
+    "delete": "Excluir",
+    "docs": "Docs"
+  },
+  "language": {
+    "pt": "Português",
+    "es": "Español",
+    "label": "Idioma"
+  },
+  "login": {
+    "signInWithGoogle": "Entrar com Google",
+    "signingIn": "Entrando...",
+    "terms": "Ao continuar, você concorda com os termos de uso e política de privacidade."
+  },
+  "nav": {
+    "home": "Início",
+    "explore": "Explorar",
+    "settings": "Config",
+    "signOut": "Sair"
+  },
+  "home": {
+    "welcome": "Bem-vindo",
+    "subtitle": "Acompanhe as reuniões da sua congregação",
+    "statMidweek": "Meio de Semana",
+    "statWeekend": "Fim de Semana"
+  },
+  "explore": {
+    "title": "Explore",
+    "subtitle": "Este aplicativo inicial inclui código de exemplo para ajudar você a começar.",
+    "docs": "Documentação do Expo",
+    "fileRouting": "Roteamento baseado em arquivos",
+    "fileRoutingContent1": "Este aplicativo tem duas telas: {{first}} e {{second}}",
+    "fileRoutingContent2": "O arquivo de layout em {{layout}} configura o navegador de abas.",
+    "platforms": "Suporte a Android, iOS e web",
+    "platformsContent": "Você pode abrir este projeto em Android, iOS e web. Para abrir a versão web, pressione {{key}} no terminal que está executando este projeto.",
+    "images": "Imagens",
+    "imagesContent": "Para imagens estáticas, você pode usar os sufixos {{first}} e {{second}} para fornecer arquivos para diferentes densidades de tela.",
+    "themes": "Componentes de tema claro",
+    "themesContent": "Este modelo tem suporte a tema claro. O hook {{hook}} permite inspecionar o esquema de cores atual do usuário e ajustar as cores da interface de acordo.",
+    "animations": "Animações",
+    "animationsContent": "Este modelo inclui um exemplo de componente animado. O componente {{component}} usa a biblioteca {{library}} para animar a abertura desta dica.",
+    "learnMore": "Saiba mais",
+    "expoDocs": "Documentação do Expo"
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Gerencie as reuniões da congregação",
+    "newConfig": "Nova Configuração",
+    "cancel": "Cancelar",
+    "meetingType": {
+      "midweek": "Meio de Semana",
+      "weekend": "Fim de Semana"
+    },
+    "days": {
+      "sunday": "Domingo",
+      "monday": "Segunda",
+      "tuesday": "Terça",
+      "wednesday": "Quarta",
+      "thursday": "Quinta",
+      "friday": "Sexta",
+      "saturday": "Sábado"
+    },
+    "noConfigs": "Nenhuma configuração ainda.",
+    "at": "às",
+    "dayOfWeek": "Dia da Semana (0-6)",
+    "startTime": "Horário (HH:mm)",
+    "duration": "Duração (min)",
+    "create": "Criar",
+    "remove": "Remover",
+    "loading": "Carregando..."
+  }
+}
