@@ -10,7 +10,7 @@
     "edit": "Editar",
     "remove": "Remover",
     "delete": "Excluir",
-    "docs": "Docs"
+    "error": "Erro"
   },
   "language": {
     "pt": "Português",
@@ -20,37 +20,120 @@
   "login": {
     "signInWithGoogle": "Entrar com Google",
     "signingIn": "Entrando...",
+    "signInError": "Não foi possível entrar. Tente novamente.",
     "terms": "Ao continuar, você concorda com os termos de uso e política de privacidade."
   },
   "nav": {
+    "dashboard": "Dashboard",
     "home": "Início",
-    "explore": "Explorar",
+    "members": "Membros",
     "settings": "Config",
+    "admin": "Admin",
     "signOut": "Sair"
   },
   "home": {
-    "welcome": "Bem-vindo",
+    "welcome": "Bem-vindo, {{name}}",
     "subtitle": "Acompanhe as reuniões da sua congregação",
-    "statMidweek": "Meio de Semana",
-    "statWeekend": "Fim de Semana"
+    "nextMeeting": "Próxima reunião",
+    "noMeetings": "Nenhuma reunião configurada.",
+    "today": "Hoje",
+    "tomorrow": "Amanhã",
+    "statMeetings": "Reuniões",
+    "statMembers": "Membros",
+    "statEvents": "Eventos",
+    "schedule": "Próximas reuniões",
+    "upcomingEvents": "Próximos eventos especiais",
+    "noEvents": "Nenhum evento especial."
   },
-  "explore": {
-    "title": "Explore",
-    "subtitle": "Este aplicativo inicial inclui código de exemplo para ajudar você a começar.",
-    "docs": "Documentação do Expo",
-    "fileRouting": "Roteamento baseado em arquivos",
-    "fileRoutingContent1": "Este aplicativo tem duas telas: {{first}} e {{second}}",
-    "fileRoutingContent2": "O arquivo de layout em {{layout}} configura o navegador de abas.",
-    "platforms": "Suporte a Android, iOS e web",
-    "platformsContent": "Você pode abrir este projeto em Android, iOS e web. Para abrir a versão web, pressione {{key}} no terminal que está executando este projeto.",
-    "images": "Imagens",
-    "imagesContent": "Para imagens estáticas, você pode usar os sufixos {{first}} e {{second}} para fornecer arquivos para diferentes densidades de tela.",
-    "themes": "Componentes de tema claro",
-    "themesContent": "Este modelo tem suporte a tema claro. O hook {{hook}} permite inspecionar o esquema de cores atual do usuário e ajustar as cores da interface de acordo.",
-    "animations": "Animações",
-    "animationsContent": "Este modelo inclui um exemplo de componente animado. O componente {{component}} usa a biblioteca {{library}} para animar a abertura desta dica.",
-    "learnMore": "Saiba mais",
-    "expoDocs": "Documentação do Expo"
+  "welcome": {
+    "title": "Bem-vindo ao Nexohub",
+    "subtitle": "Organize as reuniões e designações da sua congregação. Entre com o código de convite enviado pelo responsável da sua congregação.",
+    "feature1": "Agenda de reuniões e eventos da congregação",
+    "feature2": "Designações e partes das reuniões",
+    "feature3": "Acesso seguro apenas para membros da congregação",
+    "enter": "Entrar",
+    "codeHint": "Digite o código de 6 dígitos do seu convite",
+    "success": "Convite aceito! Bem-vindo."
+  },
+  "createOrg": {
+    "title": "Crie sua congregação",
+    "subtitle": "Você recebeu um convite de Owner. Escolha um nome para a sua congregação. Um link único será criado automaticamente.",
+    "nameLabel": "Nome da congregação",
+    "namePlaceholder": "Ex.: Congregação Central",
+    "submit": "Criar congregação",
+    "success": "Congregação criada com sucesso!"
+  },
+  "admin": {
+    "title": "Área do Super-User",
+    "createTokenTitle": "Convidar um Owner",
+    "createTokenDescription": "Gere um código de 6 dígitos para convidar alguém a se tornar Owner e criar sua própria congregação. O código expira em 24 horas.",
+    "createToken": "Criar código",
+    "tokenCreated": "Código criado! Copie e envie ao convidado.",
+    "tokensTitle": "Códigos de Owner",
+    "noTokens": "Nenhum código criado ainda.",
+    "copyCode": "Copiar código",
+    "codeCopied": "Código copiado!",
+    "tokenStatus": {
+      "active": "Ativo",
+      "used": "Usado",
+      "revoked": "Revogado"
+    },
+    "revokeConfirmTitle": "Revogar código?",
+    "revokeConfirmDescription": "Este código não poderá mais ser utilizado.",
+    "tokenRevoked": "Código revogado.",
+    "orgsTitle": "Congregações",
+    "noOrgs": "Nenhuma congregação criada ainda.",
+    "memberCount": "{{count}} membros",
+    "enterOrg": "Entrar",
+    "deleteOrg": "Excluir",
+    "deleteOrgConfirmTitle": "Excluir congregação?",
+    "deleteOrgConfirmDescription": "Todos os dados de {{name}} serão excluídos permanentemente.",
+    "orgDeleted": "Congregação excluída."
+  },
+  "members": {
+    "title": "Membros",
+    "subtitle": "Gerencie os membros da sua congregação",
+    "listTitle": "Lista de membros",
+    "noMembers": "Nenhum membro ainda.",
+    "you": "você",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Membro"
+    },
+    "promoteOwner": "Tornar Owner",
+    "demoteOwner": "Rebaixar",
+    "promoteAdmin": "Tornar Admin",
+    "remove": "Remover",
+    "removeConfirmTitle": "Remover membro?",
+    "removeConfirmDescription": "{{name}} perderá o acesso a esta congregação.",
+    "memberRemoved": "Membro removido.",
+    "roleUpdated": "Papel atualizado.",
+    "leaveOrg": "Sair da congregação",
+    "leaveConfirmTitle": "Sair da congregação?",
+    "leaveConfirmDescription": "Você perderá o acesso a esta congregação.",
+    "leftOrg": "Você saiu da congregação.",
+    "inviteTitle": "Convidar membro",
+    "inviteDescription": "Gere um código de 6 dígitos para convidar alguém para a congregação. O código expira em 24 horas.",
+    "createToken": "Criar código",
+    "copyCode": "Copiar",
+    "codeCopied": "Código copiado!",
+    "tokenHint": "Compartilhe este código com o convidado."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Bem-vindo, {{name}}",
+    "subtitle": "Acompanhe as atividades da congregação",
+    "statMeetings": "Reuniões",
+    "statConfigs": "Configurações ativas",
+    "statParts": "Partes",
+    "statMembers": "Membros",
+    "meetingsTitle": "Reuniões",
+    "noMeetings": "Nenhuma reunião configurada.",
+    "meetingParts": "{{count}} partes",
+    "eventsTitle": "Eventos Especiais",
+    "noEvents": "Nenhum evento especial.",
+    "manageSettings": "Gerenciar configurações"
   },
   "settings": {
     "title": "Configurações",
@@ -98,6 +181,11 @@
       "assemblyTraveling": "Assembléia com Viajante",
       "assemblyRepresentative": "Assembléia com Representante",
       "specialMeeting": "Reunião Especial"
-    }
+    },
+    "account": "Conta",
+    "signOut": "Sair",
+    "signingOut": "Saindo...",
+    "adminAccess": "Acesso de Super-User",
+    "exitOrg": "Voltar para o Admin"
   }
 }

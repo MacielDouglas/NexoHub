@@ -43,7 +43,7 @@ export default async function DashboardLayout({
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-[#2563EB] to-[#7C3AED]">
                 <span className="text-lg font-bold text-white">N</span>
               </div>
               <span className="text-lg font-semibold">Nexohub</span>

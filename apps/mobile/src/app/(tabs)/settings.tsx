@@ -1,13 +1,15 @@
-import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import {
   ANNUAL_EVENT_TYPES,
   SPECIAL_EVENT_FIELDS,
@@ -60,25 +62,12 @@ const EMPTY_EVENT_FORM: SpecialEventFormValues = {
   location: "",
 };
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
-
-async function apiFetch(path: string, options: RequestInit = {}) {
-  const cookies = await SecureStore.getItemAsync("nexohub_session");
-  return fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(cookies ? { Cookie: cookies } : {}),
-      ...(options.headers as Record<string, string>),
-    },
-    credentials: "include",
-  });
-}
-
 export default function SettingsScreen() {
   const safeAreaInsets = useSafeAreaInsets();
   const theme = useTheme();
   const { t } = useTranslation();
+  const router = useRouter();
+  const { signOut, session, refreshSession } = useAuth();
   const [configs, setConfigs] = useState<MeetingConfig[]>([]);
   const [events, setEvents] = useState<SpecialEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,6 +167,19 @@ export default function SettingsScreen() {
 
               <SpecialEventsSection events={events} onChanged={fetchAll} />
             </ThemedView>
+
+            <SignOutSection onSignOut={async () => {
+              await signOut();
+              router.replace("/(auth)/login");
+            }} />
+
+            {session?.user?.globalRole === "super_user" && (
+              <AdminSection onExit={async () => {
+                await apiFetch("/api/admin/exit-org", { method: "POST" });
+                await refreshSession();
+                router.replace("/admin");
+              }} />
+            )}
           </>
         )}
       </ThemedView>
@@ -563,6 +565,62 @@ function formatEventSummary(
   return parts.join(" ");
 }
 
+function SignOutSection({ onSignOut }: { onSignOut: () => void }) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const [signingOut, setSigningOut] = useState(false);
+
+  return (
+    <ThemedView style={styles.section}>
+      <ThemedText type="default" style={styles.sectionTitle}>{t("settings.account")}</ThemedText>
+      <Pressable
+        onPress={async () => {
+          setSigningOut(true);
+          try {
+            await onSignOut();
+          } finally {
+            setSigningOut(false);
+          }
+        }}
+        disabled={signingOut}
+        style={({ pressed }) => [styles.dangerBtn, pressed && { opacity: 0.8 }, signingOut && { opacity: 0.5 }]}
+      >
+        <ThemedText style={{ color: theme.danger, fontWeight: "600" }}>
+          {signingOut ? t("settings.signingOut") : t("settings.signOut")}
+        </ThemedText>
+      </Pressable>
+    </ThemedView>
+  );
+}
+
+function AdminSection({ onExit }: { onExit: () => void }) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const [exiting, setExiting] = useState(false);
+
+  return (
+    <ThemedView style={styles.section}>
+      <ThemedText type="default" style={styles.sectionTitle}>{t("settings.adminAccess")}</ThemedText>
+      <Pressable
+        onPress={async () => {
+          setExiting(true);
+          try {
+            await onExit();
+          } finally {
+            setExiting(false);
+          }
+        }}
+        disabled={exiting}
+        style={({ pressed }) => [styles.primaryBtn, { backgroundColor: theme.secondary }, pressed && { opacity: 0.8 }, exiting && { opacity: 0.5 }]}
+      >
+        <ThemedText style={{ color: theme.secondaryForeground, fontWeight: "600" }}>
+          {exiting ? t("common.loading") : t("settings.exitOrg")}
+        </ThemedText>
+      </Pressable>
+    </ThemedView>
+  );
+}
+
 const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   contentContainer: { flexDirection: "row", justifyContent: "center" },
@@ -588,4 +646,5 @@ const styles = StyleSheet.create({
   typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.one },
   typeChip: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two, borderWidth: 1 },
   actionsRow: { flexDirection: "row", gap: Spacing.two, marginTop: Spacing.one },
+  dangerBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", borderWidth: 1, borderColor: "#DC2626" },
 });

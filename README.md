@@ -8,7 +8,6 @@ Plataforma mobile-first para organizar reuniões, pessoas e designações: cadas
 | --- | --- |
 | `apps/web` | Painel web e API. Next.js (App Router), Prisma + PostgreSQL, Better Auth |
 | `apps/mobile` | Aplicativo nativo. Expo SDK 57, Expo Router |
-| `apps/jwpub` | Utilitário e arquivo de exemplo para importação de programação de reuniões (`.jwpub`) |
 
 ## Stack
 

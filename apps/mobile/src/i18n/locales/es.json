@@ -10,7 +10,7 @@
     "edit": "Editar",
     "remove": "Quitar",
     "delete": "Eliminar",
-    "docs": "Docs"
+    "error": "Error"
   },
   "language": {
     "pt": "Português",
@@ -20,37 +20,120 @@
   "login": {
     "signInWithGoogle": "Iniciar sesión con Google",
     "signingIn": "Iniciando...",
+    "signInError": "No se pudo iniciar sesión. Inténtalo de nuevo.",
     "terms": "Al continuar, aceptas los términos de uso y la política de privacidad."
   },
   "nav": {
+    "dashboard": "Panel",
     "home": "Inicio",
-    "explore": "Explorar",
+    "members": "Miembros",
     "settings": "Ajustes",
+    "admin": "Admin",
     "signOut": "Salir"
   },
   "home": {
-    "welcome": "Bienvenido",
+    "welcome": "Bienvenido, {{name}}",
     "subtitle": "Sigue las reuniones de tu congregación",
-    "statMidweek": "Entre Semana",
-    "statWeekend": "Fin de Semana"
+    "nextMeeting": "Próxima reunión",
+    "noMeetings": "No hay reuniones configuradas.",
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "statMeetings": "Reuniones",
+    "statMembers": "Miembros",
+    "statEvents": "Eventos",
+    "schedule": "Próximas reuniones",
+    "upcomingEvents": "Próximos eventos especiales",
+    "noEvents": "No hay eventos especiales."
   },
-  "explore": {
-    "title": "Explorar",
-    "subtitle": "Esta aplicación de inicio incluye código de ejemplo para ayudarte a comenzar.",
-    "docs": "Documentación de Expo",
-    "fileRouting": "Enrutamiento basado en archivos",
-    "fileRoutingContent1": "Esta aplicación tiene dos pantallas: {{first}} y {{second}}",
-    "fileRoutingContent2": "El archivo de diseño en {{layout}} configura el navegador de pestañas.",
-    "platforms": "Compatibilidad con Android, iOS y web",
-    "platformsContent": "Puedes abrir este proyecto en Android, iOS y web. Para abrir la versión web, presiona {{key}} en la terminal que ejecuta este proyecto.",
-    "images": "Imágenes",
-    "imagesContent": "Para imágenes estáticas, puedes usar los sufijos {{first}} y {{second}} para proporcionar archivos para diferentes densidades de pantalla.",
-    "themes": "Componentes de tema claro",
-    "themesContent": "Esta plantilla tiene soporte de tema claro. El hook {{hook}} te permite inspeccionar el esquema de colores actual del usuario y ajustar los colores de la interfaz en consecuencia.",
-    "animations": "Animaciones",
-    "animationsContent": "Esta plantilla incluye un ejemplo de componente animado. El componente {{component}} usa la biblioteca {{library}} para animar la apertura de esta sugerencia.",
-    "learnMore": "Aprende más",
-    "expoDocs": "Documentación de Expo"
+  "welcome": {
+    "title": "Bienvenido a Nexohub",
+    "subtitle": "Organiza las reuniones y asignaciones de tu congregación. Entra con el código de invitación enviado por el responsable de tu congregación.",
+    "feature1": "Agenda de reuniones y eventos de la congregación",
+    "feature2": "Asignaciones y partes de las reuniones",
+    "feature3": "Acceso seguro solo para miembros de la congregación",
+    "enter": "Entrar",
+    "codeHint": "Ingresa el código de 6 dígitos de tu invitación",
+    "success": "¡Invitación aceptada! Bienvenido."
+  },
+  "createOrg": {
+    "title": "Crea tu congregación",
+    "subtitle": "Recibiste una invitación de Owner. Elige un nombre para tu congregación. Se creará un enlace único automáticamente.",
+    "nameLabel": "Nombre de la congregación",
+    "namePlaceholder": "Ej.: Congregación Central",
+    "submit": "Crear congregación",
+    "success": "¡Congregación creada con éxito!"
+  },
+  "admin": {
+    "title": "Área del Super-User",
+    "createTokenTitle": "Invitar a un Owner",
+    "createTokenDescription": "Genera un código de 6 dígitos para invitar a alguien a convertirse en Owner y crear su propia congregación. El código expira en 24 horas.",
+    "createToken": "Crear código",
+    "tokenCreated": "¡Código creado! Cópialo y envíalo al invitado.",
+    "tokensTitle": "Códigos de Owner",
+    "noTokens": "Aún no se ha creado ningún código.",
+    "copyCode": "Copiar código",
+    "codeCopied": "¡Código copiado!",
+    "tokenStatus": {
+      "active": "Activo",
+      "used": "Usado",
+      "revoked": "Revocado"
+    },
+    "revokeConfirmTitle": "¿Revocar código?",
+    "revokeConfirmDescription": "Este código ya no podrá utilizarse.",
+    "tokenRevoked": "Código revocado.",
+    "orgsTitle": "Congregaciones",
+    "noOrgs": "Aún no se ha creado ninguna congregación.",
+    "memberCount": "{{count}} miembros",
+    "enterOrg": "Entrar",
+    "deleteOrg": "Eliminar",
+    "deleteOrgConfirmTitle": "¿Eliminar congregación?",
+    "deleteOrgConfirmDescription": "Todos los datos de {{name}} se eliminarán permanentemente.",
+    "orgDeleted": "Congregación eliminada."
+  },
+  "members": {
+    "title": "Miembros",
+    "subtitle": "Gestiona los miembros de tu congregación",
+    "listTitle": "Lista de miembros",
+    "noMembers": "Aún no hay miembros.",
+    "you": "tú",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Miembro"
+    },
+    "promoteOwner": "Hacer Owner",
+    "demoteOwner": "Degradar",
+    "promoteAdmin": "Hacer Admin",
+    "remove": "Quitar",
+    "removeConfirmTitle": "¿Quitar miembro?",
+    "removeConfirmDescription": "{{name}} perderá el acceso a esta congregación.",
+    "memberRemoved": "Miembro quitado.",
+    "roleUpdated": "Rol actualizado.",
+    "leaveOrg": "Salir de la congregación",
+    "leaveConfirmTitle": "¿Salir de la congregación?",
+    "leaveConfirmDescription": "Perderás el acceso a esta congregación.",
+    "leftOrg": "Saliste de la congregación.",
+    "inviteTitle": "Invitar miembro",
+    "inviteDescription": "Genera un código de 6 dígitos para invitar a alguien a la congregación. El código expira en 24 horas.",
+    "createToken": "Crear código",
+    "copyCode": "Copiar",
+    "codeCopied": "¡Código copiado!",
+    "tokenHint": "Comparte este código con el invitado."
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Bienvenido, {{name}}",
+    "subtitle": "Sigue las actividades de la congregación",
+    "statMeetings": "Reuniones",
+    "statConfigs": "Configuraciones activas",
+    "statParts": "Partes",
+    "statMembers": "Miembros",
+    "meetingsTitle": "Reuniones",
+    "noMeetings": "No hay reuniones configuradas.",
+    "meetingParts": "{{count}} partes",
+    "eventsTitle": "Eventos Especiales",
+    "noEvents": "No hay eventos especiales.",
+    "manageSettings": "Gestionar configuraciones"
   },
   "settings": {
     "title": "Ajustes",
@@ -98,6 +181,11 @@
       "assemblyTraveling": "Asamblea con Viajante",
       "assemblyRepresentative": "Asamblea con Representante",
       "specialMeeting": "Reunión Especial"
-    }
+    },
+    "account": "Cuenta",
+    "signOut": "Salir",
+    "signingOut": "Saliendo...",
+    "adminAccess": "Acceso de Super-User",
+    "exitOrg": "Volver al Admin"
   }
 }

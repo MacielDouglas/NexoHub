@@ -1,3 +1,4 @@
+import { expo } from "@better-auth/expo";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { APIError } from "better-auth/api";
@@ -81,6 +82,19 @@ export const auth = betterAuth({
       },
     }),
     nextCookies(),
+    expo(),
+  ],
+  trustedOrigins: [
+    "nexohub://",
+    "com.googleusercontent.apps.795969729961-lh7l31kqvvdkt0miag5i4d14vb7mulu9://",
+    ...(process.env.NODE_ENV === "development"
+      ? [
+          "exp://",
+          "exp://**",
+          "exp://192.168.*.*:*/**",
+          "http://localhost:8081",
+        ]
+      : []),
   ],
   databaseHooks: {
     user: {
