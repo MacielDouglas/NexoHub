@@ -10,21 +10,12 @@ import {
   type SpecialEventType,
 } from "@/lib/special-events";
 
-type MeetingPart = {
-  id: string;
-  name: string;
-  durationMinutes: number | null;
-  sortOrder: number;
-  description: string | null;
-};
-
 type MeetingConfig = {
   id: string;
   type: string;
   dayOfWeek: number;
   startTime: string;
   isActive: boolean;
-  parts: MeetingPart[];
 };
 
 type SpecialEvent = {
@@ -237,16 +228,6 @@ function MeetingDayCard({
           {t("common.save")}
         </button>
       </div>
-
-      {config && (
-        <div className="mt-6">
-          <MeetingPartsList
-            configId={config.id}
-            parts={config.parts}
-            onUpdate={onSaved}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -549,117 +530,4 @@ function formatEventSummary(
   if (event.time) parts.push(t("settings.at"), event.time);
   if (event.location) parts.push("·", event.location);
   return parts.join(" ");
-}
-
-function MeetingPartsList({
-  configId,
-  parts,
-  onUpdate,
-}: {
-  configId: string;
-  parts: MeetingPart[];
-  onUpdate: () => void;
-}) {
-  const { t } = useTranslation();
-  const [newPart, setNewPart] = useState<{
-    name: string;
-    durationMinutes: number | null;
-    sortOrder: number;
-  }>({
-    name: "",
-    durationMinutes: 10,
-    sortOrder: parts.length + 1,
-  });
-
-  async function addPart() {
-    if (!newPart.name) return;
-    const res = await fetch(`/api/meeting-configs/${configId}/parts`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newPart),
-    });
-    if (res.ok) {
-      setNewPart({
-        name: "",
-        durationMinutes: 10,
-        sortOrder: parts.length + 2,
-      });
-      onUpdate();
-    }
-  }
-
-  async function deletePart(id: string) {
-    const res = await fetch(`/api/meeting-parts/${id}`, { method: "DELETE" });
-    if (res.ok) onUpdate();
-  }
-
-  return (
-    <div>
-      <h4 className="mb-2 text-sm font-medium tracking-wide text-muted-foreground uppercase">
-        {t("settings.parts")}
-      </h4>
-      {parts.length === 0 ? (
-        <p className="mb-3 text-sm text-muted-foreground">
-          {t("settings.noParts")}
-        </p>
-      ) : (
-        <div className="mb-4 space-y-2">
-          {parts.map((part) => (
-            <div
-              key={part.id}
-              className="flex items-center justify-between rounded-xl bg-background px-4 py-2.5"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">
-                  #{part.sortOrder}
-                </span>
-                <span className="text-sm font-medium">{part.name}</span>
-                {part.durationMinutes && (
-                  <span className="text-xs text-muted-foreground">
-                    {t("settings.minutes", { count: part.durationMinutes })}
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => deletePart(part.id)}
-                className="text-xs font-medium text-red-500 hover:underline"
-              >
-                {t("common.remove")}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="flex items-center gap-3">
-        <input
-          type="text"
-          placeholder={t("settings.newPart")}
-          value={newPart.name}
-          onChange={(e) => setNewPart({ ...newPart, name: e.target.value })}
-          className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-        />
-        <input
-          type="number"
-          placeholder={t("settings.minShort")}
-          value={newPart.durationMinutes ?? ""}
-          onChange={(e) =>
-            setNewPart({
-              ...newPart,
-              durationMinutes: e.target.value ? Number(e.target.value) : null,
-            })
-          }
-          className="w-16 rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-        />
-        <button
-          type="button"
-          onClick={addPart}
-          className="rounded-xl bg-[#1F2937] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-        >
-          {t("common.add")}
-        </button>
-      </div>
-    </div>
-  );
 }

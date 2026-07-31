@@ -15,21 +15,12 @@ import {
   type SpecialEventType,
 } from "@/lib/special-events";
 
-type MeetingPart = {
-  id: string;
-  name: string;
-  durationMinutes: number | null;
-  sortOrder: number;
-  description: string | null;
-};
-
 type MeetingConfig = {
   id: string;
   type: string;
   dayOfWeek: number;
   startTime: string;
   isActive: boolean;
-  parts: MeetingPart[];
 };
 
 type SpecialEvent = {
@@ -270,26 +261,6 @@ function MeetingDayCard({
       >
         <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>{t("common.save")}</ThemedText>
       </Pressable>
-
-      {config && (
-        <ThemedView style={styles.partsSection}>
-          <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: "600" }}>
-            {t("settings.parts")}
-          </ThemedText>
-          {config.parts.length === 0 ? (
-            <ThemedText type="small" themeColor="textSecondary">{t("settings.noParts")}</ThemedText>
-          ) : (
-            config.parts.map((part) => (
-              <ThemedView key={part.id} type="backgroundSelected" style={styles.partRow}>
-                <ThemedText type="small">#{part.sortOrder} {part.name}</ThemedText>
-                {part.durationMinutes && (
-                  <ThemedText type="small" themeColor="textSecondary">{part.durationMinutes}min</ThemedText>
-                )}
-              </ThemedView>
-            ))
-          )}
-        </ThemedView>
-      )}
     </ThemedView>
   );
 }
@@ -609,8 +580,6 @@ const styles = StyleSheet.create({
   dayChip: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two, borderWidth: 1, minWidth: 92 },
   primaryBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1 },
   secondaryBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1 },
-  partsSection: { gap: Spacing.two, paddingTop: Spacing.one },
-  partRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two },
   eventsContainer: { gap: Spacing.three },
   eventsList: { gap: Spacing.two },
   eventRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: Spacing.two, padding: Spacing.three, borderRadius: Spacing.three },
