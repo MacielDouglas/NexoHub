@@ -6,20 +6,33 @@ import { useTranslation } from "react-i18next";
 
 import { LanguageSwitcher } from "./language-switcher";
 
-export function DashboardNav() {
+export function DashboardNav({
+  role,
+  isSuperUser,
+}: {
+  role?: string;
+  isSuperUser?: boolean;
+}) {
   const { t } = useTranslation();
   const pathname = usePathname();
 
   const links = [
     { href: "/dashboard", label: t("nav.dashboard") },
-    { href: "/dashboard/settings", label: t("nav.settings") },
+    { href: "/dashboard/members", label: t("nav.members") },
   ];
+
+  if (role === "owner") {
+    links.push({ href: "/dashboard/settings", label: t("nav.settings") });
+  }
 
   return (
     <div className="flex items-center gap-6">
       <nav className="flex items-center gap-4 text-sm">
         {links.map((link) => {
-          const active = pathname === link.href;
+          const active =
+            pathname === link.href ||
+            (link.href !== "/dashboard" &&
+              pathname.startsWith(`${link.href}/`));
           return (
             <Link
               key={link.href}
@@ -34,6 +47,14 @@ export function DashboardNav() {
             </Link>
           );
         })}
+        {isSuperUser && (
+          <Link
+            href="/admin"
+            className="rounded-full bg-[#7C3AED]/10 px-3 py-1 text-xs font-medium text-[#7C3AED] hover:bg-[#7C3AED]/20"
+          >
+            {t("nav.admin")}
+          </Link>
+        )}
       </nav>
       <LanguageSwitcher />
     </div>

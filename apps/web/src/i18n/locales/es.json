@@ -28,7 +28,85 @@
     "dashboard": "Panel",
     "settings": "Ajustes",
     "signOut": "Salir",
-    "home": "Inicio"
+    "home": "Inicio",
+    "members": "Miembros",
+    "admin": "Admin"
+  },
+  "welcome": {
+    "title": "Bienvenido a Nexohub",
+    "subtitle": "Organiza las reuniones y asignaciones de tu congregación. Entra con el código de invitación enviado por el responsable de tu congregación.",
+    "feature1": "Agenda de reuniones y eventos de la congregación",
+    "feature2": "Asignaciones y partes de las reuniones",
+    "feature3": "Acceso seguro solo para miembros de la congregación",
+    "enter": "Entrar",
+    "codeHint": "Escribe el código de 6 dígitos de tu invitación",
+    "success": "¡Invitación aceptada! Bienvenido."
+  },
+  "createOrg": {
+    "title": "Crea tu congregación",
+    "subtitle": "Recibiste una invitación de Owner. Elige un nombre para tu congregación. Se creará un enlace único automáticamente.",
+    "nameLabel": "Nombre de la congregación",
+    "namePlaceholder": "Ej.: Congregación Central",
+    "submit": "Crear congregación",
+    "success": "¡Congregación creada correctamente!"
+  },
+  "admin": {
+    "title": "Área del Super-User",
+    "createTokenTitle": "Invitar a un Owner",
+    "createTokenDescription": "Genera un código de 6 dígitos para invitar a alguien a convertirse en Owner y crear su propia congregación. El código caduca en 24 horas.",
+    "createToken": "Crear código",
+    "tokenCreated": "¡Código creado! Cópialo y envíalo al invitado.",
+    "tokensTitle": "Códigos de Owner",
+    "noTokens": "Aún no hay códigos creados.",
+    "copyCode": "Copiar código",
+    "codeCopied": "¡Código copiado!",
+    "tokenStatus": {
+      "active": "Activo",
+      "used": "Usado",
+      "revoked": "Revocado"
+    },
+    "revokeConfirmTitle": "¿Revocar código?",
+    "revokeConfirmDescription": "Este código ya no podrá utilizarse.",
+    "tokenRevoked": "Código revocado.",
+    "orgsTitle": "Congregaciones",
+    "noOrgs": "Aún no hay congregaciones creadas.",
+    "memberCount": "{{count}} miembros",
+    "enterOrg": "Entrar",
+    "deleteOrg": "Eliminar",
+    "deleteOrgConfirmTitle": "¿Eliminar congregación?",
+    "deleteOrgConfirmDescription": "Todos los datos de {{name}} se eliminarán permanentemente.",
+    "orgDeleted": "Congregación eliminada."
+  },
+  "members": {
+    "title": "Miembros",
+    "subtitle": "Gestiona los miembros de tu congregación",
+    "listTitle": "Lista de miembros",
+    "noMembers": "Aún no hay miembros.",
+    "you": "tú",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "member": "Miembro"
+    },
+    "promoteOwner": "Hacer Owner",
+    "demoteOwner": "Degradar",
+    "promoteAdmin": "Hacer Admin",
+    "remove": "Quitar",
+    "removeConfirmTitle": "¿Quitar miembro?",
+    "removeConfirmDescription": "{{name}} perderá el acceso a esta congregación.",
+    "memberRemoved": "Miembro eliminado.",
+    "roleUpdated": "Papel actualizado.",
+    "leaveOrg": "Salir de la congregación",
+    "leaveConfirmTitle": "¿Salir de la congregación?",
+    "leaveConfirmDescription": "Perderás el acceso a esta congregación.",
+    "leftOrg": "Saliste de la congregación.",
+    "inviteTitle": "Invitar miembro",
+    "inviteDescription": "Genera un código de 6 dígitos para invitar a alguien a la congregación. El código caduca en 24 horas.",
+    "createToken": "Crear código",
+    "tokenCreated": "¡Código creado! Cópialo y envíalo al invitado.",
+    "copyCode": "Copiar",
+    "codeCopied": "¡Código copiado!",
+    "tokenHint": "Comparte este código con el invitado."
   },
   "dashboard": {
     "title": "Panel",
@@ -36,7 +114,14 @@
     "subtitle": "Sigue la actividad de la congregación",
     "statMeetings": "Reuniones",
     "statConfigs": "Configuración activa",
-    "statParts": "Partes"
+    "statParts": "Partes",
+    "statMembers": "Miembros",
+    "meetingsTitle": "Reuniones",
+    "noMeetings": "No hay reuniones configuradas.",
+    "meetingParts": "{{count}} partes",
+    "eventsTitle": "Eventos Especiales",
+    "noEvents": "No hay eventos especiales.",
+    "manageSettings": "Gestionar configuración"
   },
   "settings": {
     "title": "Ajustes",

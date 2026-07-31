@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { I18nProvider } from "@/components/i18n-provider";
 import { I18nSync } from "@/components/i18n-sync";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
         <I18nProvider>
           <I18nSync />
           {children}
+          <Toaster />
         </I18nProvider>
       </body>
     </html>

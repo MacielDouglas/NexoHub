@@ -19,10 +19,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sessions    Session[]
-  accounts    Account[]
-  members     Member[]
-  invitations Invitation[]
+  sessions           Session[]
+  accounts           Account[]
+  members            Member[]
+  invitations        Invitation[]
+  createdInviteTokens InviteToken[] @relation("CreatedInviteTokens")
+  usedInviteTokens    InviteToken[] @relation("UsedInviteTokens")
 }
 
 model Session {
@@ -78,6 +80,7 @@ model Organization {
   invitations    Invitation[]
   meetingConfigs MeetingConfig[]
   specialEvents  SpecialEvent[]
+  inviteTokens   InviteToken[]
 }
 
 model Member {
@@ -107,6 +110,24 @@ model Invitation {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   inviter      User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+}
+
+model InviteToken {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  purpose        String   @default("owner")
+  organizationId String?
+  createdById    String
+  usedById       String?
+  usedAt         DateTime?
+  expiresAt      DateTime
+  status         String   @default("active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy     User         @relation("CreatedInviteTokens", fields: [createdById], references: [id], onDelete: Cascade)
+  usedBy        User?        @relation("UsedInviteTokens", fields: [usedById], references: [id])
 }
 
 model MeetingConfig {

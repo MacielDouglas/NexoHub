@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { I18nSync } from "@/components/i18n-sync";
 import { auth } from "@/lib/auth";
+import { getUserOrg } from "@/lib/org-utils";
 
 export default async function DashboardLayout({
   children,
@@ -17,6 +18,23 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const member = await getUserOrg(await headers());
+
+  if (session.user.globalRole === "super_user") {
+    if (!member) {
+      redirect("/admin");
+    }
+  } else if (!member) {
+    if (session.user.globalRole === "owner") {
+      redirect("/create-org");
+    }
+    redirect("/welcome");
+  }
+
+  const org = member?.organization;
+  const role = member?.role;
+  const isSuperUser = Boolean(member?.isSuperUser);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <I18nSync lang={session.user.language} />
@@ -29,11 +47,18 @@ export default async function DashboardLayout({
               </div>
               <span className="text-lg font-semibold">Nexohub</span>
             </div>
-            <DashboardNav />
+            <DashboardNav role={role} isSuperUser={isSuperUser} />
           </div>
-          <span className="text-sm text-muted-foreground">
-            {session.user.name}
-          </span>
+          <div className="flex items-center gap-3">
+            {org && (
+              <span className="max-w-40 truncate text-sm text-muted-foreground">
+                {org.name}
+              </span>
+            )}
+            <span className="text-sm text-muted-foreground">
+              {session.user.name}
+            </span>
+          </div>
         </div>
       </header>
       <main className="flex-1">{children}</main>
