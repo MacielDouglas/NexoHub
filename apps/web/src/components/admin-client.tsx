@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { SignOutButton } from "@/components/sign-out-button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -158,6 +159,7 @@ export function AdminClient() {
           >
             {t("nav.dashboard")}
           </Link>
+          <SignOutButton />
         </div>
       </header>
 

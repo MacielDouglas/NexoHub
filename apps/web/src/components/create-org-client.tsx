@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { I18nSync } from "@/components/i18n-sync";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { SignOutButton } from "@/components/sign-out-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -56,7 +57,8 @@ export function CreateOrgClient({ lang }: { lang?: string | null }) {
             "radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.3) 0, transparent 40%)",
         }}
       />
-      <div className="absolute top-5 right-6">
+      <div className="absolute top-5 right-6 flex items-center gap-2">
+        <SignOutButton light />
         <LanguageSwitcher />
       </div>
 

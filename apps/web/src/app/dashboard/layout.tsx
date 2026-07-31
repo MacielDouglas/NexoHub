@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { I18nSync } from "@/components/i18n-sync";
+import { SignOutButton } from "@/components/sign-out-button";
 import { auth } from "@/lib/auth";
 import { getUserOrg } from "@/lib/org-utils";
 
@@ -58,6 +59,7 @@ export default async function DashboardLayout({
             <span className="text-sm text-muted-foreground">
               {session.user.name}
             </span>
+            <SignOutButton />
           </div>
         </div>
       </header>
