@@ -55,11 +55,15 @@
   "settings": {
     "title": "Configurações",
     "subtitle": "Gerencie as reuniões da congregação",
-    "newConfig": "Nova Configuração",
-    "cancel": "Cancelar",
+    "meetingDays": "Dias de Reuniões",
+    "meetingDaysSubtitle": "Configure os dois dias fixos de reunião da congregação. Todo o aplicativo usa essas informações como referência.",
+    "requiredMeetings": "Reuniões obrigatórias",
+    "notConfigured": "Não configurado",
+    "dayOfWeek": "Dia da Semana",
+    "startTime": "Horário",
     "meetingType": {
-      "midweek": "Meio de Semana",
-      "weekend": "Fim de Semana"
+      "midweek": "Reunião de Meio de Semana",
+      "weekend": "Reunião de Fim de Semana"
     },
     "days": {
       "sunday": "Domingo",
@@ -70,13 +74,30 @@
       "friday": "Sexta",
       "saturday": "Sábado"
     },
-    "noConfigs": "Nenhuma configuração ainda.",
     "at": "às",
-    "dayOfWeek": "Dia da Semana (0-6)",
-    "startTime": "Horário (HH:mm)",
-    "duration": "Duração (min)",
-    "create": "Criar",
-    "remove": "Remover",
-    "loading": "Carregando..."
+    "parts": "Partes",
+    "noParts": "Nenhuma parte definida.",
+    "minutes": "{{count}}min",
+    "specialEvents": "Eventos Especiais",
+    "specialEventsSubtitle": "Cadastre os eventos especiais opcionais do ano.",
+    "noSpecialEvents": "Nenhum evento especial cadastrado.",
+    "newSpecialEvent": "Novo evento especial",
+    "editSpecialEvent": "Editar evento especial",
+    "specialEventType": "Tipo de evento",
+    "eventDate": "Data",
+    "eventStartDate": "Data inicial",
+    "eventEndDate": "Data final",
+    "eventTime": "Horário",
+    "eventLocation": "Local",
+    "onePerYear": "Permitido apenas 1 por ano",
+    "specialEventTypes": {
+      "memorial": "Comemoração",
+      "specialTalk": "Discurso Especial",
+      "circuitVisit": "Visita do Superintendente de Circuito",
+      "convention": "Congresso Regional",
+      "assemblyTraveling": "Assembléia com Viajante",
+      "assemblyRepresentative": "Assembléia com Representante",
+      "specialMeeting": "Reunião Especial"
+    }
   }
 }

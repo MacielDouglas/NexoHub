@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, TextInput } from "react-native";
+import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -8,6 +8,12 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import {
+  ANNUAL_EVENT_TYPES,
+  SPECIAL_EVENT_FIELDS,
+  SPECIAL_EVENT_TYPES,
+  type SpecialEventType,
+} from "@/lib/special-events";
 
 type MeetingPart = {
   id: string;
@@ -22,9 +28,45 @@ type MeetingConfig = {
   type: string;
   dayOfWeek: number;
   startTime: string;
-  durationMinutes: number | null;
   isActive: boolean;
   parts: MeetingPart[];
+};
+
+type SpecialEvent = {
+  id: string;
+  type: string;
+  date: string;
+  endDate: string | null;
+  time: string | null;
+  location: string | null;
+};
+
+type SpecialEventFormValues = {
+  type: SpecialEventType;
+  date: string;
+  endDate: string;
+  time: string;
+  location: string;
+};
+
+const DAY_KEYS = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+] as const;
+
+const MEETING_TYPES = ["midweek", "weekend"] as const;
+
+const EMPTY_EVENT_FORM: SpecialEventFormValues = {
+  type: "memorial",
+  date: "",
+  endDate: "",
+  time: "",
+  location: "",
 };
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
@@ -47,8 +89,8 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const { t } = useTranslation();
   const [configs, setConfigs] = useState<MeetingConfig[]>([]);
+  const [events, setEvents] = useState<SpecialEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
 
   const insets = {
     ...safeAreaInsets,
@@ -60,21 +102,38 @@ export default function SettingsScreen() {
     web: { paddingTop: Spacing.six, paddingBottom: Spacing.four },
   });
 
-  async function fetchConfigs() {
-    const res = await apiFetch("/api/meeting-configs");
-    const data = await res.json();
-    if (data.configs) setConfigs(data.configs);
-    setLoading(false);
+  async function fetchAll() {
+    const [configRes, eventRes] = await Promise.all([
+      apiFetch("/api/meeting-configs"),
+      apiFetch("/api/special-events"),
+    ]);
+    if (configRes.ok) {
+      const data = await configRes.json();
+      if (data.configs) setConfigs(data.configs);
+    }
+    if (eventRes.ok) {
+      const data = await eventRes.json();
+      if (data.events) setEvents(data.events);
+    }
   }
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      const res = await apiFetch("/api/meeting-configs");
-      const data = await res.json();
+      const [configRes, eventRes] = await Promise.all([
+        apiFetch("/api/meeting-configs"),
+        apiFetch("/api/special-events"),
+      ]);
       if (cancelled) return;
-      if (data.configs) setConfigs(data.configs);
+      if (configRes.ok) {
+        const data = await configRes.json();
+        if (data.configs) setConfigs(data.configs);
+      }
+      if (eventRes.ok) {
+        const data = await eventRes.json();
+        if (data.events) setEvents(data.events);
+      }
       setLoading(false);
     }
 
@@ -83,11 +142,6 @@ export default function SettingsScreen() {
       cancelled = true;
     };
   }, []);
-
-  async function handleDelete(id: string) {
-    const res = await apiFetch(`/api/meeting-configs/${id}`, { method: "DELETE" });
-    if (res.ok) await fetchConfigs();
-  }
 
   return (
     <ScrollView
@@ -101,114 +155,441 @@ export default function SettingsScreen() {
           {t("settings.subtitle")}
         </ThemedText>
 
-        <Pressable
-          onPress={() => setShowForm(!showForm)}
-          style={({ pressed }) => [styles.addButton, { backgroundColor: theme.primary }, pressed && { opacity: 0.8 }]}
-        >
-          <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>
-            {showForm ? t("settings.cancel") : t("settings.newConfig")}
-          </ThemedText>
-        </Pressable>
-
-        {showForm && <ConfigForm onSaved={() => { setShowForm(false); fetchConfigs(); }} />}
-
         {loading ? (
           <ThemedText themeColor="textSecondary" style={{ textAlign: "center", marginTop: Spacing.four }}>
-            {t("settings.loading")}
-          </ThemedText>
-        ) : configs.length === 0 ? (
-          <ThemedText themeColor="textSecondary" style={{ textAlign: "center", marginTop: Spacing.four }}>
-            {t("settings.noConfigs")}
+            {t("common.loading")}
           </ThemedText>
         ) : (
-          <ThemedView style={styles.configsList}>
-            {configs.map((config) => (
-              <ThemedView key={config.id} type="backgroundElement" style={styles.configCard}>
-                <ThemedView style={styles.configHeader}>
-                  <ThemedView style={{ flex: 1 }}>
-                    <ThemedText type="default" style={{ fontWeight: "600" }}>
-                      {t(`settings.meetingType.${config.type}`)}
-                    </ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {t(`settings.days.${["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][config.dayOfWeek]}`)} {t("settings.at")} {config.startTime}
-                      {config.durationMinutes ? ` · ${config.durationMinutes}min` : ""}
-                    </ThemedText>
-                  </ThemedView>
-                  <Pressable onPress={() => handleDelete(config.id)} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
-                    <ThemedText style={{ color: theme.danger, fontSize: 13 }}>{t("settings.remove")}</ThemedText>
-                  </Pressable>
-                </ThemedView>
+          <>
+            <ThemedView style={styles.section}>
+              <ThemedText type="default" style={styles.sectionTitle}>{t("settings.meetingDays")}</ThemedText>
+              <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
+                {t("settings.meetingDaysSubtitle")}
+              </ThemedText>
 
-                {config.parts.length > 0 && (
-                  <ThemedView style={styles.partsSection}>
-                    {config.parts.map((part) => (
-                      <ThemedView key={part.id} type="backgroundSelected" style={styles.partRow}>
-                        <ThemedText type="small">#{part.sortOrder} {part.name}</ThemedText>
-                        {part.durationMinutes && (
-                          <ThemedText type="small" themeColor="textSecondary">{part.durationMinutes}min</ThemedText>
-                        )}
-                      </ThemedView>
-                    ))}
-                  </ThemedView>
-                )}
+              <ThemedView style={styles.cardsColumn}>
+                {MEETING_TYPES.map((type) => (
+                  <MeetingDayCard
+                    key={type}
+                    type={type}
+                    config={configs.find((c) => c.type === type)}
+                    onSaved={fetchAll}
+                  />
+                ))}
               </ThemedView>
-            ))}
-          </ThemedView>
+            </ThemedView>
+
+            <ThemedView style={styles.section}>
+              <ThemedText type="default" style={styles.sectionTitle}>{t("settings.specialEvents")}</ThemedText>
+              <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
+                {t("settings.specialEventsSubtitle")}
+              </ThemedText>
+
+              <SpecialEventsSection events={events} onChanged={fetchAll} />
+            </ThemedView>
+          </>
         )}
       </ThemedView>
     </ScrollView>
   );
 }
 
-function ConfigForm({ onSaved }: { onSaved: () => void }) {
+function MeetingDayCard({
+  type,
+  config,
+  onSaved,
+}: {
+  type: string;
+  config: MeetingConfig | undefined;
+  onSaved: () => void;
+}) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const [type, setType] = useState<"midweek" | "weekend">("midweek");
-  const [dayOfWeek, setDayOfWeek] = useState("3");
-  const [startTime, setStartTime] = useState("19:30");
-  const [durationMinutes, setDurationMinutes] = useState("105");
+  const [dayOfWeek, setDayOfWeek] = useState(config?.dayOfWeek ?? 3);
+  const [startTime, setStartTime] = useState(config?.startTime ?? "19:30");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
-    const res = await apiFetch("/api/meeting-configs", {
-      method: "POST",
-      body: JSON.stringify({ type, dayOfWeek: Number(dayOfWeek), startTime, durationMinutes: durationMinutes ? Number(durationMinutes) : null }),
-    });
-    if (res.ok) onSaved();
+    setSaving(true);
+    setError(null);
+    try {
+      const res = config
+        ? await apiFetch(`/api/meeting-configs/${config.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ dayOfWeek, startTime }),
+          })
+        : await apiFetch("/api/meeting-configs", {
+            method: "POST",
+            body: JSON.stringify({ type, dayOfWeek, startTime }),
+          });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "Erro");
+        return;
+      }
+      await onSaved();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <ThemedView type="backgroundElement" style={styles.formCard}>
-      <ThemedText type="default" style={{ fontWeight: "600", marginBottom: Spacing.three }}>{t("settings.newConfig")}</ThemedText>
-
-      <ThemedView style={styles.formRow}>
-        <Pressable onPress={() => setType("midweek")} style={[styles.typeBtn, { borderColor: theme.primary }, type === "midweek" && { backgroundColor: theme.primary }]}>
-          <ThemedText style={[type === "midweek" && { color: theme.primaryForeground }, { textAlign: "center" }]}>{t("settings.meetingType.midweek")}</ThemedText>
-        </Pressable>
-        <Pressable onPress={() => setType("weekend")} style={[styles.typeBtn, { borderColor: theme.primary }, type === "weekend" && { backgroundColor: theme.primary }]}>
-          <ThemedText style={[type === "weekend" && { color: theme.primaryForeground }, { textAlign: "center" }]}>{t("settings.meetingType.weekend")}</ThemedText>
-        </Pressable>
-      </ThemedView>
+    <ThemedView type="backgroundElement" style={styles.card}>
+      <ThemedText type="default" style={{ fontWeight: "600" }}>
+        {t(`settings.meetingType.${type}`)}
+      </ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        {config
+          ? `${t(`settings.days.${DAY_KEYS[config.dayOfWeek]}`)} ${t("settings.at")} ${config.startTime}`
+          : t("settings.notConfigured")}
+      </ThemedText>
 
       <ThemedView style={styles.field}>
         <ThemedText type="small">{t("settings.dayOfWeek")}</ThemedText>
-        <TextInput value={dayOfWeek} onChangeText={setDayOfWeek} keyboardType="numeric" style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]} />
+        <DayPicker selected={dayOfWeek} onSelect={setDayOfWeek} />
       </ThemedView>
 
       <ThemedView style={styles.field}>
         <ThemedText type="small">{t("settings.startTime")}</ThemedText>
-        <TextInput value={startTime} onChangeText={setStartTime} style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]} />
+        <TextInput
+          value={startTime}
+          onChangeText={setStartTime}
+          placeholder="19:30"
+          placeholderTextColor={theme.textSecondary}
+          style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+        />
+      </ThemedView>
+
+      {error && <ThemedText type="small" style={{ color: theme.danger }}>{error}</ThemedText>}
+
+      <Pressable
+        onPress={handleSave}
+        disabled={saving}
+        style={({ pressed }) => [styles.primaryBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.8 }, saving && { opacity: 0.5 }]}
+      >
+        <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>{t("common.save")}</ThemedText>
+      </Pressable>
+
+      {config && (
+        <ThemedView style={styles.partsSection}>
+          <ThemedText type="small" themeColor="textSecondary" style={{ fontWeight: "600" }}>
+            {t("settings.parts")}
+          </ThemedText>
+          {config.parts.length === 0 ? (
+            <ThemedText type="small" themeColor="textSecondary">{t("settings.noParts")}</ThemedText>
+          ) : (
+            config.parts.map((part) => (
+              <ThemedView key={part.id} type="backgroundSelected" style={styles.partRow}>
+                <ThemedText type="small">#{part.sortOrder} {part.name}</ThemedText>
+                {part.durationMinutes && (
+                  <ThemedText type="small" themeColor="textSecondary">{part.durationMinutes}min</ThemedText>
+                )}
+              </ThemedView>
+            ))
+          )}
+        </ThemedView>
+      )}
+    </ThemedView>
+  );
+}
+
+function DayPicker({ selected, onSelect }: { selected: number; onSelect: (day: number) => void }) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.dayGrid}>
+      {DAY_KEYS.map((key, index) => {
+        const active = index === selected;
+        return (
+          <Pressable
+            key={key}
+            onPress={() => onSelect(index)}
+            style={[
+              styles.dayChip,
+              { borderColor: theme.primary },
+              active && { backgroundColor: theme.primary },
+            ]}
+          >
+            <ThemedText
+              type="small"
+              style={[active && { color: theme.primaryForeground }, { textAlign: "center" }]}
+            >
+              {t(`settings.days.${key}`)}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function SpecialEventsSection({
+  events,
+  onChanged,
+}: {
+  events: SpecialEvent[];
+  onChanged: () => void;
+}) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+
+  function startCreate() {
+    setEditingId(null);
+    setShowForm(true);
+  }
+
+  function startEdit(event: SpecialEvent) {
+    setEditingId(event.id);
+    setShowForm(true);
+  }
+
+  async function handleDelete(id: string) {
+    const res = await apiFetch(`/api/special-events/${id}`, { method: "DELETE" });
+    if (res.ok) await onChanged();
+  }
+
+  return (
+    <ThemedView style={styles.eventsContainer}>
+      {events.length === 0 ? (
+        <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.three }}>
+          {t("settings.noSpecialEvents")}
+        </ThemedText>
+      ) : (
+        <ThemedView style={styles.eventsList}>
+          {events.map((event) => (
+            <ThemedView key={event.id} type="backgroundElement" style={styles.eventRow}>
+              <ThemedView style={{ flex: 1 }}>
+                <ThemedText type="default" style={{ fontWeight: "600" }}>
+                  {t(`settings.specialEventTypes.${event.type}`)}
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {formatEventSummary(event, t)}
+                </ThemedText>
+              </ThemedView>
+              <ThemedView style={styles.eventActions}>
+                <Pressable onPress={() => startEdit(event)} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
+                  <ThemedText style={{ color: theme.primary, fontSize: 13 }}>{t("common.edit")}</ThemedText>
+                </Pressable>
+                <Pressable onPress={() => handleDelete(event.id)} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
+                  <ThemedText style={{ color: theme.danger, fontSize: 13 }}>{t("common.remove")}</ThemedText>
+                </Pressable>
+              </ThemedView>
+            </ThemedView>
+          ))}
+        </ThemedView>
+      )}
+
+      {showForm ? (
+        <SpecialEventForm
+          key={editingId ?? "new"}
+          event={events.find((e) => e.id === editingId) ?? null}
+          onCancel={() => setShowForm(false)}
+          onSaved={() => {
+            setShowForm(false);
+            setEditingId(null);
+            void onChanged();
+          }}
+        />
+      ) : (
+        <Pressable
+          onPress={startCreate}
+          style={({ pressed }) => [styles.secondaryBtn, { backgroundColor: theme.backgroundSelected }, pressed && { opacity: 0.8 }]}
+        >
+          <ThemedText style={{ fontWeight: "600" }}>{t("settings.newSpecialEvent")}</ThemedText>
+        </Pressable>
+      )}
+    </ThemedView>
+  );
+}
+
+function SpecialEventForm({
+  event,
+  onCancel,
+  onSaved,
+}: {
+  event: SpecialEvent | null;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const [form, setForm] = useState<SpecialEventFormValues>(() =>
+    event
+      ? {
+          type: event.type as SpecialEventType,
+          date: event.date,
+          endDate: event.endDate ?? "",
+          time: event.time ?? "",
+          location: event.location ?? "",
+        }
+      : EMPTY_EVENT_FORM,
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fields = SPECIAL_EVENT_FIELDS[form.type];
+  const isAnnual = (ANNUAL_EVENT_TYPES as readonly string[]).includes(form.type);
+
+  async function handleSubmit() {
+    if (!form.date) {
+      setError(t("settings.eventDate"));
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const payload: Record<string, string> = {
+        type: form.type,
+        date: form.date,
+      };
+      if (fields.endDate) payload.endDate = form.endDate;
+      if (fields.time) payload.time = form.time;
+      if (fields.location) payload.location = form.location;
+
+      const res = event
+        ? await apiFetch(`/api/special-events/${event.id}`, {
+            method: "PUT",
+            body: JSON.stringify(payload),
+          })
+        : await apiFetch("/api/special-events", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "Erro");
+        return;
+      }
+      onSaved();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ThemedView type="backgroundElement" style={styles.formCard}>
+      <ThemedText type="default" style={{ fontWeight: "600", marginBottom: Spacing.three }}>
+        {event ? t("settings.editSpecialEvent") : t("settings.newSpecialEvent")}
+      </ThemedText>
+
+      <ThemedView style={styles.field}>
+        <ThemedText type="small">{t("settings.specialEventType")}</ThemedText>
+        <View style={styles.typeGrid}>
+          {SPECIAL_EVENT_TYPES.map((type) => {
+            const active = type === form.type;
+            return (
+              <Pressable
+                key={type}
+                onPress={() => setForm({ ...form, type })}
+                style={[
+                  styles.typeChip,
+                  { borderColor: theme.primary },
+                  active && { backgroundColor: theme.primary },
+                ]}
+              >
+                <ThemedText
+                  type="small"
+                  style={[active && { color: theme.primaryForeground }, { textAlign: "center" }]}
+                >
+                  {t(`settings.specialEventTypes.${type}`)}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
       </ThemedView>
 
       <ThemedView style={styles.field}>
-        <ThemedText type="small">{t("settings.duration")}</ThemedText>
-        <TextInput value={durationMinutes} onChangeText={setDurationMinutes} keyboardType="numeric" style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]} />
+        <ThemedText type="small">{fields.endDate ? t("settings.eventStartDate") : t("settings.eventDate")}</ThemedText>
+        <TextInput
+          value={form.date}
+          onChangeText={(date) => setForm({ ...form, date })}
+          placeholder="AAAA-MM-DD"
+          placeholderTextColor={theme.textSecondary}
+          style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+        />
       </ThemedView>
 
-      <Pressable onPress={handleSave} style={({ pressed }) => [styles.saveBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.8 }]}>
-        <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>{t("settings.create")}</ThemedText>
-      </Pressable>
+      {fields.endDate && (
+        <ThemedView style={styles.field}>
+          <ThemedText type="small">{t("settings.eventEndDate")}</ThemedText>
+          <TextInput
+            value={form.endDate}
+            onChangeText={(endDate) => setForm({ ...form, endDate })}
+            placeholder="AAAA-MM-DD"
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+          />
+        </ThemedView>
+      )}
+
+      {fields.time && (
+        <ThemedView style={styles.field}>
+          <ThemedText type="small">{t("settings.eventTime")}</ThemedText>
+          <TextInput
+            value={form.time}
+            onChangeText={(time) => setForm({ ...form, time })}
+            placeholder="19:30"
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+          />
+        </ThemedView>
+      )}
+
+      {fields.location && (
+        <ThemedView style={styles.field}>
+          <ThemedText type="small">{t("settings.eventLocation")}</ThemedText>
+          <TextInput
+            value={form.location}
+            onChangeText={(location) => setForm({ ...form, location })}
+            placeholder={t("settings.eventLocation")}
+            placeholderTextColor={theme.textSecondary}
+            style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+          />
+        </ThemedView>
+      )}
+
+      {isAnnual && (
+        <ThemedText type="small" style={{ color: theme.warning, fontWeight: "600" }}>
+          {t("settings.onePerYear")}
+        </ThemedText>
+      )}
+
+      {error && <ThemedText type="small" style={{ color: theme.danger }}>{error}</ThemedText>}
+
+      <ThemedView style={styles.actionsRow}>
+        <Pressable
+          onPress={handleSubmit}
+          disabled={saving}
+          style={({ pressed }) => [styles.primaryBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.8 }, saving && { opacity: 0.5 }]}
+        >
+          <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>{t("common.save")}</ThemedText>
+        </Pressable>
+        <Pressable
+          onPress={onCancel}
+          style={({ pressed }) => [styles.secondaryBtn, { backgroundColor: theme.backgroundSelected }, pressed && { opacity: 0.8 }]}
+        >
+          <ThemedText style={{ fontWeight: "600" }}>{t("common.cancel")}</ThemedText>
+        </Pressable>
+      </ThemedView>
     </ThemedView>
   );
+}
+
+function formatEventSummary(
+  event: SpecialEvent,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) {
+  const parts: string[] = [event.date];
+  if (event.endDate) parts.push(`– ${event.endDate}`);
+  if (event.time) parts.push(t("settings.at"), event.time);
+  if (event.location) parts.push("·", event.location);
+  return parts.join(" ");
 }
 
 const styles = StyleSheet.create({
@@ -217,16 +598,25 @@ const styles = StyleSheet.create({
   container: { maxWidth: MaxContentWidth, flexGrow: 1, paddingHorizontal: Spacing.four, paddingTop: Spacing.six },
   title: { marginBottom: Spacing.one },
   subtitle: { marginBottom: Spacing.four },
-  addButton: { paddingVertical: Spacing.two, borderRadius: Spacing.three, alignItems: "center", marginBottom: Spacing.three },
-  configsList: { gap: Spacing.three, marginTop: Spacing.three },
-  configCard: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.three },
-  configHeader: { flexDirection: "row", alignItems: "flex-start", gap: Spacing.two },
-  partsSection: { gap: Spacing.two, paddingLeft: Spacing.two },
-  partRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two },
-  formCard: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.three, marginBottom: Spacing.three },
-  formRow: { flexDirection: "row", gap: Spacing.two },
-  typeBtn: { flex: 1, paddingVertical: Spacing.two, borderRadius: Spacing.two, borderWidth: 1 },
-  field: { gap: Spacing.half },
+  section: { gap: Spacing.three, marginBottom: Spacing.five },
+  sectionTitle: { fontWeight: "700" },
+  sectionSubtitle: { marginTop: -Spacing.one },
+  cardsColumn: { gap: Spacing.three },
+  card: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.three },
+  field: { gap: Spacing.one },
   input: { borderRadius: Spacing.two, borderWidth: 1, paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, fontSize: 16 },
-  saveBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", marginTop: Spacing.one },
+  dayGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.one },
+  dayChip: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two, borderWidth: 1, minWidth: 92 },
+  primaryBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1 },
+  secondaryBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1 },
+  partsSection: { gap: Spacing.two, paddingTop: Spacing.one },
+  partRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two },
+  eventsContainer: { gap: Spacing.three },
+  eventsList: { gap: Spacing.two },
+  eventRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: Spacing.two, padding: Spacing.three, borderRadius: Spacing.three },
+  eventActions: { flexDirection: "row", gap: Spacing.three, marginLeft: Spacing.two },
+  formCard: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.three },
+  typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.one },
+  typeChip: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two, borderWidth: 1 },
+  actionsRow: { flexDirection: "row", gap: Spacing.two, marginTop: Spacing.one },
 });
