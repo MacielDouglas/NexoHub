@@ -41,13 +41,12 @@
   "settings": {
     "title": "Ajustes",
     "subtitle": "Gestiona las reuniones de la congregación",
-    "meetingConfig": "Configuración de Reuniones",
-    "newConfig": "Nueva Configuración",
-    "editConfig": "Editar Configuración",
-    "type": "Tipo",
+    "meetingDays": "Días de Reuniones",
+    "meetingDaysSubtitle": "Configura los dos días fijos de reunión de la congregación. Toda la aplicación usa esta información como referencia.",
+    "requiredMeetings": "Reuniones obligatorias",
+    "notConfigured": "No configurado",
     "dayOfWeek": "Día de la Semana",
     "startTime": "Hora",
-    "duration": "Duración (min)",
     "meetingType": {
       "midweek": "Reunión de Entre Semana",
       "weekend": "Reunión de Fin de Semana"
@@ -61,12 +60,32 @@
       "friday": "Viernes",
       "saturday": "Sábado"
     },
-    "noConfigs": "Aún no hay configuración de reuniones.",
     "at": "a las",
     "parts": "Partes",
     "noParts": "No hay partes definidas.",
     "newPart": "Nombre de la parte",
     "minShort": "min",
-    "minutes": "{{count}}min"
+    "minutes": "{{count}}min",
+    "specialEvents": "Eventos Especiales",
+    "specialEventsSubtitle": "Registra los eventos especiales opcionales del año.",
+    "noSpecialEvents": "No hay eventos especiales registrados.",
+    "newSpecialEvent": "Nuevo evento especial",
+    "editSpecialEvent": "Editar evento especial",
+    "specialEventType": "Tipo de evento",
+    "eventDate": "Fecha",
+    "eventStartDate": "Fecha inicial",
+    "eventEndDate": "Fecha final",
+    "eventTime": "Hora",
+    "eventLocation": "Lugar",
+    "onePerYear": "Solo se permite 1 por año",
+    "specialEventTypes": {
+      "memorial": "Conmemoración",
+      "specialTalk": "Discurso Especial",
+      "circuitVisit": "Visita del Superintendente de Circuito",
+      "convention": "Asamblea Regional",
+      "assemblyTraveling": "Asamblea con Viajante",
+      "assemblyRepresentative": "Asamblea con Representante",
+      "specialMeeting": "Reunión Especial"
+    }
   }
 }

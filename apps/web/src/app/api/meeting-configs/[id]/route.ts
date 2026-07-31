@@ -55,8 +55,7 @@ export async function PUT(
     );
   }
 
-  const { type, dayOfWeek, startTime, durationMinutes, isActive } =
-    await request.json();
+  const { type, dayOfWeek, startTime, isActive } = await request.json();
 
   const config = await prisma.meetingConfig.update({
     where: { id },
@@ -64,7 +63,6 @@ export async function PUT(
       ...(type !== undefined && { type }),
       ...(dayOfWeek !== undefined && { dayOfWeek }),
       ...(startTime !== undefined && { startTime }),
-      ...(durationMinutes !== undefined && { durationMinutes }),
       ...(isActive !== undefined && { isActive }),
     },
     include: { parts: { orderBy: { sortOrder: "asc" } } },

@@ -1,7 +1,7 @@
 /**
  * Nexohub theme — light only, banking-grade fintech feel.
  * Primary: tech blue #2563EB · Secondary: innovation purple #7C3AED
- * Background: #e2e8f0 · Foreground: #1F2937
+ * Background: #f8fafd · Foreground: #1F2937
  */
 
 import '@/global.css';
@@ -11,29 +11,29 @@ import { Platform } from 'react-native';
 export const Colors = {
   light: {
     text: '#1F2937',
-    background: '#e2e8f0',
+    background: '#f8fafd',
     backgroundElement: '#ffffff',
-    backgroundSelected: '#eff2f7',
+    backgroundSelected: '#f1f5fb',
     textSecondary: '#64748B',
     primary: '#2563EB',
     primaryForeground: '#ffffff',
     secondary: '#7C3AED',
     secondaryForeground: '#ffffff',
-    border: '#cbd5e1',
+    border: '#e5eaf2',
     danger: '#DC2626',
     success: '#16A34A',
   },
   dark: {
     text: '#1F2937',
-    background: '#e2e8f0',
+    background: '#f8fafd',
     backgroundElement: '#ffffff',
-    backgroundSelected: '#eff2f7',
+    backgroundSelected: '#f1f5fb',
     textSecondary: '#64748B',
     primary: '#2563EB',
     primaryForeground: '#ffffff',
     secondary: '#7C3AED',
     secondaryForeground: '#ffffff',
-    border: '#cbd5e1',
+    border: '#e5eaf2',
     danger: '#DC2626',
     success: '#16A34A',
   },

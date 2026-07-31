@@ -41,13 +41,12 @@
   "settings": {
     "title": "Configurações",
     "subtitle": "Gerencie as reuniões da congregação",
-    "meetingConfig": "Configurações de Reuniões",
-    "newConfig": "Nova Configuração",
-    "editConfig": "Editar Configuração",
-    "type": "Tipo",
+    "meetingDays": "Dias de Reuniões",
+    "meetingDaysSubtitle": "Configure os dois dias fixos de reunião da congregação. Todo o aplicativo usa essas informações como referência.",
+    "requiredMeetings": "Reuniões obrigatórias",
+    "notConfigured": "Não configurado",
     "dayOfWeek": "Dia da Semana",
     "startTime": "Horário",
-    "duration": "Duração (min)",
     "meetingType": {
       "midweek": "Reunião de Meio de Semana",
       "weekend": "Reunião de Fim de Semana"
@@ -61,12 +60,32 @@
       "friday": "Sexta",
       "saturday": "Sábado"
     },
-    "noConfigs": "Nenhuma configuração de reunião ainda.",
     "at": "às",
     "parts": "Partes",
     "noParts": "Nenhuma parte definida.",
     "newPart": "Nome da parte",
     "minShort": "min",
-    "minutes": "{{count}}min"
+    "minutes": "{{count}}min",
+    "specialEvents": "Eventos Especiais",
+    "specialEventsSubtitle": "Cadastre os eventos especiais opcionais do ano.",
+    "noSpecialEvents": "Nenhum evento especial cadastrado.",
+    "newSpecialEvent": "Novo evento especial",
+    "editSpecialEvent": "Editar evento especial",
+    "specialEventType": "Tipo de evento",
+    "eventDate": "Data",
+    "eventStartDate": "Data inicial",
+    "eventEndDate": "Data final",
+    "eventTime": "Horário",
+    "eventLocation": "Local",
+    "onePerYear": "Permitido apenas 1 por ano",
+    "specialEventTypes": {
+      "memorial": "Comemoração",
+      "specialTalk": "Discurso Especial",
+      "circuitVisit": "Visita do Superintendente de Circuito",
+      "convention": "Congresso Regional",
+      "assemblyTraveling": "Assembléia com Viajante",
+      "assemblyRepresentative": "Assembléia com Representante",
+      "specialMeeting": "Reunião Especial"
+    }
   }
 }

@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
 
-  const { type, dayOfWeek, startTime, durationMinutes } = await request.json();
+  const { type, dayOfWeek, startTime } = await request.json();
 
   if (!type || dayOfWeek === undefined || !startTime) {
     return NextResponse.json(
@@ -56,7 +56,6 @@ export async function POST(request: Request) {
       type,
       dayOfWeek,
       startTime,
-      durationMinutes,
     },
     include: { parts: { orderBy: { sortOrder: "asc" } } },
   });

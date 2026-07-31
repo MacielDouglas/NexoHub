@@ -77,6 +77,7 @@ model Organization {
   members        Member[]
   invitations    Invitation[]
   meetingConfigs MeetingConfig[]
+  specialEvents  SpecialEvent[]
 }
 
 model Member {
@@ -114,7 +115,6 @@ model MeetingConfig {
   type            String   @default("midweek")
   dayOfWeek       Int
   startTime       String
-  durationMinutes Int?
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -136,4 +136,20 @@ model MeetingPart {
   updatedAt       DateTime @updatedAt
 
   meetingConfig MeetingConfig @relation(fields: [meetingConfigId], references: [id], onDelete: Cascade)
+}
+
+model SpecialEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  type           String
+  date           DateTime
+  endDate        DateTime?
+  time           String?
+  location       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, type])
 }
