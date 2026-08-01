@@ -1,8 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { authClient } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 import {
   ANNUAL_EVENT_TYPES,
   SPECIAL_EVENT_FIELDS,
@@ -55,7 +58,11 @@ const EMPTY_EVENT_FORM: SpecialEventForm = {
   location: "",
 };
 
-export function SettingsClient() {
+export function SettingsClient({
+  isSuperUser = false,
+}: {
+  isSuperUser?: boolean;
+}) {
   const { t } = useTranslation();
   const [configs, setConfigs] = useState<MeetingConfig[]>([]);
   const [events, setEvents] = useState<SpecialEvent[]>([]);
@@ -97,7 +104,7 @@ export function SettingsClient() {
       ) : (
         <>
           <section className="mb-12">
-            <h2 className="mb-1 text-lg font-medium">
+            <h2 className="mb-1 text-lg font-semibold">
               {t("settings.meetingDays")}
             </h2>
             <p className="mb-4 text-sm text-muted-foreground">
@@ -115,8 +122,8 @@ export function SettingsClient() {
             </div>
           </section>
 
-          <section>
-            <h2 className="mb-1 text-lg font-medium">
+          <section className="mb-12">
+            <h2 className="mb-1 text-lg font-semibold">
               {t("settings.specialEvents")}
             </h2>
             <p className="mb-4 text-sm text-muted-foreground">
@@ -124,6 +131,9 @@ export function SettingsClient() {
             </p>
             <SpecialEventsSection events={events} onChanged={fetchAll} />
           </section>
+
+          <SignOutSection />
+          {isSuperUser && <AdminSection />}
         </>
       )}
     </div>
@@ -173,7 +183,7 @@ function MeetingDayCard({
 
   return (
     <div className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
-      <h3 className="text-lg font-medium">
+      <h3 className="text-lg font-semibold">
         {t(`settings.meetingType.${type}`)}
       </h3>
       <p className="mt-0.5 text-sm text-muted-foreground">
@@ -182,31 +192,20 @@ function MeetingDayCard({
           : t("settings.notConfigured")}
       </p>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-4">
         <div>
           <label
             htmlFor={`${type}-day`}
-            className="mb-1 block text-sm font-medium"
+            className="mb-2 block text-sm font-medium"
           >
             {t("settings.dayOfWeek")}
           </label>
-          <select
-            id={`${type}-day`}
-            value={dayOfWeek}
-            onChange={(e) => setDayOfWeek(Number(e.target.value))}
-            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-          >
-            {DAY_KEYS.map((key, index) => (
-              <option key={key} value={index}>
-                {t(`settings.days.${key}`)}
-              </option>
-            ))}
-          </select>
+          <DayPicker selected={dayOfWeek} onSelect={setDayOfWeek} />
         </div>
         <div>
           <label
             htmlFor={`${type}-time`}
-            className="mb-1 block text-sm font-medium"
+            className="mb-2 block text-sm font-medium"
           >
             {t("settings.startTime")}
           </label>
@@ -223,11 +222,44 @@ function MeetingDayCard({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="w-full rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {t("common.save")}
         </button>
       </div>
+    </div>
+  );
+}
+
+function DayPicker({
+  selected,
+  onSelect,
+}: {
+  selected: number;
+  onSelect: (day: number) => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {DAY_KEYS.map((key, index) => {
+        const active = index === selected;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onSelect(index)}
+            className={cn(
+              "min-w-[88px] rounded-lg border border-[#2563EB] px-3 py-1.5 text-center text-sm",
+              active
+                ? "bg-[#2563EB] font-medium text-white"
+                : "bg-background text-foreground hover:bg-[#2563EB]/10",
+            )}
+          >
+            {t(`settings.days.${key}`)}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -395,104 +427,93 @@ function SpecialEventForm({
 
   return (
     <div className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
-      <h3 className="mb-4 text-lg font-medium">
+      <h3 className="mb-4 text-lg font-semibold">
         {event ? t("settings.editSpecialEvent") : t("settings.newSpecialEvent")}
       </h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-4">
         <div>
           <label
             htmlFor="special-event-type"
-            className="mb-1 block text-sm font-medium"
+            className="mb-2 block text-sm font-medium"
           >
             {t("settings.specialEventType")}
           </label>
-          <select
-            id="special-event-type"
-            value={form.type}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                type: e.target.value as SpecialEventType,
-              })
-            }
-            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-          >
-            {SPECIAL_EVENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {t(`settings.specialEventTypes.${type}`)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="special-event-date"
-            className="mb-1 block text-sm font-medium"
-          >
-            {fields.endDate
-              ? t("settings.eventStartDate")
-              : t("settings.eventDate")}
-          </label>
-          <input
-            id="special-event-date"
-            type="date"
-            value={form.date}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
-            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+          <TypePicker
+            selected={form.type}
+            onSelect={(type) => setForm({ ...form, type })}
           />
         </div>
-        {fields.endDate && (
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label
-              htmlFor="special-event-end-date"
-              className="mb-1 block text-sm font-medium"
+              htmlFor="special-event-date"
+              className="mb-2 block text-sm font-medium"
             >
-              {t("settings.eventEndDate")}
+              {fields.endDate
+                ? t("settings.eventStartDate")
+                : t("settings.eventDate")}
             </label>
             <input
-              id="special-event-end-date"
+              id="special-event-date"
               type="date"
-              value={form.endDate}
-              onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+              value={form.date}
+              onChange={(e) => setForm({ ...form, date: e.target.value })}
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
             />
           </div>
-        )}
-        {fields.time && (
-          <div>
-            <label
-              htmlFor="special-event-time"
-              className="mb-1 block text-sm font-medium"
-            >
-              {t("settings.eventTime")}
-            </label>
-            <input
-              id="special-event-time"
-              type="time"
-              value={form.time}
-              onChange={(e) => setForm({ ...form, time: e.target.value })}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-            />
-          </div>
-        )}
-        {fields.location && (
-          <div>
-            <label
-              htmlFor="special-event-location"
-              className="mb-1 block text-sm font-medium"
-            >
-              {t("settings.eventLocation")}
-            </label>
-            <input
-              id="special-event-location"
-              type="text"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              placeholder={t("settings.eventLocation")}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-            />
-          </div>
-        )}
+          {fields.endDate && (
+            <div>
+              <label
+                htmlFor="special-event-end-date"
+                className="mb-2 block text-sm font-medium"
+              >
+                {t("settings.eventEndDate")}
+              </label>
+              <input
+                id="special-event-end-date"
+                type="date"
+                value={form.endDate}
+                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+              />
+            </div>
+          )}
+          {fields.time && (
+            <div>
+              <label
+                htmlFor="special-event-time"
+                className="mb-2 block text-sm font-medium"
+              >
+                {t("settings.eventTime")}
+              </label>
+              <input
+                id="special-event-time"
+                type="time"
+                value={form.time}
+                onChange={(e) => setForm({ ...form, time: e.target.value })}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+              />
+            </div>
+          )}
+          {fields.location && (
+            <div>
+              <label
+                htmlFor="special-event-location"
+                className="mb-2 block text-sm font-medium"
+              >
+                {t("settings.eventLocation")}
+              </label>
+              <input
+                id="special-event-location"
+                type="text"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                placeholder={t("settings.eventLocation")}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+              />
+            </div>
+          )}
+        </div>
       </div>
       {isAnnual && (
         <p className="mt-3 text-xs font-medium text-amber-600">
@@ -505,19 +526,117 @@ function SpecialEventForm({
           type="button"
           onClick={handleSubmit}
           disabled={saving}
-          className="rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="flex-1 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {t("common.save")}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background"
+          className="flex-1 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background"
         >
           {t("common.cancel")}
         </button>
       </div>
     </div>
+  );
+}
+
+function TypePicker({
+  selected,
+  onSelect,
+}: {
+  selected: SpecialEventType;
+  onSelect: (type: SpecialEventType) => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {SPECIAL_EVENT_TYPES.map((type) => {
+        const active = type === selected;
+        return (
+          <button
+            key={type}
+            type="button"
+            onClick={() => onSelect(type)}
+            className={cn(
+              "rounded-lg border border-[#2563EB] px-3 py-1.5 text-center text-sm",
+              active
+                ? "bg-[#2563EB] font-medium text-white"
+                : "bg-background text-foreground hover:bg-[#2563EB]/10",
+            )}
+          >
+            {t(`settings.specialEventTypes.${type}`)}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function SignOutSection() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const [signingOut, setSigningOut] = useState(false);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await authClient.signOut();
+      await fetch("/api/sign-out", { method: "POST" });
+      router.push("/login");
+      router.refresh();
+    } finally {
+      setSigningOut(false);
+    }
+  }
+
+  return (
+    <section className="mb-12">
+      <h2 className="mb-4 text-base font-semibold">{t("settings.account")}</h2>
+      <button
+        type="button"
+        onClick={handleSignOut}
+        disabled={signingOut}
+        className="w-full rounded-xl border border-red-600 py-2.5 text-sm font-semibold text-red-600 transition-opacity hover:opacity-80 disabled:opacity-50"
+      >
+        {signingOut ? t("settings.signingOut") : t("settings.signOut")}
+      </button>
+    </section>
+  );
+}
+
+function AdminSection() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const [exiting, setExiting] = useState(false);
+
+  async function handleExit() {
+    setExiting(true);
+    try {
+      await fetch("/api/admin/exit-org", { method: "POST" });
+      router.push("/admin");
+      router.refresh();
+    } finally {
+      setExiting(false);
+    }
+  }
+
+  return (
+    <section>
+      <h2 className="mb-4 text-base font-semibold">
+        {t("settings.adminAccess")}
+      </h2>
+      <button
+        type="button"
+        onClick={handleExit}
+        disabled={exiting}
+        className="w-full rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-80 disabled:opacity-50"
+      >
+        {exiting ? t("common.loading") : t("settings.exitOrg")}
+      </button>
+    </section>
   );
 }
 

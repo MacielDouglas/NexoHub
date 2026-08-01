@@ -158,7 +158,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <Card className="mb-8 bg-gradient-to-br from-primary to-[#7C3AED] text-primary-foreground shadow-xl">
+      <Card className="mb-8 bg-linear-to-br from-primary to-[#7C3AED] text-primary-foreground shadow-xl">
         <CardHeader className="pb-2">
           <CardDescription className="text-primary-foreground/80">
             {t("home.nextMeeting")}

@@ -185,6 +185,11 @@
       "assemblyTraveling": "Asamblea con Viajante",
       "assemblyRepresentative": "Asamblea con Representante",
       "specialMeeting": "Reunión Especial"
-    }
+    },
+    "account": "Cuenta",
+    "signOut": "Salir",
+    "signingOut": "Saliendo...",
+    "adminAccess": "Acceso de Super-User",
+    "exitOrg": "Volver al Admin"
   }
 }

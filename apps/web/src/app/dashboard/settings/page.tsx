@@ -27,5 +27,5 @@ export default async function SettingsPage() {
     redirect("/dashboard");
   }
 
-  return <SettingsClient />;
+  return <SettingsClient isSuperUser={member.isSuperUser} />;
 }
