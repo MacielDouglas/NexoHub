@@ -123,6 +123,20 @@
     "noEvents": "Nenhum evento especial.",
     "manageSettings": "Gerenciar configurações"
   },
+  "home": {
+    "welcome": "Bem-vindo, {{name}}",
+    "subtitle": "Acompanhe as reuniões da sua congregação",
+    "nextMeeting": "Próxima reunião",
+    "noMeetings": "Nenhuma reunião configurada.",
+    "today": "Hoje",
+    "tomorrow": "Amanhã",
+    "statMeetings": "Reuniões",
+    "statMembers": "Membros",
+    "statEvents": "Eventos",
+    "schedule": "Próximas reuniões",
+    "upcomingEvents": "Próximos eventos especiais",
+    "noEvents": "Nenhum evento especial."
+  },
   "settings": {
     "title": "Configurações",
     "subtitle": "Gerencie as reuniões da congregação",
