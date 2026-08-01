@@ -10,7 +10,10 @@
     "edit": "Editar",
     "remove": "Quitar",
     "delete": "Eliminar",
-    "search": "Buscar"
+    "search": "Buscar",
+    "people": "personas",
+    "week": "semana",
+    "weeks": "semanas"
   },
   "language": {
     "pt": "Português",
@@ -140,6 +143,8 @@
   "settings": {
     "title": "Ajustes",
     "subtitle": "Gestiona las reuniones de la congregación",
+    "tabMeeting": "Reunión",
+    "tabCleaning": "Limpieza",
     "meetingDays": "Días de Reuniones",
     "meetingDaysSubtitle": "Configura los dos días fijos de reunión de la congregación. Toda la aplicación usa esta información como referencia.",
     "requiredMeetings": "Reuniones obligatorias",
@@ -191,5 +196,140 @@
     "signingOut": "Saliendo...",
     "adminAccess": "Acceso de Super-User",
     "exitOrg": "Volver al Admin"
+  },
+  "cleaning": {
+    "title": "Limpieza",
+    "subtitle": "Configura los sectores de limpieza de la congregación",
+    "types": {
+      "meeting": "Cada reunión",
+      "weekly": "Semanal",
+      "general": "General"
+    },
+    "typesSubtitle": {
+      "meeting": "Limpieza realizada en todas las reuniones.",
+      "weekly": "Limpieza opcional realizada semanalmente.",
+      "general": "Limpieza general realizada algunas veces al año."
+    },
+    "units": {
+      "person": "Persona",
+      "family": "Familia",
+      "group": "Grupo"
+    },
+    "genders": {
+      "male": "Masculino",
+      "female": "Femenino",
+      "any": "Cualquiera"
+    },
+    "weeklyEnabled": "Limpieza semanal activa",
+    "weeklyDayOfWeek": "Día de la semana",
+    "weeklyIntervalWeeks": "Cada cuántas semanas",
+    "sectors": "Sectores",
+    "addSector": "Agregar sector",
+    "newSector": "Nuevo sector",
+    "editSector": "Editar sector",
+    "sectorName": "Nombre del sector",
+    "task": "Tarea",
+    "unit": "Unidad de asignación",
+    "peopleCount": "Cantidad de personas",
+    "allowYoung": "Permitir joven",
+    "gender": "Sexo",
+    "restoreDefault": "Restaurar predeterminado",
+    "noSectors": "No hay sectores registrados.",
+    "defaults": {
+      "meeting": {
+        "bathroomMale": {
+          "name": "Baño de varones",
+          "task": "Limpie el inodoro, el urinario y la pared alrededor con desinfectante. Recoja la basura. Pase un paño con desinfectante por el piso."
+        },
+        "bathroomFemale": {
+          "name": "Baño de damas",
+          "task": "Limpie el inodoro y la pared alrededor con desinfectante. Recoja la basura. Pase un paño con desinfectante por el piso."
+        },
+        "auditorium": {
+          "name": "Auditorio",
+          "task": "Barra o aspire el piso. Pase un paño húmedo por el piso o use el trapeador (mopa), si es necesario. Para evitar accidentes, haga esto cuando haya pocas personas en el lugar."
+        },
+        "supplies": {
+          "name": "Abastecimiento",
+          "task": "Reponga los dispensadores de papel higiénico, toallas de papel, vasos desechables, jabón y gel antibacterial, si es necesario."
+        },
+        "trash": {
+          "name": "Sacar la basura",
+          "task": "Recoja y deseche la basura."
+        }
+      },
+      "weekly": {
+        "cobwebs": {
+          "name": "Telarañas",
+          "task": "Retire las telarañas del techo y de las luminarias con un plumero de mango extensible."
+        },
+        "floor": {
+          "name": "Piso",
+          "task": "Barra o aspire el piso. Pase un paño húmedo por el piso o use el trapeador (mopa)."
+        },
+        "doorsWindows": {
+          "name": "Puertas y ventanas",
+          "task": "Limpie las puertas, ventanas, vidrios y marcos con un paño ligeramente húmedo, si es necesario."
+        },
+        "objects": {
+          "name": "Objetos",
+          "task": "Limpie las manijas, la tribuna, la mesa del estrado, el bebedero, los interruptores, los mostradores y los dispensadores de alcohol en gel con un paño húmedo con agua y detergente."
+        },
+        "microphones": {
+          "name": "Micrófonos",
+          "task": "Higienice los micrófonos y sus cables con un paño ligeramente húmedo en agua y detergente. Nunca use un paño empapado."
+        },
+        "chairs": {
+          "name": "Sillas",
+          "task": "Limpie los brazos, asientos y respaldos de las sillas con un paño húmedo en agua y unas gotas de detergente."
+        },
+        "gardens": {
+          "name": "Jardines",
+          "task": "Barra las aceras. Recoja hojas y suciedad del estacionamiento, área exterior y jardines."
+        },
+        "laundry": {
+          "name": "Lavandería",
+          "task": "Lave los paños."
+        },
+        "forgottenObjects": {
+          "name": "Objetos olvidados",
+          "task": "Retire los objetos personales dejados en el Salón del Reino."
+        }
+      },
+      "general": {
+        "walls": {
+          "name": "Paredes",
+          "task": "Elimine manchas de las paredes internas y externas con una solución de agua y detergente neutro y una esponja suave."
+        },
+        "blinds": {
+          "name": "Persianas o cortinas",
+          "task": "Limpiar las persianas o cortinas."
+        },
+        "fans": {
+          "name": "Ventiladores",
+          "task": "Limpie los ventiladores."
+        },
+        "bathrooms": {
+          "name": "Baños",
+          "task": "Limpie los revestimientos de las paredes y divisiones de los baños con un paño húmedo y detergente. Limpie las divisiones cercanas al inodoro y al mingitorio (varones) con un paño húmedo y desinfectante."
+        },
+        "gates": {
+          "name": "Rejas y portón",
+          "task": "Limpie las rejas y el portón."
+        },
+        "garden": {
+          "name": "Jardín",
+          "task": "Corte el césped y elimine las malas hierbas de los jardines y del estacionamiento. Pode las plantas ornamentales y los arbustos."
+        },
+        "sidewalks": {
+          "name": "Aceras",
+          "task": "Lave las aceras y otras áreas de concreto."
+        },
+        "cleaningRoom": {
+          "name": "Sala de limpieza",
+          "task": "Organice la sala de limpieza y lave los basureros."
+        }
+      }
+    }
   }
 }

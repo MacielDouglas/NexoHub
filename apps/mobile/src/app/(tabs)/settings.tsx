@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { CleaningSettings } from "@/components/cleaning-settings";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { apiFetch } from "@/lib/api";
@@ -71,6 +72,7 @@ export default function SettingsScreen() {
   const [configs, setConfigs] = useState<MeetingConfig[]>([]);
   const [events, setEvents] = useState<SpecialEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"meeting" | "cleaning">("meeting");
 
   const insets = {
     ...safeAreaInsets,
@@ -135,38 +137,74 @@ export default function SettingsScreen() {
           {t("settings.subtitle")}
         </ThemedText>
 
+        <ThemedView style={styles.tabBar}>
+          {(
+            [
+              ["meeting", "settings.tabMeeting"],
+              ["cleaning", "settings.tabCleaning"],
+            ] as const
+          ).map(([value, label]) => {
+            const active = tab === value;
+            return (
+              <Pressable
+                key={value}
+                onPress={() => setTab(value)}
+                style={[
+                  styles.tab,
+                  active && { backgroundColor: theme.backgroundElement },
+                ]}
+              >
+                <ThemedText
+                  type="small"
+                  style={[
+                    active ? { fontWeight: "600" } : { color: theme.textSecondary },
+                  ]}
+                >
+                  {t(label)}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </ThemedView>
+
         {loading ? (
           <ThemedText themeColor="textSecondary" style={{ textAlign: "center", marginTop: Spacing.four }}>
             {t("common.loading")}
           </ThemedText>
         ) : (
           <>
-            <ThemedView style={styles.section}>
-              <ThemedText type="default" style={styles.sectionTitle}>{t("settings.meetingDays")}</ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
-                {t("settings.meetingDaysSubtitle")}
-              </ThemedText>
+            {tab === "meeting" ? (
+              <>
+                <ThemedView style={styles.section}>
+                  <ThemedText type="default" style={styles.sectionTitle}>{t("settings.meetingDays")}</ThemedText>
+                  <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
+                    {t("settings.meetingDaysSubtitle")}
+                  </ThemedText>
 
-              <ThemedView style={styles.cardsColumn}>
-                {MEETING_TYPES.map((type) => (
-                  <MeetingDayCard
-                    key={type}
-                    type={type}
-                    config={configs.find((c) => c.type === type)}
-                    onSaved={fetchAll}
-                  />
-                ))}
-              </ThemedView>
-            </ThemedView>
+                  <ThemedView style={styles.cardsColumn}>
+                    {MEETING_TYPES.map((type) => (
+                      <MeetingDayCard
+                        key={type}
+                        type={type}
+                        config={configs.find((c) => c.type === type)}
+                        onSaved={fetchAll}
+                      />
+                    ))}
+                  </ThemedView>
+                </ThemedView>
 
-            <ThemedView style={styles.section}>
-              <ThemedText type="default" style={styles.sectionTitle}>{t("settings.specialEvents")}</ThemedText>
-              <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
-                {t("settings.specialEventsSubtitle")}
-              </ThemedText>
+                <ThemedView style={styles.section}>
+                  <ThemedText type="default" style={styles.sectionTitle}>{t("settings.specialEvents")}</ThemedText>
+                  <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
+                    {t("settings.specialEventsSubtitle")}
+                  </ThemedText>
 
-              <SpecialEventsSection events={events} onChanged={fetchAll} />
-            </ThemedView>
+                  <SpecialEventsSection events={events} onChanged={fetchAll} />
+                </ThemedView>
+              </>
+            ) : (
+              <CleaningSettings />
+            )}
 
             <SignOutSection onSignOut={async () => {
               await signOut();
@@ -627,6 +665,20 @@ const styles = StyleSheet.create({
   container: { maxWidth: MaxContentWidth, flexGrow: 1, paddingHorizontal: Spacing.four, paddingTop: Spacing.six },
   title: { marginBottom: Spacing.one },
   subtitle: { marginBottom: Spacing.four },
+  tabBar: {
+    flexDirection: "row",
+    gap: Spacing.one,
+    borderRadius: Spacing.three,
+    backgroundColor: "#EEF2F8",
+    padding: Spacing.one,
+    marginBottom: Spacing.four,
+  },
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: Spacing.two,
+    borderRadius: Spacing.two,
+  },
   section: { gap: Spacing.three, marginBottom: Spacing.five },
   sectionTitle: { fontWeight: "700" },
   sectionSubtitle: { marginTop: -Spacing.one },

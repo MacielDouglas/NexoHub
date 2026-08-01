@@ -4,14 +4,15 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { CleaningClient } from "@/components/cleaning-client";
 import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
 import {
   ANNUAL_EVENT_TYPES,
   SPECIAL_EVENT_FIELDS,
   SPECIAL_EVENT_TYPES,
   type SpecialEventType,
 } from "@/lib/special-events";
+import { cn } from "@/lib/utils";
 
 type MeetingConfig = {
   id: string;
@@ -67,6 +68,7 @@ export function SettingsClient({
   const [configs, setConfigs] = useState<MeetingConfig[]>([]);
   const [events, setEvents] = useState<SpecialEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"meeting" | "cleaning">("meeting");
 
   const fetchAll = useCallback(async () => {
     const [configRes, eventRes] = await Promise.all([
@@ -94,43 +96,75 @@ export function SettingsClient({
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-semibold">{t("settings.title")}</h1>
         <p className="mt-1 text-muted-foreground">{t("settings.subtitle")}</p>
+      </div>
+
+      <div className="mb-8 flex gap-1.5 rounded-xl bg-muted p-1.5">
+        {(
+          [
+            ["meeting", "settings.tabMeeting"],
+            ["cleaning", "settings.tabCleaning"],
+          ] as const
+        ).map(([value, label]) => {
+          const active = tab === value;
+          return (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setTab(value)}
+              className={cn(
+                "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t(label)}
+            </button>
+          );
+        })}
       </div>
 
       {loading ? (
         <p className="text-muted-foreground">{t("common.loading")}</p>
       ) : (
         <>
-          <section className="mb-12">
-            <h2 className="mb-1 text-lg font-semibold">
-              {t("settings.meetingDays")}
-            </h2>
-            <p className="mb-4 text-sm text-muted-foreground">
-              {t("settings.meetingDaysSubtitle")}
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {MEETING_TYPES.map((type) => (
-                <MeetingDayCard
-                  key={type}
-                  type={type}
-                  config={configs.find((c) => c.type === type)}
-                  onSaved={fetchAll}
-                />
-              ))}
-            </div>
-          </section>
+          {tab === "meeting" ? (
+            <>
+              <section className="mb-12">
+                <h2 className="mb-1 text-lg font-semibold">
+                  {t("settings.meetingDays")}
+                </h2>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  {t("settings.meetingDaysSubtitle")}
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {MEETING_TYPES.map((type) => (
+                    <MeetingDayCard
+                      key={type}
+                      type={type}
+                      config={configs.find((c) => c.type === type)}
+                      onSaved={fetchAll}
+                    />
+                  ))}
+                </div>
+              </section>
 
-          <section className="mb-12">
-            <h2 className="mb-1 text-lg font-semibold">
-              {t("settings.specialEvents")}
-            </h2>
-            <p className="mb-4 text-sm text-muted-foreground">
-              {t("settings.specialEventsSubtitle")}
-            </p>
-            <SpecialEventsSection events={events} onChanged={fetchAll} />
-          </section>
+              <section className="mb-12">
+                <h2 className="mb-1 text-lg font-semibold">
+                  {t("settings.specialEvents")}
+                </h2>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  {t("settings.specialEventsSubtitle")}
+                </p>
+                <SpecialEventsSection events={events} onChanged={fetchAll} />
+              </section>
+            </>
+          ) : (
+            <CleaningClient />
+          )}
 
           <SignOutSection />
           {isSuperUser && <AdminSection />}

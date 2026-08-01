@@ -81,6 +81,7 @@ model Organization {
   meetingConfigs MeetingConfig[]
   specialEvents  SpecialEvent[]
   inviteTokens   InviteToken[]
+  cleaningConfig CleaningConfig?
 }
 
 model Member {
@@ -173,4 +174,37 @@ model SpecialEvent {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, type])
+}
+
+model CleaningConfig {
+  id                 String   @id @default(cuid())
+  organizationId     String   @unique
+  weeklyEnabled      Boolean  @default(false)
+  weeklyDayOfWeek    Int?
+  weeklyIntervalWeeks Int     @default(1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sectors      CleaningSector[]
+}
+
+model CleaningSector {
+  id              String   @id @default(cuid())
+  cleaningConfigId String
+  type            String
+  defaultKey      String?
+  name            String?
+  task            String?
+  unit            String
+  peopleCount     Int?
+  allowYoung      Boolean  @default(false)
+  gender          String   @default("any")
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  cleaningConfig CleaningConfig @relation(fields: [cleaningConfigId], references: [id], onDelete: Cascade)
+
+  @@index([cleaningConfigId, type])
 }
