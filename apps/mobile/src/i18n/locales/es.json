@@ -226,6 +226,8 @@
     "addSector": "Agregar sector",
     "newSector": "Nuevo sector",
     "editSector": "Editar sector",
+    "custom": "Personalizado",
+    "selectDefault": "Usar un sector predeterminado",
     "sectorName": "Nombre del sector",
     "task": "Tarea",
     "unit": "Unidad de asignación",

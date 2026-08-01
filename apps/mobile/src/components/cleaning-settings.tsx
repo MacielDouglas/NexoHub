@@ -15,8 +15,10 @@ import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { apiFetch } from "@/lib/api";
 import {
+  type CleaningSectorDefault,
   type CleaningType,
   type CleaningUnit,
+  DEFAULT_SECTORS,
   type Gender,
   sectorNameKey,
   sectorTaskKey,
@@ -54,6 +56,22 @@ type SectorFormValues = {
   allowYoung: boolean;
   gender: Gender;
 };
+
+function sectorDefaultName(
+  def: CleaningSectorDefault,
+  t: (key: string) => string,
+): string {
+  const key = sectorNameKey({ defaultKey: def.key, type: def.type });
+  return key ? t(key) : "";
+}
+
+function sectorDefaultTask(
+  def: CleaningSectorDefault,
+  t: (key: string) => string,
+): string {
+  const key = sectorTaskKey({ defaultKey: def.key, type: def.type });
+  return key ? t(key) : "";
+}
 
 type CleaningConfig = {
   weeklyEnabled: boolean;
@@ -172,6 +190,18 @@ export function CleaningSettings() {
     .filter((s) => s.type === "general")
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
+  const availableDefaults = (type: CleaningType): CleaningSectorDefault[] => {
+    const present = new Set(
+      sectors
+        .filter((s) => s.type === type)
+        .map((s) => s.defaultKey)
+        .filter((k): k is string => Boolean(k)),
+    );
+    return DEFAULT_SECTORS.filter(
+      (d) => d.type === type && !present.has(d.key),
+    );
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.section}>
@@ -249,6 +279,7 @@ export function CleaningSettings() {
         <SectorModal
           type={modal.type}
           sector={modal.sector}
+          defaults={modal.sector ? [] : availableDefaults(modal.type)}
           onRestore={
             modal.sector?.defaultKey
               ? async () => {
@@ -535,12 +566,14 @@ function SectorCard({
 function SectorModal({
   type,
   sector,
+  defaults,
   onRestore,
   onCancel,
   onSaved,
 }: {
   type: CleaningType;
   sector: CleaningSector | null;
+  defaults: CleaningSectorDefault[];
   onRestore?: () => void;
   onCancel: () => void;
   onSaved: () => void;
@@ -548,6 +581,9 @@ function SectorModal({
   const theme = useTheme();
   const { t } = useTranslation();
   const units = unitsForType(type);
+  const [defaultKey, setDefaultKey] = useState<string | null>(
+    sector?.defaultKey ?? null,
+  );
   const [form, setForm] = useState<SectorFormValues>(() =>
     sector
       ? {
@@ -571,6 +607,25 @@ function SectorModal({
   const [error, setError] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
 
+  function selectDefault(key: string) {
+    const def = DEFAULT_SECTORS.find((d) => d.key === key && d.type === type);
+    if (!def) return;
+    setDefaultKey(def.key);
+    setForm({
+      name: sectorDefaultName(def, t),
+      task: sectorDefaultTask(def, t),
+      unit: def.unit,
+      peopleCount: def.peopleCount?.toString() ?? "1",
+      allowYoung: def.allowYoung ?? false,
+      gender: def.gender ?? "any",
+    });
+  }
+
+  function updateForm(update: Partial<SectorFormValues>) {
+    setDefaultKey(null);
+    setForm((f) => ({ ...f, ...update }));
+  }
+
   async function handleSubmit() {
     if (!form.name.trim()) {
       setError(t("cleaning.sectorName"));
@@ -580,10 +635,12 @@ function SectorModal({
     setError(null);
     try {
       const payload: Record<string, unknown> = {
+        type,
         name: form.name.trim(),
         task: form.task.trim() || null,
         unit: form.unit,
       };
+      if (defaultKey) payload.defaultKey = defaultKey;
       if (type === "meeting") {
         payload.peopleCount = Number(form.peopleCount) || null;
         payload.allowYoung = form.allowYoung;
@@ -629,28 +686,20 @@ function SectorModal({
             {sector ? t("cleaning.editSector") : t("cleaning.newSector")}
           </ThemedText>
 
-          {onRestore && (
-            <Pressable
-              onPress={handleRestore}
-              disabled={restoring}
-              style={({ pressed }) => [
-                styles.restoreBtn,
-                { backgroundColor: theme.secondary },
-                pressed && { opacity: 0.8 },
-                restoring && { opacity: 0.5 },
-              ]}
-            >
-              <ThemedText style={{ color: theme.secondaryForeground, fontWeight: "600" }}>
-                {t("cleaning.restoreDefault")}
-              </ThemedText>
-            </Pressable>
+          {!sector && defaults.length > 0 && (
+            <DefaultSelect
+              type={type}
+              defaults={defaults}
+              value={defaultKey}
+              onChange={selectDefault}
+            />
           )}
 
           <ThemedView style={styles.field}>
             <ThemedText type="small">{t("cleaning.sectorName")}</ThemedText>
             <TextInput
               value={form.name}
-              onChangeText={(name) => setForm({ ...form, name })}
+              onChangeText={(name) => updateForm({ name })}
               placeholder={t("cleaning.sectorName")}
               placeholderTextColor={theme.textSecondary}
               style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
@@ -661,7 +710,7 @@ function SectorModal({
             <ThemedText type="small">{t("cleaning.task")}</ThemedText>
             <TextInput
               value={form.task}
-              onChangeText={(task) => setForm({ ...form, task })}
+              onChangeText={(task) => updateForm({ task })}
               placeholder={t("cleaning.task")}
               placeholderTextColor={theme.textSecondary}
               multiline
@@ -671,7 +720,7 @@ function SectorModal({
 
           <ThemedView style={styles.field}>
             <ThemedText type="small">{t("cleaning.unit")}</ThemedText>
-            <UnitPicker type={type} selected={form.unit} onSelect={(unit) => setForm({ ...form, unit })} />
+            <UnitPicker type={type} selected={form.unit} onSelect={(unit) => updateForm({ unit })} />
           </ThemedView>
 
           {type === "meeting" && (
@@ -680,7 +729,7 @@ function SectorModal({
                 <ThemedText type="small">{t("cleaning.peopleCount")}</ThemedText>
                 <TextInput
                   value={form.peopleCount}
-                  onChangeText={(peopleCount) => setForm({ ...form, peopleCount })}
+                  onChangeText={(peopleCount) => updateForm({ peopleCount })}
                   keyboardType="number-pad"
                   style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
                 />
@@ -690,14 +739,14 @@ function SectorModal({
                 <ThemedText type="small">{t("cleaning.allowYoung")}</ThemedText>
                 <Switch
                   value={form.allowYoung}
-                  onValueChange={(allowYoung) => setForm({ ...form, allowYoung })}
+                  onValueChange={(allowYoung) => updateForm({ allowYoung })}
                   trackColor={{ true: theme.primary }}
                 />
               </ThemedView>
 
               <ThemedView style={styles.field}>
                 <ThemedText type="small">{t("cleaning.gender")}</ThemedText>
-                <GenderPicker selected={form.gender} onSelect={(gender) => setForm({ ...form, gender })} />
+                <GenderPicker selected={form.gender} onSelect={(gender) => updateForm({ gender })} />
               </ThemedView>
             </>
           )}
@@ -705,6 +754,22 @@ function SectorModal({
           {error && <ThemedText type="small" style={{ color: theme.danger }}>{error}</ThemedText>}
 
           <ThemedView style={styles.actionsRow}>
+            {onRestore && (
+              <Pressable
+                onPress={handleRestore}
+                disabled={restoring}
+                style={({ pressed }) => [
+                  styles.restoreBtn,
+                  { backgroundColor: theme.secondary },
+                  pressed && { opacity: 0.8 },
+                  restoring && { opacity: 0.5 },
+                ]}
+              >
+                <ThemedText style={{ color: theme.secondaryForeground, fontWeight: "600", textAlign: "center" }}>
+                  {t("cleaning.restoreDefault")}
+                </ThemedText>
+              </Pressable>
+            )}
             <Pressable
               onPress={handleSubmit}
               disabled={saving}
@@ -733,6 +798,93 @@ function SectorModal({
         </ThemedView>
       </View>
     </Modal>
+  );
+}
+
+function DefaultSelect({
+  type,
+  defaults,
+  value,
+  onChange,
+}: {
+  type: CleaningType;
+  defaults: CleaningSectorDefault[];
+  value: string | null;
+  onChange: (key: string) => void;
+}) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+
+  const selected = value
+    ? DEFAULT_SECTORS.find((d) => d.key === value && d.type === type)
+    : undefined;
+
+  return (
+    <ThemedView style={styles.field}>
+      <ThemedText type="small">{t("cleaning.selectDefault")}</ThemedText>
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [
+          styles.selectBtn,
+          { backgroundColor: theme.background, borderColor: theme.border },
+          pressed && { opacity: 0.8 },
+        ]}
+      >
+        <ThemedText>
+          {selected ? sectorDefaultName(selected, t) : t("cleaning.custom")}
+        </ThemedText>
+      </Pressable>
+
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setOpen(false)}>
+          <ThemedView type="backgroundElement" style={styles.modalContent}>
+            <ThemedText type="default" style={{ fontWeight: "600", marginBottom: Spacing.two }}>
+              {t("cleaning.selectDefault")}
+            </ThemedText>
+            <Pressable
+              onPress={() => {
+                onChange("");
+                setOpen(false);
+              }}
+              style={({ pressed }) => [
+                styles.selectOption,
+                pressed && { opacity: 0.7 },
+                !value && { backgroundColor: theme.backgroundSelected },
+              ]}
+            >
+              <ThemedText style={{ fontWeight: value ? "400" : "600" }}>
+                {t("cleaning.custom")}
+              </ThemedText>
+            </Pressable>
+            {defaults.map((def) => {
+              const active = def.key === value;
+              return (
+                <Pressable
+                  key={def.key}
+                  onPress={() => {
+                    onChange(def.key);
+                    setOpen(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.selectOption,
+                    pressed && { opacity: 0.7 },
+                    active && { backgroundColor: theme.backgroundSelected },
+                  ]}
+                >
+                  <ThemedText style={{ fontWeight: active ? "600" : "400" }}>
+                    {sectorDefaultName(def, t)}
+                  </ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {sectorDefaultTask(def, t)}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </ThemedView>
+        </Pressable>
+      </Modal>
+    </ThemedView>
   );
 }
 
@@ -839,7 +991,9 @@ const styles = StyleSheet.create({
   sectorActions: { flexDirection: "row", gap: Spacing.three, marginLeft: Spacing.two },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", padding: Spacing.four },
   modalContent: { borderRadius: Spacing.three, padding: Spacing.four, gap: Spacing.three, maxHeight: "85%" },
-  restoreBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center" },
+  restoreBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1 },
+  selectBtn: { borderRadius: Spacing.two, borderWidth: 1, paddingHorizontal: Spacing.two, paddingVertical: Spacing.two },
+  selectOption: { borderRadius: Spacing.two, paddingHorizontal: Spacing.two, paddingVertical: Spacing.two, gap: Spacing.half },
   typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.one },
   typeChip: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two, borderWidth: 1 },
   actionsRow: { flexDirection: "row", gap: Spacing.two, marginTop: Spacing.one },

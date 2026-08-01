@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
+  type CleaningSectorDefault,
   type CleaningType,
   type CleaningUnit,
+  DEFAULT_SECTORS,
   type Gender,
   sectorNameKey,
   sectorTaskKey,
@@ -51,6 +53,22 @@ type CleaningConfig = {
   weeklyIntervalWeeks: number;
   generalEnabled: boolean;
 };
+
+function sectorDefaultName(
+  def: CleaningSectorDefault,
+  t: (key: string) => string,
+): string {
+  const key = sectorNameKey({ defaultKey: def.key, type: def.type });
+  return key ? t(key) : "";
+}
+
+function sectorDefaultTask(
+  def: CleaningSectorDefault,
+  t: (key: string) => string,
+): string {
+  const key = sectorTaskKey({ defaultKey: def.key, type: def.type });
+  return key ? t(key) : "";
+}
 
 function sectorDisplayName(
   sector: CleaningSector,
@@ -143,6 +161,18 @@ export function CleaningClient() {
     .filter((s) => s.type === "meeting")
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
+  const availableDefaults = (type: CleaningType): CleaningSectorDefault[] => {
+    const present = new Set(
+      sectors
+        .filter((s) => s.type === type)
+        .map((s) => s.defaultKey)
+        .filter((k): k is string => Boolean(k)),
+    );
+    return DEFAULT_SECTORS.filter(
+      (d) => d.type === type && !present.has(d.key),
+    );
+  };
+
   return (
     <div className="space-y-8">
       <section>
@@ -216,6 +246,7 @@ export function CleaningClient() {
         <SectorModal
           type={modal.type}
           sector={modal.sector}
+          defaults={modal.sector ? [] : availableDefaults(modal.type)}
           onRestore={
             modal.sector?.defaultKey
               ? async () => {
@@ -433,18 +464,23 @@ function SectorCard({
 function SectorModal({
   type,
   sector,
+  defaults,
   onRestore,
   onCancel,
   onSaved,
 }: {
   type: CleaningType;
   sector: CleaningSector | null;
+  defaults: CleaningSectorDefault[];
   onRestore?: () => void;
   onCancel: () => void;
   onSaved: () => void;
 }) {
   const { t } = useTranslation();
   const units = unitsForType(type);
+  const [defaultKey, setDefaultKey] = useState<string | null>(
+    sector?.defaultKey ?? null,
+  );
   const [form, setForm] = useState<SectorFormValues>(() =>
     sector
       ? {
@@ -468,6 +504,25 @@ function SectorModal({
   const [error, setError] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
 
+  function selectDefault(key: string) {
+    const def = DEFAULT_SECTORS.find((d) => d.key === key && d.type === type);
+    if (!def) return;
+    setDefaultKey(def.key);
+    setForm({
+      name: sectorDefaultName(def, t),
+      task: sectorDefaultTask(def, t),
+      unit: def.unit,
+      peopleCount: def.peopleCount?.toString() ?? "1",
+      allowYoung: def.allowYoung ?? false,
+      gender: def.gender ?? "any",
+    });
+  }
+
+  function updateForm(update: Partial<SectorFormValues>) {
+    setDefaultKey(null);
+    setForm((f) => ({ ...f, ...update }));
+  }
+
   async function handleSubmit() {
     if (!form.name.trim()) {
       setError(t("cleaning.sectorName"));
@@ -477,10 +532,12 @@ function SectorModal({
     setError(null);
     try {
       const payload: Record<string, unknown> = {
+        type,
         name: form.name.trim(),
         task: form.task.trim() || null,
         unit: form.unit,
       };
+      if (defaultKey) payload.defaultKey = defaultKey;
       if (type === "meeting") {
         payload.peopleCount = Number(form.peopleCount) || null;
         payload.allowYoung = form.allowYoung;
@@ -527,18 +584,33 @@ function SectorModal({
           {sector ? t("cleaning.editSector") : t("cleaning.newSector")}
         </h3>
 
-        {onRestore && (
-          <button
-            type="button"
-            onClick={handleRestore}
-            disabled={restoring}
-            className="mb-4 w-full rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {t("cleaning.restoreDefault")}
-          </button>
-        )}
-
         <div className="space-y-4">
+          {!sector && defaults.length > 0 && (
+            <div>
+              <label
+                htmlFor="sector-default"
+                className="mb-2 block text-sm font-medium"
+              >
+                {t("cleaning.selectDefault")}
+              </label>
+              <select
+                id="sector-default"
+                value={defaultKey ?? ""}
+                onChange={(e) =>
+                  e.target.value ? selectDefault(e.target.value) : null
+                }
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+              >
+                <option value="">{t("cleaning.custom")}</option>
+                {defaults.map((def) => (
+                  <option key={def.key} value={def.key}>
+                    {sectorDefaultName(def, t)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div>
             <label
               htmlFor="sector-name"
@@ -550,7 +622,7 @@ function SectorModal({
               id="sector-name"
               type="text"
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => updateForm({ name: e.target.value })}
               placeholder={t("cleaning.sectorName")}
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
             />
@@ -566,7 +638,7 @@ function SectorModal({
             <textarea
               id="sector-task"
               value={form.task}
-              onChange={(e) => setForm({ ...form, task: e.target.value })}
+              onChange={(e) => updateForm({ task: e.target.value })}
               rows={3}
               placeholder={t("cleaning.task")}
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
@@ -580,7 +652,7 @@ function SectorModal({
             <UnitPicker
               type={type}
               selected={form.unit}
-              onSelect={(unit) => setForm({ ...form, unit })}
+              onSelect={(unit) => updateForm({ unit })}
             />
           </div>
 
@@ -598,9 +670,7 @@ function SectorModal({
                   type="number"
                   min={1}
                   value={form.peopleCount}
-                  onChange={(e) =>
-                    setForm({ ...form, peopleCount: e.target.value })
-                  }
+                  onChange={(e) => updateForm({ peopleCount: e.target.value })}
                   className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
                 />
               </div>
@@ -609,9 +679,7 @@ function SectorModal({
                 <input
                   type="checkbox"
                   checked={form.allowYoung}
-                  onChange={(e) =>
-                    setForm({ ...form, allowYoung: e.target.checked })
-                  }
+                  onChange={(e) => updateForm({ allowYoung: e.target.checked })}
                   className="size-4 rounded border-border"
                 />
                 {t("cleaning.allowYoung")}
@@ -623,7 +691,7 @@ function SectorModal({
                 </span>
                 <GenderPicker
                   selected={form.gender}
-                  onSelect={(gender) => setForm({ ...form, gender })}
+                  onSelect={(gender) => updateForm({ gender })}
                 />
               </div>
             </>
@@ -632,6 +700,16 @@ function SectorModal({
           {error && <p className="text-sm text-red-500">{error}</p>}
 
           <div className="flex gap-3">
+            {onRestore && (
+              <button
+                type="button"
+                onClick={handleRestore}
+                disabled={restoring}
+                className="rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {t("cleaning.restoreDefault")}
+              </button>
+            )}
             <button
               type="button"
               onClick={handleSubmit}

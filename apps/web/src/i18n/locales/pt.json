@@ -230,6 +230,8 @@
     "addSector": "Adicionar setor",
     "newSector": "Novo setor",
     "editSector": "Editar setor",
+    "custom": "Personalizado",
+    "selectDefault": "Usar um setor padrão",
     "sectorName": "Nome do setor",
     "task": "Tarefa",
     "unit": "Unidade de designação",

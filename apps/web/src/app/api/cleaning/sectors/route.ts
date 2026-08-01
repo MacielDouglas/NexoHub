@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getOrCreateCleaningConfig } from "@/lib/cleaning-config";
 import {
+  DEFAULT_SECTORS,
   isCleaningType,
   isCleaningUnit,
   isGender,
@@ -23,13 +24,78 @@ export async function POST(request: Request) {
   const config = await getOrCreateCleaningConfig(member.organizationId);
 
   const body = await request.json();
-  const { type, name, task, unit, peopleCount, allowYoung, gender } = body;
+  const {
+    type,
+    defaultKey,
+    name,
+    task,
+    unit,
+    peopleCount,
+    allowYoung,
+    gender,
+  } = body;
 
   if (!isCleaningType(type)) {
     return NextResponse.json(
       { error: "Tipo de limpeza inválido" },
       { status: 400 },
     );
+  }
+
+  const defaults =
+    typeof defaultKey === "string" && defaultKey
+      ? DEFAULT_SECTORS.find((d) => d.key === defaultKey && d.type === type)
+      : undefined;
+
+  if (defaultKey && !defaults) {
+    return NextResponse.json(
+      { error: "Setor padrão inválido para este tipo de limpeza" },
+      { status: 400 },
+    );
+  }
+
+  if (defaults) {
+    const existing = await prisma.cleaningSector.findFirst({
+      where: { cleaningConfigId: config.id, type, defaultKey: defaults.key },
+    });
+
+    if (existing) {
+      const restored = await prisma.cleaningSector.update({
+        where: { id: existing.id },
+        data: {
+          name: null,
+          task: null,
+          unit: defaults.unit,
+          peopleCount:
+            type === "meeting" ? (defaults.peopleCount ?? null) : null,
+          allowYoung:
+            type === "meeting" ? (defaults.allowYoung ?? false) : false,
+          gender: type === "meeting" ? (defaults.gender ?? "any") : "any",
+        },
+      });
+      return NextResponse.json({ sector: restored });
+    }
+
+    const count = await prisma.cleaningSector.count({
+      where: { cleaningConfigId: config.id, type },
+    });
+
+    const sector = await prisma.cleaningSector.create({
+      data: {
+        cleaningConfigId: config.id,
+        type,
+        defaultKey: defaults.key,
+        name: null,
+        task: null,
+        unit: defaults.unit,
+        peopleCount: type === "meeting" ? (defaults.peopleCount ?? null) : null,
+        allowYoung: type === "meeting" ? (defaults.allowYoung ?? false) : false,
+        gender: type === "meeting" ? (defaults.gender ?? "any") : "any",
+        sortOrder: count,
+      },
+    });
+
+    return NextResponse.json({ sector }, { status: 201 });
   }
 
   if (!isCleaningUnit(unit) || !unitsForType(type).includes(unit)) {
