@@ -32,7 +32,8 @@
     "members": "Miembros",
     "settings": "Ajustes",
     "admin": "Admin",
-    "signOut": "Salir"
+    "signOut": "Salir",
+    "meetingContent": "Contenido de las Reuniones"
   },
   "home": {
     "welcome": "Bienvenido, {{name}}",
@@ -332,5 +333,54 @@
         }
       }
     }
+  },
+  "meetingContent": {
+    "title": "Contenido de las Reuniones",
+    "subtitle": "Analiza archivos .jwpub y administra el contenido de las reuniones de la congregación.",
+    "tabs": {
+      "apostila": "Apostilla",
+      "sentinela": "Atalaya",
+      "discursos": "Discursos",
+      "canticos": "Cánticos"
+    },
+    "importFile": "Importar archivo .jwpub",
+    "importing": "Importando...",
+    "importError": "No se pudo importar el archivo.",
+    "duplicateConfirmTitle": "Archivo duplicado",
+    "duplicateConfirm": "Este archivo ya se importó ({{title}}). ¿Deseas reemplazarlo?",
+    "duplicateConfirmReplace": "Reemplazar",
+    "typeMismatch": "El archivo seleccionado no es un {{type}}. Selecciona el archivo correcto.",
+    "viewContent": "Ver contenido",
+    "hideContent": "Ocultar contenido",
+    "createEmpty": "Crear vacío",
+    "empty": "Aún no hay archivos importados de este tipo.",
+    "untitled": "Sin título",
+    "itemCount": "{{count}} elementos",
+    "sectionCount": "{{count}} secciones",
+    "back": "Volver",
+    "addItem": "Agregar elemento",
+    "noItems": "No hay elementos en este archivo.",
+    "number": "Número",
+    "theme": "Tema",
+    "week": "Semana",
+    "openingSong": "Cántico inicial",
+    "openingSongTitle": "Título del cántico inicial",
+    "closingSong": "Cántico final",
+    "closingSongTitle": "Título del cántico final",
+    "dateRange": "Período",
+    "middleSong": "Cántico del medio",
+    "order": "Orden",
+    "parte": "Parte",
+    "tempo": "Tiempo",
+    "modalidade": "Modalidad",
+    "fonte": "Fuente",
+    "section": "Sección",
+    "addPart": "Agregar parte",
+    "addSection": "Agregar sección",
+    "deleteConfirmTitle": "¿Eliminar archivo?",
+    "deleteConfirmDescription": "Todo el contenido de este archivo se eliminará permanentemente.",
+    "removeAll": "Eliminar todos",
+    "removeAllConfirmTitle": "¿Eliminar todos los elementos?",
+    "removeAllConfirm": "Todos los elementos de este tipo se eliminarán permanentemente."
   }
 }

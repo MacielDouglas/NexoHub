@@ -422,7 +422,7 @@ function SectorCard({
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-start justify-between gap-3 rounded-2xl bg-card px-5 py-3.5 shadow-sm ring-1 ring-border">
+    <div className="flex items-start justify-between gap-3 rounded-2xl bg-card px-5 py-3.5 ">
       <div className="min-w-0">
         <p className="font-medium">{sectorDisplayName(sector, t)}</p>
         <p className="mt-0.5 text-sm text-muted-foreground">
@@ -441,11 +441,11 @@ function SectorCard({
             : ""}
         </p>
       </div>
-      <div className="flex shrink-0 gap-3">
+      <div className="flex flex-col   shrink-0 items-center gap-5">
         <button
           type="button"
           onClick={onEdit}
-          className="text-sm font-medium text-[#2563EB] hover:underline"
+          className="text-sm font-medium text-[#2563EB] hover:underline "
         >
           {t("common.edit")}
         </button>

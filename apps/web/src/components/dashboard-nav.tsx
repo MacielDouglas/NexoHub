@@ -19,6 +19,7 @@ export function DashboardNav({
   const links = [
     { href: "/dashboard", label: t("nav.dashboard") },
     { href: "/dashboard/members", label: t("nav.members") },
+    { href: "/dashboard/meeting-content", label: t("nav.meetingContent") },
   ];
 
   if (role === "owner") {

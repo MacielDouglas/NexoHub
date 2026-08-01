@@ -76,12 +76,13 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members        Member[]
-  invitations    Invitation[]
-  meetingConfigs MeetingConfig[]
-  specialEvents  SpecialEvent[]
-  inviteTokens   InviteToken[]
-  cleaningConfig CleaningConfig?
+  members         Member[]
+  invitations     Invitation[]
+  meetingConfigs  MeetingConfig[]
+  specialEvents   SpecialEvent[]
+  inviteTokens    InviteToken[]
+  cleaningConfig  CleaningConfig?
+  meetingContents MeetingContent[]
 }
 
 model Member {
@@ -208,4 +209,34 @@ model CleaningSector {
   cleaningConfig CleaningConfig @relation(fields: [cleaningConfigId], references: [id], onDelete: Cascade)
 
   @@index([cleaningConfigId, type])
+}
+
+model MeetingContent {
+  id             String   @id @default(cuid())
+  organizationId String
+  type           String
+  title          String
+  symbol         String?
+  coverTitle     String?
+  issue          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  items        MeetingContentItem[]
+
+  @@index([organizationId, type])
+}
+
+model MeetingContentItem {
+  id        String   @id @default(cuid())
+  contentId String
+  position  Int      @default(0)
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  content MeetingContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+
+  @@index([contentId])
 }

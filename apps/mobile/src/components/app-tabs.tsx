@@ -22,13 +22,27 @@ export default function AppTabs() {
 
       <NativeTabs.Trigger name="members">
         <NativeTabs.Trigger.Label>{t('nav.members')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="person.2" md="group" />
+        <NativeTabs.Trigger.Icon
+          sf="person.2"
+          src={require('@/assets/images/tabIcons/people.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="meeting-content">
+        <NativeTabs.Trigger.Label>{t('nav.meetingContent')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf="books.vertical"
+          src={require('@/assets/images/tabIcons/books.png')}
+          renderingMode="template"
+        />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Label>{t('nav.settings')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
+          sf="gear"
+          src={require('@/assets/images/tabIcons/settings.png')}
           renderingMode="template"
         />
       </NativeTabs.Trigger>

@@ -28,6 +28,9 @@ export default function AppTabs() {
           <TabTrigger name="members" href="/members" asChild>
             <TabButton>{t('nav.members')}</TabButton>
           </TabTrigger>
+          <TabTrigger name="meeting-content" href="/meeting-content" asChild>
+            <TabButton>{t('nav.meetingContent')}</TabButton>
+          </TabTrigger>
           <TabTrigger name="settings" href="/settings" asChild>
             <TabButton>{t('nav.settings')}</TabButton>
           </TabTrigger>
