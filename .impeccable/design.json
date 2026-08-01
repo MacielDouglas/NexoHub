@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-01T00:00:00Z",
+  "title": "Design System: Nexohub",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Azul Congregacional", "canonical": "#2563EB", "tonalRamp": ["#1a3f9c", "#1d4ed8", "#2563EB", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe", "#dbeafe"] },
+      "secondary": { "role": "secondary", "displayName": "Roxo Cerimonial", "canonical": "#7C3AED", "tonalRamp": ["#3b0764", "#6d28d9", "#7C3AED", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe", "#ede9fe"] },
+      "background": { "role": "neutral", "displayName": "Fundo da Sala", "canonical": "#f8fafd", "tonalRamp": ["#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f8fafd"] },
+      "surface": { "role": "neutral", "displayName": "Superfície", "canonical": "#ffffff", "tonalRamp": ["#0f172a", "#1e293b", "#334155", "#475569", "#94a3b8", "#cbd5e1", "#eef2f6", "#ffffff"] },
+      "surface-selected": { "role": "neutral", "displayName": "Superfície Selecionada", "canonical": "#f1f5fb", "tonalRamp": ["#1e293b", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f1f5fb"] },
+      "text": { "role": "neutral", "displayName": "Tinta", "canonical": "#1F2937", "tonalRamp": ["#0f172a", "#1F2937", "#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0"] },
+      "text-secondary": { "role": "neutral", "displayName": "Tinta Secundária", "canonical": "#64748B", "tonalRamp": ["#1e293b", "#334155", "#475569", "#64748B", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f1f5f9"] },
+      "border": { "role": "neutral", "displayName": "Divisa", "canonical": "#e5eaf2", "tonalRamp": ["#1e293b", "#334155", "#475569", "#94a3b8", "#cbd5e1", "#dde3ee", "#e5eaf2", "#eef2f8"] },
+      "danger": { "role": "neutral", "displayName": "Sinal Vermelho", "canonical": "#DC2626", "tonalRamp": ["#450a0a", "#991b1b", "#b91c1c", "#DC2626", "#ef4444", "#f87171", "#fca5a5", "#fecaca"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Somente a marca (Nexohub) na tela de login." },
+      "headline": { "displayName": "Headline", "purpose": "Subtítulos de seção e números de estatística no dashboard." },
+      "title": { "displayName": "Title", "purpose": "Títulos de card, nomes de membros, tipos de reunião." },
+      "body": { "displayName": "Body", "purpose": "Conteúdo padrão, listas, labels de item." },
+      "label": { "displayName": "Label", "purpose": "Metadados, descrições, botões de texto, data/hora." }
+    },
+    "shadows": [
+      { "name": "accent-highlight", "value": "0 6px 12px rgba(37, 99, 235, 0.30)", "purpose": "Sombra azulada exclusiva do hero 'próxima reunião' e do botão primário do login." },
+      { "name": "logo", "value": "0 6px 12px rgba(0, 0, 0, 0.30)", "purpose": "Somente o logotipo no login." }
+    ],
+    "motion": [
+      { "name": "state-transition", "value": "opacity 150ms ease", "purpose": "Hover/press de botões e interações." }
+    ],
+    "breakpoints": [
+      { "name": "content-max", "value": "800px", "purpose": "Largura máxima do conteúdo central (MaxContentWidth)." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal de cada tela (importar, salvar, entrar). Um por área de ação.",
+      "html": "<button class=\"ds-btn-primary\">Importar arquivo</button>",
+      "css": ".ds-btn-primary { background: #2563EB; color: #ffffff; font-family: Geist, system-ui, sans-serif; font-size: 14px; font-weight: 500; height: 32px; padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; transition: opacity 150ms ease; } .ds-btn-primary:hover { opacity: 0.85; } .ds-btn-primary:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Ação secundária (criar vazio, cancelar). Nunca compete com o primário.",
+      "html": "<button class=\"ds-btn-outline\">Criar vazio</button>",
+      "css": ".ds-btn-outline { background: #f8fafd; color: #1F2937; font-family: Geist, system-ui, sans-serif; font-size: 14px; font-weight: 500; height: 32px; padding: 8px 12px; border: 1px solid #e5eaf2; border-radius: 8px; cursor: pointer; transition: background 150ms ease; } .ds-btn-outline:hover { background: #eef2f8; } .ds-btn-outline:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Link Button",
+      "kind": "button",
+      "refersTo": "button-link",
+      "description": "Ação inline em azul (editar, ver conteúdo, excluir em vermelho).",
+      "html": "<button class=\"ds-btn-link\">Editar</button>",
+      "css": ".ds-btn-link { background: none; color: #2563EB; font-family: Geist, system-ui, sans-serif; font-size: 14px; font-weight: 500; padding: 0; border: none; cursor: pointer; } .ds-btn-link:hover { text-decoration: underline; } .ds-btn-link:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; border-radius: 4px; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de formulário em superfície branca, borda leve e foco azul.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Nome do membro\" />",
+      "css": ".ds-input { background: transparent; color: #1F2937; font-family: Geist, system-ui, sans-serif; font-size: 14px; font-weight: 500; height: 32px; width: 100%; min-width: 0; padding: 4px 10px; border: 1px solid #e5eaf2; border-radius: 8px; outline: none; transition: border-color 150ms ease; } .ds-input::placeholder { color: #64748B; } .ds-input:focus-visible { border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5); } .ds-input[aria-invalid='true'] { border-color: #DC2626; box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Superfície branca sobre fundo claro, cantos generosos, plana em repouso.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Tesouros da Bíblia</div><div class=\"ds-card-meta\">mwb26.09 · 5 itens</div></div>",
+      "css": ".ds-card { background: #ffffff; color: #1F2937; font-family: Geist, system-ui, sans-serif; padding: 16px; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 14px; } .ds-card-title { font-size: 16px; font-weight: 600; line-height: 24px; } .ds-card-meta { font-size: 14px; color: #64748B; font-weight: 500; margin-top: 2px; }"
+    },
+    {
+      "name": "Hero Card",
+      "kind": "card",
+      "refersTo": "card-hero",
+      "description": "O único destaque sombreado do sistema: a próxima reunião no dashboard.",
+      "html": "<div class=\"ds-hero\"><div class=\"ds-hero-label\">PRÓXIMA REUNIÃO</div><div class=\"ds-hero-value\">15 de setembro</div><div class=\"ds-hero-sub\">Vida e Ministério · Quarta 19:00</div></div>",
+      "css": ".ds-hero { background: #2563EB; color: #ffffff; font-family: Geist, system-ui, sans-serif; padding: 16px; border-radius: 24px; box-shadow: 0 6px 12px rgba(37, 99, 235, 0.30); } .ds-hero-label { font-size: 14px; font-weight: 500; color: #e2e8f0; } .ds-hero-value { font-size: 20px; font-weight: 600; margin-top: 2px; } .ds-hero-sub { font-size: 13px; font-weight: 500; color: #e2e8f0; margin-top: 2px; }"
+    },
+    {
+      "name": "Top Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Navegação web: item ativo em azul, demais em cinza secundário.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-active\" href=\"#\">Início</a><a class=\"ds-nav-item\" href=\"#\">Membros</a><a class=\"ds-nav-item\" href=\"#\">Conteúdo</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 16px; font-family: Geist, system-ui, sans-serif; font-size: 14px; } .ds-nav-item { color: #64748B; text-decoration: none; font-weight: 500; padding: 2px 0; } .ds-nav-item:hover { color: #1F2937; } .ds-nav-active { color: #2563EB; font-weight: 500; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Sala do Reino Digital",
+    "overview": "O Nexohub se apresenta como o quadro de avisos da congregação digitalizado: organizado, sereno e digno de confiança. Não é um dashboard frio de empresa; é um espaço institucional calmo que trata a informação da congregação com o respeito que ela merece. A superfície é clara, os cards são brancos em camadas tonais, e uma única cor de ação guia o olho para o que fazer agora.",
+    "keyCharacteristics": [
+      "Um acento de ação (azul) + um acento cerimonial (roxo); todo o resto é neutro.",
+      "Camadas tonais claras com sombra azulada reservada a um único destaque (o hero 'próxima reunião').",
+      "Cards brancos de cantos generosos (10–18px) separados por ritmo de 8/16px.",
+      "Botões compactos (32px) e inputs da mesma altura — aparato operacional discreto.",
+      "Navegação nativa por abas no mobile; links de texto no web, sempre com o item ativo em azul.",
+      "Dark mode apenas no web; o mobile é um tema claro único."
+    ],
+    "rules": [
+      { "name": "A Regra do Acento Único", "body": "O azul aparece em no máximo uma ação por contexto — nunca dois botões primários na mesma área de ação. Sua raridade é o que o torna direcional.", "section": "colors" },
+      { "name": "A Regra do Roxo Cerimonial", "body": "Roxo é para o sagrado e o institucional (login, admin). Em telas de trabalho ele não aparece.", "section": "colors" },
+      { "name": "A Regra do Peso de Tarefa", "body": "Corpo nunca abaixo de 500; títulos nunca acima de 700. O peso carrega hierarquia, não o tamanho.", "section": "typography" },
+      { "name": "A Regra da Sombra Cerimonial", "body": "Sombras aparecem apenas onde a marca precisa se destacar (hero, login, logo). Em telas de trabalho, superfícies são planas; a profundidade é tonal.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar o Azul Congregacional para uma única ação primária por área; o resto fica outline ou ghost.",
+      "Do manter os cards planos em telas de trabalho; a sombra azulada é só para o hero e o login.",
+      "Do usar a escala de espaçamento de 4px (8/16/24) para manter o ritmo consistente.",
+      "Do dar ao item de navegação ativo o azul primário — é o único indicador de estado da nav.",
+      "Do usar o roxo apenas em superfícies cerimoniais/institucionais (login, admin)."
+    ],
+    "donts": [
+      "Don't empilhar dois botões primários na mesma área de ação.",
+      "Don't adicionar sombras genéricas pretas em cards de lista; use tom de fundo para hierarquia.",
+      "Don't introduzir uma segunda cor de ação no conteúdo de trabalho — o roxo não compete com o azul em telas operacionais.",
+      "Don't quebrar o raio de 8px nos controles de formulário; a consistência das formas é o que dá a calma institucional.",
+      "Don't usar caixa-alta para títulos ou labels — a hierarquia vem de peso e tamanho, não de versalete."
+    ]
+  }
+}
