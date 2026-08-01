@@ -1,7 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { ItemEditor } from "./meeting-content-editors";
 import {
@@ -34,14 +45,18 @@ export function MeetingContentClient({
   const [contents, setContents] = useState<MeetingContent[]>([]);
   const [flat, setFlat] = useState<FlatContent[]>([]);
   const [selected, setSelected] = useState<LoadedContent | null>(null);
-  const [inlineContent, setInlineContent] = useState<LoadedContent | null>(
-    null,
-  );
-  const [inlineLoading, setInlineLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [songTitles, setSongTitles] = useState<Map<number, string>>(new Map());
+  const [confirmDelete, setConfirmDelete] = useState<MeetingContent | null>(
+    null,
+  );
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [pendingReplace, setPendingReplace] = useState<{
+    file: File;
+    existingTitle: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isFlat = tab === "discursos" || tab === "canticos";
@@ -114,24 +129,6 @@ export function MeetingContentClient({
     }
   }
 
-  async function toggleInline(content: MeetingContent) {
-    if (inlineContent?.id === content.id) {
-      setInlineContent(null);
-      return;
-    }
-    setInlineContent(null);
-    setInlineLoading(true);
-    try {
-      const res = await fetch(`/api/meeting-content/${content.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.content) setInlineContent(data.content);
-      }
-    } finally {
-      setInlineLoading(false);
-    }
-  }
-
   async function handleImport(file: File) {
     setUploading(true);
     setUploadError(null);
@@ -152,17 +149,11 @@ export function MeetingContentClient({
       if (res.status === 409) {
         const data = await res.json().catch(() => null);
         const existing = data?.existing as { title?: string } | undefined;
-        const confirmed = window.confirm(
-          t("meetingContent.duplicateConfirm", {
-            title: existing?.title ?? "",
-          }),
-        );
-        if (!confirmed) return;
-        const res2 = await doUpload(true);
-        if (!res2.ok) {
-          setUploadError(t("meetingContent.importError"));
-          return;
-        }
+        setPendingReplace({
+          file,
+          existingTitle: existing?.title ?? "",
+        });
+        return;
       } else if (!res.ok) {
         const data = await res.json().catch(() => null);
         if (data?.code === "TYPE_MISMATCH") {
@@ -181,6 +172,34 @@ export function MeetingContentClient({
       await refreshCurrent();
       setSongTitles(new Map());
       void loadSongTitles();
+      toast.success(t("meetingContent.importSuccess"));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function runReplaceImport(file: File) {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("type", tab);
+      form.append("replace", "true");
+      const res = await fetch("/api/meeting-content/import", {
+        method: "POST",
+        body: form,
+      });
+      if (!res.ok) {
+        setUploadError(t("meetingContent.importError"));
+        return;
+      }
+      setSelected(null);
+      await refreshCurrent();
+      setSongTitles(new Map());
+      void loadSongTitles();
+      toast.success(t("meetingContent.importSuccess"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -213,17 +232,21 @@ export function MeetingContentClient({
     if (res.ok) {
       if (selected?.id === contentId) setSelected(null);
       await refreshCurrent();
+      toast.success(t("meetingContent.deleteSuccess"));
+    } else {
+      toast.error(t("meetingContent.importError"));
     }
   }
 
   async function handleDeleteAll() {
-    const confirmed = window.confirm(t("meetingContent.removeAllConfirm"));
-    if (!confirmed) return;
     const res = await fetch(`/api/meeting-content?type=${tab}`, {
       method: "DELETE",
     });
     if (res.ok) {
       setFlat([]);
+      toast.success(t("meetingContent.removeAllSuccess"));
+    } else {
+      toast.error(t("meetingContent.importError"));
     }
   }
 
@@ -243,40 +266,40 @@ export function MeetingContentClient({
   async function saveItem(
     item: MeetingContentItem,
     data: Record<string, unknown>,
-  ) {
+  ): Promise<boolean> {
     const res = await fetch(`/api/meeting-content/items/${item.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data }),
     });
-    if (res.ok) {
-      const json = await res.json();
-      if (selected) {
-        setSelected((prev) =>
-          prev
+    if (!res.ok) return false;
+    const json = await res.json();
+    if (selected) {
+      setSelected((prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((i) =>
+                i.id === item.id ? { ...i, data: json.item.data } : i,
+              ),
+            }
+          : prev,
+      );
+    } else {
+      setFlat((prev) =>
+        prev.map((c) =>
+          c.id === item.contentId
             ? {
-                ...prev,
-                items: prev.items.map((i) =>
+                ...c,
+                items: c.items.map((i) =>
                   i.id === item.id ? { ...i, data: json.item.data } : i,
                 ),
               }
-            : prev,
-        );
-      } else {
-        setFlat((prev) =>
-          prev.map((c) =>
-            c.id === item.contentId
-              ? {
-                  ...c,
-                  items: c.items.map((i) =>
-                    i.id === item.id ? { ...i, data: json.item.data } : i,
-                  ),
-                }
-              : c,
-          ),
-        );
-      }
+            : c,
+        ),
+      );
     }
+    return true;
   }
 
   async function addItem() {
@@ -347,6 +370,9 @@ export function MeetingContentClient({
             : c,
         ),
       );
+      toast.success(t("meetingContent.deleteSuccess"));
+    } else {
+      toast.error(t("meetingContent.importError"));
     }
   }
 
@@ -419,14 +445,16 @@ export function MeetingContentClient({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
               >
                 {uploading
                   ? t("meetingContent.importing")
                   : t("meetingContent.importFile")}
               </button>
               {uploadError && (
-                <span className="text-sm text-red-500">{uploadError}</span>
+                <span className="text-sm text-destructive" role="alert">
+                  {uploadError}
+                </span>
               )}
             </div>
           )}
@@ -438,7 +466,7 @@ export function MeetingContentClient({
             onAdd={addFlatItem}
             onSaveItem={saveItem}
             onDeleteItem={deleteFlatItem}
-            onDeleteAll={() => void handleDeleteAll()}
+            onDeleteAll={() => setConfirmDeleteAll(true)}
           />
         </>
       ) : selected ? (
@@ -469,7 +497,7 @@ export function MeetingContentClient({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
               >
                 {uploading
                   ? t("meetingContent.importing")
@@ -478,18 +506,24 @@ export function MeetingContentClient({
               <button
                 type="button"
                 onClick={handleCreateEmpty}
-                className="rounded-xl bg-[#1F2937] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+                className="rounded-xl bg-background px-5 py-2.5 text-sm font-medium text-foreground ring-1 ring-border transition-colors hover:bg-muted"
               >
                 {t("meetingContent.createEmpty")}
               </button>
               {uploadError && (
-                <span className="text-sm text-red-500">{uploadError}</span>
+                <span className="text-sm text-destructive" role="alert">
+                  {uploadError}
+                </span>
               )}
             </div>
           )}
 
           {tabContents.length === 0 ? (
-            <p className="text-muted-foreground">{t("meetingContent.empty")}</p>
+            <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-5 py-12 ring-1 ring-border">
+              <p className="text-muted-foreground">
+                {t("meetingContent.empty")}
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
               {tabContents.map((content) => (
@@ -498,25 +532,105 @@ export function MeetingContentClient({
                   type={tab}
                   content={content}
                   canManage={canManage}
-                  songTitle={songTitle}
-                  expanded={inlineContent?.id === content.id}
-                  inlineItems={
-                    inlineContent?.id === content.id
-                      ? inlineContent.items
-                      : null
-                  }
-                  inlineLoading={
-                    inlineLoading && inlineContent?.id !== content.id
-                  }
-                  onToggle={() => void toggleInline(content)}
                   onOpen={() => openContent(content)}
-                  onDelete={() => handleDeleteContent(content.id)}
+                  onDelete={() => setConfirmDelete(content)}
                 />
               ))}
             </div>
           )}
         </>
       )}
+
+      <AlertDialog
+        open={confirmDelete != null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("meetingContent.deleteConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("meetingContent.deleteConfirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                if (confirmDelete) void handleDeleteContent(confirmDelete.id);
+                setConfirmDelete(null);
+              }}
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={confirmDeleteAll}
+        onOpenChange={(open) => {
+          if (!open) setConfirmDeleteAll(false);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("meetingContent.removeAllConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("meetingContent.removeAllConfirm")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                setConfirmDeleteAll(false);
+                void handleDeleteAll();
+              }}
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={pendingReplace != null}
+        onOpenChange={(open) => {
+          if (!open) setPendingReplace(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("meetingContent.duplicateConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("meetingContent.duplicateConfirm", {
+                title: pendingReplace?.existingTitle ?? "",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingReplace) void runReplaceImport(pendingReplace.file);
+                setPendingReplace(null);
+              }}
+            >
+              {t("meetingContent.duplicateConfirmReplace")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -525,35 +639,24 @@ function ContentCard({
   type,
   content,
   canManage,
-  songTitle,
-  expanded,
-  inlineItems,
-  inlineLoading,
-  onToggle,
   onOpen,
   onDelete,
 }: {
   type: string;
   content: MeetingContent;
   canManage: boolean;
-  songTitle: (num: number | null | undefined) => string | null;
-  expanded: boolean;
-  inlineItems: MeetingContentItem[] | null;
-  inlineLoading: boolean;
-  onToggle: () => void;
   onOpen: () => void;
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
   const issue = formatContentIssue(type, content);
-  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
   return (
-    <div className="rounded-2xl bg-card shadow-sm ring-1 ring-border">
+    <div className="rounded-2xl bg-card ring-1 ring-border">
       <div className="flex items-center justify-between gap-3 px-5 py-4">
         <div className="min-w-0">
           {issue && (
-            <p className="text-lg font-semibold text-[#2563EB]">{issue}</p>
+            <p className="text-lg font-semibold text-primary">{issue}</p>
           )}
           <p className="truncate font-medium">
             {content.title || t("meetingContent.untitled")}
@@ -573,77 +676,22 @@ function ContentCard({
         <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
-            onClick={onToggle}
-            className="text-sm font-medium text-[#2563EB] hover:underline"
-          >
-            {expanded
-              ? t("meetingContent.hideContent")
-              : t("meetingContent.viewContent")}
-          </button>
-          <button
-            type="button"
             onClick={onOpen}
-            className="text-sm font-medium text-[#2563EB] hover:underline"
+            className="text-sm font-medium text-primary hover:underline"
           >
-            {t("common.edit")}
+            {canManage ? t("common.edit") : t("meetingContent.view")}
           </button>
           {canManage && (
             <button
               type="button"
               onClick={onDelete}
-              className="text-sm font-medium text-red-500 hover:underline"
+              className="text-sm font-medium text-destructive hover:underline"
             >
               {t("common.delete")}
             </button>
           )}
         </div>
       </div>
-      {expanded && (
-        <div className="border-t border-border px-5 py-4">
-          {inlineLoading ? (
-            <p className="text-sm text-muted-foreground">
-              {t("common.loading")}
-            </p>
-          ) : inlineItems == null ? null : inlineItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("meetingContent.noItems")}
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {inlineItems.map((item) => {
-                const itemExpanded = expandedItemId === item.id;
-                return (
-                  <div key={item.id} className="rounded-xl bg-muted/50 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <ItemSummary type={type} item={item} />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedItemId(itemExpanded ? null : item.id)
-                        }
-                        className="shrink-0 text-sm font-medium text-[#2563EB] hover:underline"
-                      >
-                        {itemExpanded
-                          ? t("meetingContent.hideContent")
-                          : t("meetingContent.viewContent")}
-                      </button>
-                    </div>
-                    {itemExpanded && (
-                      <div className="mt-3">
-                        <ItemDetail
-                          type={type}
-                          item={item}
-                          songTitle={songTitle}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -664,7 +712,7 @@ function SelectedView({
   onSaveItem: (
     item: MeetingContentItem,
     data: Record<string, unknown>,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   onAddItem: () => void;
   onDeleteItem: (itemId: string) => void;
 }) {
@@ -677,7 +725,7 @@ function SelectedView({
       <button
         type="button"
         onClick={onBack}
-        className="mb-4 text-sm font-medium text-[#2563EB] hover:underline"
+        className="mb-4 text-sm font-medium text-primary hover:underline"
       >
         ← {t("meetingContent.back")}
       </button>
@@ -685,7 +733,7 @@ function SelectedView({
       <div className="mb-6 flex items-center justify-between gap-3">
         <div className="min-w-0">
           {formatContentIssue(content.type, content) && (
-            <p className="text-lg font-semibold text-[#2563EB]">
+            <p className="text-lg font-semibold text-primary">
               {formatContentIssue(content.type, content)}
             </p>
           )}
@@ -702,7 +750,7 @@ function SelectedView({
           <button
             type="button"
             onClick={onAddItem}
-            className="shrink-0 rounded-xl bg-[#2563EB] px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+            className="shrink-0 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
           >
             + {t("meetingContent.addItem")}
           </button>
@@ -719,7 +767,7 @@ function SelectedView({
             return (
               <div
                 key={item.id}
-                className="rounded-2xl bg-card p-5 shadow-sm ring-1 ring-border"
+                className="rounded-2xl bg-card p-5 ring-1 ring-border"
               >
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <ItemSummary type={content.type} item={item} />
@@ -727,7 +775,9 @@ function SelectedView({
                     <button
                       type="button"
                       onClick={() => setExpandedId(expanded ? null : item.id)}
-                      className="text-sm font-medium text-[#2563EB] hover:underline"
+                      aria-expanded={expanded}
+                      aria-controls={`item-detail-${item.id}`}
+                      className="text-sm font-medium text-primary hover:underline"
                     >
                       {expanded
                         ? t("meetingContent.hideContent")
@@ -738,14 +788,14 @@ function SelectedView({
                         <button
                           type="button"
                           onClick={() => setEditingId(editing ? null : item.id)}
-                          className="text-sm font-medium text-[#2563EB] hover:underline"
+                          className="text-sm font-medium text-primary hover:underline"
                         >
                           {editing ? t("common.cancel") : t("common.edit")}
                         </button>
                         <button
                           type="button"
                           onClick={() => onDeleteItem(item.id)}
-                          className="text-sm font-medium text-red-500 hover:underline"
+                          className="text-sm font-medium text-destructive hover:underline"
                         >
                           {t("common.remove")}
                         </button>
@@ -754,11 +804,13 @@ function SelectedView({
                   </div>
                 </div>
                 {expanded && (
-                  <ItemDetail
-                    type={content.type}
-                    item={item}
-                    songTitle={songTitle}
-                  />
+                  <div id={`item-detail-${item.id}`}>
+                    <ItemDetail
+                      type={content.type}
+                      item={item}
+                      songTitle={songTitle}
+                    />
+                  </div>
                 )}
                 {editing && canManage && (
                   <ItemEditor
@@ -766,8 +818,9 @@ function SelectedView({
                     item={item}
                     songTitle={songTitle}
                     onSave={async (data) => {
-                      await onSaveItem(item, data);
-                      setEditingId(null);
+                      const ok = await onSaveItem(item, data);
+                      if (ok) setEditingId(null);
+                      return ok;
                     }}
                   />
                 )}
@@ -798,104 +851,134 @@ function FlatView({
   onSaveItem: (
     item: MeetingContentItem,
     data: Record<string, unknown>,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   onDeleteItem: (item: MeetingContentItem) => void;
   onDeleteAll: () => void;
 }) {
   const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLocaleLowerCase();
+    if (!q) return items;
+    return items.filter((item) => {
+      const d = item.data as { number?: number | null; theme?: string };
+      const number = d.number != null ? String(d.number) : "";
+      const theme = d.theme ?? "";
+      return number.includes(q) || theme.toLocaleLowerCase().includes(q);
+    });
+  }, [items, query]);
 
   const addButton = canManage ? (
     <button
       type="button"
       onClick={onAdd}
-      className="rounded-xl bg-[#2563EB] px-4 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90"
+      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
     >
       + {t("meetingContent.addItem")}
     </button>
   ) : null;
 
+  if (items.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-5 py-12 ring-1 ring-border">
+        <p className="text-muted-foreground">{t("meetingContent.empty")}</p>
+        {canManage && addButton}
+      </div>
+    );
+  }
+
   return (
     <div>
-      <div className="mb-4 flex justify-center">
-        {items.length === 0 ? null : addButton}
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <p className="text-sm text-muted-foreground" aria-live="polite">
+          {query.trim()
+            ? t("meetingContent.searchResultsCount", {
+                count: filtered.length,
+              })
+            : t("meetingContent.itemCount", { count: items.length })}
+        </p>
       </div>
-
-      {items.length === 0 ? (
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-muted-foreground">{t("meetingContent.empty")}</p>
-          {addButton}
-        </div>
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder={t("meetingContent.searchPlaceholder")}
+        aria-label={t("meetingContent.searchLabel")}
+        className="mb-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
+      />
+      {filtered.length === 0 ? (
+        <p className="text-muted-foreground">
+          {t("meetingContent.noSearchResults")}
+        </p>
       ) : (
-        <div className="space-y-2">
-          {items.map((item) => {
-            const d = item.data as { number?: number | null; theme?: string };
-            const editing = editingId === item.id;
-            return (
-              <div
-                key={item.id}
-                className="rounded-2xl bg-card px-5 py-3 shadow-sm ring-1 ring-border"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 truncate font-medium">
-                    {d.number != null ? (
-                      <span className="mr-1.5 font-semibold text-[#2563EB]">
-                        {d.number}.
-                      </span>
-                    ) : null}
-                    {d.theme || "—"}
-                  </p>
-                  {canManage && (
-                    <div className="flex shrink-0 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setEditingId(editing ? null : item.id)}
-                        className="text-sm font-medium text-[#2563EB] hover:underline"
-                      >
-                        {editing ? t("common.cancel") : t("common.edit")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDeleteItem(item)}
-                        className="text-sm font-medium text-red-500 hover:underline"
-                      >
-                        {t("common.remove")}
-                      </button>
-                    </div>
+        <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-border">
+          <ul className="divide-y divide-border">
+            {filtered.map((item) => {
+              const d = item.data as { number?: number | null; theme?: string };
+              const editing = editingId === item.id;
+              return (
+                <li key={item.id} className="px-5 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="min-w-0 truncate font-medium">
+                      {d.number != null ? (
+                        <span className="mr-1.5 font-semibold text-primary">
+                          {d.number}.
+                        </span>
+                      ) : null}
+                      {d.theme || "—"}
+                    </p>
+                    {canManage && (
+                      <div className="flex shrink-0 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setEditingId(editing ? null : item.id)}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          {editing ? t("common.cancel") : t("common.edit")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDeleteItem(item)}
+                          className="text-sm font-medium text-destructive hover:underline"
+                        >
+                          {t("common.remove")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {editing && canManage && (
+                    <ItemEditor
+                      type={type}
+                      item={item}
+                      songTitle={songTitle}
+                      onSave={async (data) => {
+                        const ok = await onSaveItem(item, data);
+                        if (ok) setEditingId(null);
+                        return ok;
+                      }}
+                    />
                   )}
-                </div>
-                {editing && canManage && (
-                  <ItemEditor
-                    type={type}
-                    item={item}
-                    songTitle={songTitle}
-                    onSave={async (data) => {
-                      await onSaveItem(item, data);
-                      setEditingId(null);
-                    }}
-                  />
-                )}
-              </div>
-            );
-          })}
+                </li>
+              );
+            })}
+          </ul>
         </div>
       )}
 
-      {items.length > 0 && (
-        <div className="mt-4 flex justify-center">{addButton}</div>
-      )}
-
-      {canManage && items.length > 0 && (
-        <div className="mt-6 flex justify-center">
+      <div className="mt-4 flex items-center justify-between gap-3">
+        {addButton}
+        {canManage && (
           <button
             type="button"
             onClick={onDeleteAll}
-            className="text-sm font-medium text-red-500 hover:underline"
+            className="text-sm font-medium text-destructive hover:underline"
           >
             {t("meetingContent.removeAll")}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

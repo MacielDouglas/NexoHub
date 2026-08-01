@@ -352,6 +352,7 @@
     "typeMismatch": "O arquivo selecionado não é um {{type}}. Selecione o arquivo correto.",
     "viewContent": "Ver conteúdo",
     "hideContent": "Ocultar conteúdo",
+    "view": "Ver",
     "createEmpty": "Criar vazio",
     "empty": "Nenhum arquivo importado neste tipo ainda.",
     "untitled": "Sem título",
@@ -360,6 +361,13 @@
     "back": "Voltar",
     "addItem": "Adicionar item",
     "noItems": "Nenhum item neste arquivo.",
+    "searchPlaceholder": "Buscar por número ou tema...",
+    "searchLabel": "Buscar",
+    "noSearchResults": "Nenhum item encontrado.",
+    "searchResultsCount": "{{count}} resultados",
+    "importSuccess": "Arquivo importado com sucesso.",
+    "deleteSuccess": "Arquivo excluído.",
+    "removeAllSuccess": "Todos os itens foram removidos.",
     "number": "Número",
     "theme": "Tema",
     "week": "Semana",
@@ -381,6 +389,10 @@
     "deleteConfirmDescription": "Todo o conteúdo deste arquivo será excluído permanentemente.",
     "removeAll": "Remover todos",
     "removeAllConfirmTitle": "Remover todos os itens?",
-    "removeAllConfirm": "Todos os itens deste tipo serão removidos permanentemente."
+    "removeAllConfirm": "Todos os itens deste tipo serão removidos permanentemente.",
+    "errorInvalidNumber": "Informe um número válido.",
+    "errorInvalidSong": "Informe um cântico válido (1–161).",
+    "errorInvalidDateRange": "Período inválido. Use o formato AAAAAMMDD-AAAAAMMDD.",
+    "errorSave": "Não foi possível salvar. Tente novamente."
   }
 }

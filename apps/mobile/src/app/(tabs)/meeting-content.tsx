@@ -1,6 +1,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -43,8 +43,6 @@ export default function MeetingContentScreen() {
   const [contents, setContents] = useState<MeetingContent[]>([]);
   const [flat, setFlat] = useState<FlatContent[]>([]);
   const [selected, setSelected] = useState<LoadedContent | null>(null);
-  const [inlineContent, setInlineContent] = useState<LoadedContent | null>(null);
-  const [inlineLoading, setInlineLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -134,24 +132,6 @@ export default function MeetingContentScreen() {
     }
   }
 
-  async function toggleInline(content: MeetingContent) {
-    if (inlineContent?.id === content.id) {
-      setInlineContent(null);
-      return;
-    }
-    setInlineContent(null);
-    setInlineLoading(true);
-    try {
-      const res = await apiFetch(`/api/meeting-content/${content.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.content) setInlineContent(data.content);
-      }
-    } finally {
-      setInlineLoading(false);
-    }
-  }
-
   async function handleImport() {
     setUploading(true);
     setUploadError(null);
@@ -236,12 +216,14 @@ export default function MeetingContentScreen() {
       setSelected(null);
       await refreshCurrent();
       await loadSongTitles();
+      Alert.alert(t('meetingContent.importSuccess'));
     } finally {
       setUploading(false);
     }
   }
 
-  async function handleDeleteContent(content: MeetingContent) {    Alert.alert(
+  async function handleDeleteContent(content: MeetingContent) {
+    Alert.alert(
       t('meetingContent.deleteConfirmTitle'),
       t('meetingContent.deleteConfirmDescription'),
       [
@@ -256,6 +238,9 @@ export default function MeetingContentScreen() {
             if (res.ok) {
               if (selected?.id === content.id) setSelected(null);
               await refreshCurrent();
+              Alert.alert(t('meetingContent.deleteSuccess'));
+            } else {
+              Alert.alert(t('common.error'), t('meetingContent.importError'));
             }
           },
         },
@@ -276,7 +261,12 @@ export default function MeetingContentScreen() {
             const res = await apiFetch(`/api/meeting-content?type=${tab}`, {
               method: 'DELETE',
             });
-            if (res.ok) setFlat([]);
+            if (res.ok) {
+              setFlat([]);
+              Alert.alert(t('meetingContent.removeAllSuccess'));
+            } else {
+              Alert.alert(t('common.error'), t('meetingContent.importError'));
+            }
           },
         },
       ],
@@ -295,12 +285,15 @@ export default function MeetingContentScreen() {
     }
   }
 
-  async function saveItem(item: MeetingContentItem, data: Record<string, unknown>) {
+  async function saveItem(
+    item: MeetingContentItem,
+    data: Record<string, unknown>,
+  ): Promise<boolean> {
     const res = await apiFetch(`/api/meeting-content/items/${item.id}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
     });
-    if (!res.ok) return;
+    if (!res.ok) return false;
     const json = await res.json();
     if (selected) {
       setSelected((prev) =>
@@ -327,6 +320,7 @@ export default function MeetingContentScreen() {
         ),
       );
     }
+    return true;
   }
 
   async function addItem() {
@@ -548,17 +542,6 @@ export default function MeetingContentScreen() {
                     type={tab}
                     content={content}
                     canManage={canManage}
-                    songTitle={songTitle}
-                    expanded={inlineContent?.id === content.id}
-                    inlineItems={
-                      inlineContent?.id === content.id
-                        ? inlineContent.items
-                        : null
-                    }
-                    inlineLoading={
-                      inlineLoading && inlineContent?.id !== content.id
-                    }
-                    onToggle={() => void toggleInline(content)}
                     onOpen={() => openContent(content)}
                     onDelete={() => handleDeleteContent(content)}
                   />
@@ -576,29 +559,18 @@ function ContentCard({
   type,
   content,
   canManage,
-  songTitle,
-  expanded,
-  inlineItems,
-  inlineLoading,
-  onToggle,
   onOpen,
   onDelete,
 }: {
   type: string;
   content: MeetingContent;
   canManage: boolean;
-  songTitle: SongTitle;
-  expanded: boolean;
-  inlineItems: MeetingContentItem[] | null;
-  inlineLoading: boolean;
-  onToggle: () => void;
   onOpen: () => void;
   onDelete: () => void;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const issue = formatContentIssue(type, content);
-  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
 
   return (
     <ThemedView type="backgroundElement" style={styles.contentCard}>
@@ -626,21 +598,11 @@ function ContentCard({
         </View>
         <View style={styles.contentActions}>
           <Pressable
-            onPress={onToggle}
-            style={({ pressed }) => pressed && { opacity: 0.7 }}
-          >
-            <ThemedText type="small" style={{ color: theme.primary }}>
-              {expanded
-                ? t('meetingContent.hideContent')
-                : t('meetingContent.viewContent')}
-            </ThemedText>
-          </Pressable>
-          <Pressable
             onPress={onOpen}
             style={({ pressed }) => pressed && { opacity: 0.7 }}
           >
             <ThemedText type="small" style={{ color: theme.primary }}>
-              {t('common.edit')}
+              {canManage ? t('common.edit') : t('meetingContent.view')}
             </ThemedText>
           </Pressable>
           {canManage && (
@@ -655,53 +617,6 @@ function ContentCard({
           )}
         </View>
       </View>
-      {expanded && (
-        <View style={[styles.inlineBox, { borderColor: theme.border }]}>
-          {inlineLoading ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('common.loading')}
-            </ThemedText>
-          ) : inlineItems == null ? null : inlineItems.length === 0 ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {t('meetingContent.noItems')}
-            </ThemedText>
-          ) : (
-            <View style={styles.list}>
-              {inlineItems.map((item) => {
-                const itemExpanded = expandedItemId === item.id;
-                return (
-                  <ThemedView
-                    key={item.id}
-                    type="background"
-                    style={styles.inlineItem}
-                  >
-                    <View style={styles.itemHeader}>
-                      <View style={styles.itemSummaryWrap}>
-                        <ItemSummary type={type} item={item} />
-                      </View>
-                      <Pressable
-                        onPress={() =>
-                          setExpandedItemId(itemExpanded ? null : item.id)
-                        }
-                        style={({ pressed }) => pressed && { opacity: 0.7 }}
-                      >
-                        <ThemedText type="small" style={{ color: theme.primary }}>
-                          {itemExpanded
-                            ? t('meetingContent.hideContent')
-                            : t('meetingContent.viewContent')}
-                        </ThemedText>
-                      </Pressable>
-                    </View>
-                    {itemExpanded && (
-                      <ItemDetail type={type} item={item} songTitle={songTitle} />
-                    )}
-                  </ThemedView>
-                );
-              })}
-            </View>
-          )}
-        </View>
-      )}
     </ThemedView>
   );
 }
@@ -722,7 +637,7 @@ function SelectedView({
   onSaveItem: (
     item: MeetingContentItem,
     data: Record<string, unknown>,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   onAddItem: () => void;
   onDeleteItem: (item: MeetingContentItem) => void;
 }) {
@@ -829,8 +744,9 @@ function SelectedView({
                     item={item}
                     songTitle={songTitle}
                     onSave={async (data) => {
-                      await onSaveItem(item, data);
-                      setEditingId(null);
+                      const ok = await onSaveItem(item, data);
+                      if (ok) setEditingId(null);
+                      return ok;
                     }}
                   />
                 )}
@@ -861,13 +777,14 @@ function FlatView({
   onSaveItem: (
     item: MeetingContentItem,
     data: Record<string, unknown>,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
   onDeleteItem: (item: MeetingContentItem) => void;
   onDeleteAll: () => void;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   const addButton = canManage ? (
     <Pressable
@@ -886,80 +803,120 @@ function FlatView({
 
   if (items.length === 0) {
     return (
-      <View style={styles.flatEmpty}>
+      <ThemedView type="backgroundElement" style={styles.flatEmpty}>
         <ThemedText themeColor="textSecondary">
           {t('meetingContent.empty')}
         </ThemedText>
         {addButton}
-      </View>
+      </ThemedView>
     );
   }
 
+  const q = query.trim().toLocaleLowerCase();
+  const filtered = q
+    ? items.filter((item) => {
+        const d = item.data as { number?: number | null; theme?: string };
+        const number = d.number != null ? String(d.number) : '';
+        const theme = d.theme ?? '';
+        return number.includes(q) || theme.toLocaleLowerCase().includes(q);
+      })
+    : items;
+
   return (
     <View>
-      <View style={styles.flatAddWrap}>{addButton}</View>
-      <View style={styles.list}>
-        {items.map((item) => {
-          const d = item.data as { number?: number | null; theme?: string };
-          const editing = editingId === item.id;
-          return (
-            <ThemedView key={item.id} type="backgroundElement" style={styles.flatItemCard}>
-              <View style={styles.itemHeader}>
-                <ThemedText type="default" numberOfLines={1} style={styles.flatItemText}>
-                  {d.number != null ? (
-                    <Text style={[styles.flatNumber, { color: theme.primary }]}>
-                      {d.number}.{' '}
-                    </Text>
-                  ) : null}
-                  {d.theme || '—'}
-                </ThemedText>
-                {canManage && (
-                  <View style={styles.itemActions}>
-                    <Pressable
-                      onPress={() => setEditingId(editing ? null : item.id)}
-                      style={({ pressed }) => pressed && { opacity: 0.7 }}
-                    >
-                      <ThemedText type="small" style={{ color: theme.primary }}>
-                        {editing ? t('common.cancel') : t('common.edit')}
-                      </ThemedText>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => onDeleteItem(item)}
-                      style={({ pressed }) => pressed && { opacity: 0.7 }}
-                    >
-                      <ThemedText type="small" style={{ color: theme.danger }}>
-                        {t('common.remove')}
-                      </ThemedText>
-                    </Pressable>
-                  </View>
+      <ThemedText type="small" themeColor="textSecondary" style={styles.listMeta}>
+        {query.trim()
+          ? t('meetingContent.searchResultsCount', { count: filtered.length })
+          : t('meetingContent.itemCount', { count: items.length })}
+      </ThemedText>
+      <TextInput
+        value={query}
+        onChangeText={setQuery}
+        placeholder={t('meetingContent.searchPlaceholder')}
+        placeholderTextColor={theme.textSecondary}
+        accessibilityLabel={t('meetingContent.searchLabel')}
+        style={[
+          styles.searchInput,
+          { borderColor: theme.border, color: theme.text },
+        ]}
+      />
+      {filtered.length === 0 ? (
+        <ThemedText themeColor="textSecondary">
+          {t('meetingContent.noSearchResults')}
+        </ThemedText>
+      ) : (
+        <ThemedView type="backgroundElement" style={styles.flatList}>
+          {filtered.map((item, index) => {
+            const d = item.data as { number?: number | null; theme?: string };
+            const editing = editingId === item.id;
+            return (
+              <View
+                key={item.id}
+                style={[
+                  styles.flatItemRow,
+                  index < filtered.length - 1 && styles.flatItemDivider,
+                ]}
+              >
+                <View style={styles.itemHeader}>
+                  <ThemedText type="default" numberOfLines={1} style={styles.flatItemText}>
+                    {d.number != null ? (
+                      <Text style={[styles.flatNumber, { color: theme.primary }]}>
+                        {d.number}.{' '}
+                      </Text>
+                    ) : null}
+                    {d.theme || '—'}
+                  </ThemedText>
+                  {canManage && (
+                    <View style={styles.itemActions}>
+                      <Pressable
+                        onPress={() => setEditingId(editing ? null : item.id)}
+                        style={({ pressed }) => pressed && { opacity: 0.7 }}
+                      >
+                        <ThemedText type="small" style={{ color: theme.primary }}>
+                          {editing ? t('common.cancel') : t('common.edit')}
+                        </ThemedText>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => onDeleteItem(item)}
+                        style={({ pressed }) => pressed && { opacity: 0.7 }}
+                      >
+                        <ThemedText type="small" style={{ color: theme.danger }}>
+                          {t('common.remove')}
+                        </ThemedText>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+                {editing && canManage && (
+                  <ItemEditor
+                    type={type}
+                    item={item}
+                    songTitle={songTitle}
+                    onSave={async (data) => {
+                      const ok = await onSaveItem(item, data);
+                      if (ok) setEditingId(null);
+                      return ok;
+                    }}
+                  />
                 )}
               </View>
-              {editing && canManage && (
-                <ItemEditor
-                  type={type}
-                  item={item}
-                  songTitle={songTitle}
-                  onSave={async (data) => {
-                    await onSaveItem(item, data);
-                    setEditingId(null);
-                  }}
-                />
-              )}
-            </ThemedView>
-          );
-        })}
-      </View>
-      <View style={styles.flatAddWrap}>{addButton}</View>
-      {canManage && (
-        <Pressable
-          onPress={onDeleteAll}
-          style={({ pressed }) => pressed && { opacity: 0.7 }}
-        >
-          <ThemedText type="small" style={{ color: theme.danger, textAlign: 'center' }}>
-            {t('meetingContent.removeAll')}
-          </ThemedText>
-        </Pressable>
+            );
+          })}
+        </ThemedView>
       )}
+      <View style={styles.flatFooter}>
+        {addButton}
+        {canManage && (
+          <Pressable
+            onPress={onDeleteAll}
+            style={({ pressed }) => pressed && { opacity: 0.7 }}
+          >
+            <ThemedText type="small" style={{ color: theme.danger }}>
+              {t('meetingContent.removeAll')}
+            </ThemedText>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -1233,15 +1190,42 @@ const styles = StyleSheet.create({
   itemSummaryWrap: { flex: 1, minWidth: 0, gap: Spacing.half },
   itemTitle: { fontWeight: '500' },
   itemActions: { flexDirection: 'row', gap: Spacing.three, flexShrink: 0 },
-  flatEmpty: { alignItems: 'center', gap: Spacing.three },
-  flatAddWrap: { alignItems: 'center', marginVertical: Spacing.four },
-  flatItemCard: {
-    padding: Spacing.three,
+  flatEmpty: {
+    alignItems: 'center',
+    gap: Spacing.three,
+    padding: Spacing.five,
     borderRadius: Spacing.three,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    fontSize: 16,
+    marginBottom: Spacing.three,
+  },
+  listMeta: {
+    marginBottom: Spacing.two,
+  },
+  flatList: {
+    borderRadius: Spacing.three,
+    overflow: 'hidden',
+  },
+  flatItemRow: {
+    padding: Spacing.three,
     gap: Spacing.two,
+  },
+  flatItemDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   flatItemText: { flex: 1, minWidth: 0 },
   flatNumber: { fontWeight: '700' },
+  flatFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.four,
+  },
   detailBox: {
     borderRadius: Spacing.two,
     padding: Spacing.three,

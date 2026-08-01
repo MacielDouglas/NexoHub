@@ -16,6 +16,28 @@ export type SongTitleResolver = (
   num: number | null | undefined,
 ) => string | null;
 
+const SONGS = new Set(Array.from({ length: 161 }, (_, i) => i + 1));
+
+function isValidDateRange(value: string): boolean {
+  const match = /^(\d{8})-(\d{8})$/.exec(value);
+  if (!match) return false;
+  const [start, end] = [match[1], match[2]];
+  const valid = (s: string) => {
+    const y = Number(s.slice(0, 4));
+    const m = Number(s.slice(4, 6));
+    const d = Number(s.slice(6, 8));
+    if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+    return !Number.isNaN(new Date(y, m - 1, d).getTime());
+  };
+  return valid(start) && valid(end) && end >= start;
+}
+
+function isValidSongNumber(value: string): boolean {
+  if (value.trim() === "") return true;
+  const n = Number(value);
+  return Number.isInteger(n) && SONGS.has(n);
+}
+
 export function ItemEditor({
   type,
   item,
@@ -25,7 +47,7 @@ export function ItemEditor({
   type: string;
   item: MeetingContentItem;
   songTitle?: SongTitleResolver;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   switch (type) {
     case "apostila":
@@ -54,12 +76,14 @@ function Field({
   onChange,
   placeholder,
   type = "text",
+  error,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   type?: "text" | "number";
+  error?: string;
 }) {
   const id = useId();
   return (
@@ -75,22 +99,41 @@ function Field({
         type={type}
         value={value}
         placeholder={placeholder}
+        aria-invalid={error ? true : undefined}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30 aria-invalid:border-destructive aria-invalid:focus:ring-destructive/30"
       />
+      {error ? (
+        <p className="mt-1 text-xs font-medium text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-function SaveBar({ saving, onSave }: { saving: boolean; onSave: () => void }) {
+function SaveBar({
+  saving,
+  onSave,
+  error,
+}: {
+  saving: boolean;
+  onSave: () => void;
+  error?: string;
+}) {
   const { t } = useTranslation();
   return (
-    <div className="flex justify-end">
+    <div className="flex flex-col items-end gap-2">
+      {error ? (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
       <button
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="rounded-xl bg-[#2563EB] px-5 py-2 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="rounded-xl bg-primary px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
       >
         {saving ? t("common.loading") : t("common.save")}
       </button>
@@ -103,7 +146,7 @@ function BasicEditor({
   onSave,
 }: {
   initial: Record<string, unknown>;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   const { t } = useTranslation();
   const [number, setNumber] = useState(
@@ -113,14 +156,22 @@ function BasicEditor({
   );
   const [theme, setTheme] = useState(String(initial.theme ?? ""));
   const [saving, setSaving] = useState(false);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave({
+      if (number.trim() !== "" && !Number.isInteger(Number(number))) {
+        setFieldError(t("meetingContent.errorInvalidNumber"));
+        return;
+      }
+      setFieldError(null);
+      const ok = await onSave({
         number: number.trim() === "" ? null : Number(number),
         theme,
       });
+      if (!ok) setSaveError(t("meetingContent.errorSave"));
     } finally {
       setSaving(false);
     }
@@ -135,6 +186,7 @@ function BasicEditor({
             value={number}
             onChange={setNumber}
             type="number"
+            error={fieldError ?? undefined}
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -145,7 +197,11 @@ function BasicEditor({
           />
         </div>
       </div>
-      <SaveBar saving={saving} onSave={handleSave} />
+      <SaveBar
+        saving={saving}
+        onSave={handleSave}
+        error={saveError ?? undefined}
+      />
     </div>
   );
 }
@@ -157,7 +213,7 @@ function SentinelaEditor({
 }: {
   initial: SentinelaItem;
   songTitle?: SongTitleResolver;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   const { t } = useTranslation();
   const [week, setWeek] = useState(initial.week ?? "");
@@ -179,11 +235,24 @@ function SentinelaEditor({
     initial.songs?.closing?.title ?? "",
   );
   const [saving, setSaving] = useState(false);
+  const [openError, setOpenError] = useState<string | null>(null);
+  const [closeError, setCloseError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave({
+      if (!isValidSongNumber(openNum)) {
+        setOpenError(t("meetingContent.errorInvalidSong"));
+        return;
+      }
+      if (!isValidSongNumber(closeNum)) {
+        setCloseError(t("meetingContent.errorInvalidSong"));
+        return;
+      }
+      setOpenError(null);
+      setCloseError(null);
+      const ok = await onSave({
         week,
         theme,
         songs: {
@@ -197,6 +266,7 @@ function SentinelaEditor({
           },
         },
       });
+      if (!ok) setSaveError(t("meetingContent.errorSave"));
     } finally {
       setSaving(false);
     }
@@ -217,6 +287,7 @@ function SentinelaEditor({
             value={openNum}
             onChange={setOpenNum}
             type="number"
+            error={openError ?? undefined}
           />
           {songTitle && openNum ? (
             <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -239,6 +310,7 @@ function SentinelaEditor({
             value={closeNum}
             onChange={setCloseNum}
             type="number"
+            error={closeError ?? undefined}
           />
           {songTitle && closeNum ? (
             <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -254,7 +326,11 @@ function SentinelaEditor({
           />
         </div>
       </div>
-      <SaveBar saving={saving} onSave={handleSave} />
+      <SaveBar
+        saving={saving}
+        onSave={handleSave}
+        error={saveError ?? undefined}
+      />
     </div>
   );
 }
@@ -264,7 +340,7 @@ function ApostilaEditor({
   onSave,
 }: {
   initial: ApostilaSemana;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   const { t } = useTranslation();
   const [semana, setSemana] = useState(initial.semana ?? "");
@@ -277,6 +353,9 @@ function ApostilaEditor({
   );
   const [secoes, setSecoes] = useState<ApostilaSecao[]>(initial.secoes ?? []);
   const [saving, setSaving] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [songError, setSongError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function updateParte(
     sectionIndex: number,
@@ -345,13 +424,27 @@ function ApostilaEditor({
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave({
+      if (dateRange.trim() !== "" && !isValidDateRange(dateRange)) {
+        setDateError(t("meetingContent.errorInvalidDateRange"));
+        return;
+      }
+      if (
+        !isValidSongNumber(canticoInicial) ||
+        !isValidSongNumber(canticoFinal)
+      ) {
+        setSongError(t("meetingContent.errorInvalidSong"));
+        return;
+      }
+      setDateError(null);
+      setSongError(null);
+      const ok = await onSave({
         semana,
         dateRange,
         canticoInicial: canticoInicial === "" ? null : Number(canticoInicial),
         secoes,
         canticoFinal: canticoFinal === "" ? null : Number(canticoFinal),
       });
+      if (!ok) setSaveError(t("meetingContent.errorSave"));
     } finally {
       setSaving(false);
     }
@@ -373,6 +466,7 @@ function ApostilaEditor({
             value={dateRange}
             onChange={setDateRange}
             placeholder="20260706-20260712"
+            error={dateError ?? undefined}
           />
         </div>
       </div>
@@ -383,6 +477,7 @@ function ApostilaEditor({
             value={String(canticoInicial)}
             onChange={(v) => setCanticoInicial(v === "" ? "" : v)}
             type="number"
+            error={songError ?? undefined}
           />
         </div>
         <div className="w-36">
@@ -391,6 +486,7 @@ function ApostilaEditor({
             value={String(canticoFinal)}
             onChange={(v) => setCanticoFinal(v === "" ? "" : v)}
             type="number"
+            error={songError ?? undefined}
           />
         </div>
       </div>
@@ -407,7 +503,7 @@ function ApostilaEditor({
                 value={sec.secao}
                 onChange={(e) => updateSecao(si, { secao: e.target.value })}
                 placeholder={t("meetingContent.section")}
-                className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+                className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
               />
               <div className="w-36">
                 <Field
@@ -424,7 +520,7 @@ function ApostilaEditor({
               <button
                 type="button"
                 onClick={() => removeSecao(si)}
-                className="shrink-0 text-sm font-medium text-red-500 hover:underline"
+                className="shrink-0 text-sm font-medium text-destructive hover:underline"
               >
                 {t("common.remove")}
               </button>
@@ -493,7 +589,7 @@ function ApostilaEditor({
                   <button
                     type="button"
                     onClick={() => removeParte(si, pi)}
-                    className="shrink-0 px-2 py-2 text-sm font-medium text-red-500 hover:underline"
+                    className="shrink-0 px-2 py-2 text-sm font-medium text-destructive hover:underline"
                   >
                     {t("common.remove")}
                   </button>
@@ -502,7 +598,7 @@ function ApostilaEditor({
               <button
                 type="button"
                 onClick={() => addParte(si)}
-                className="rounded-lg border border-dashed border-border px-4 py-2 text-sm font-medium text-[#2563EB] hover:bg-[#2563EB]/5"
+                className="rounded-lg border border-dashed border-border px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5"
               >
                 + {t("meetingContent.addPart")}
               </button>
@@ -512,13 +608,17 @@ function ApostilaEditor({
         <button
           type="button"
           onClick={addSecao}
-          className="rounded-lg border border-dashed border-border px-4 py-2 text-sm font-medium text-[#2563EB] hover:bg-[#2563EB]/5"
+          className="rounded-lg border border-dashed border-border px-4 py-2 text-sm font-medium text-primary hover:bg-primary/5"
         >
           + {t("meetingContent.addSection")}
         </button>
       </div>
 
-      <SaveBar saving={saving} onSave={handleSave} />
+      <SaveBar
+        saving={saving}
+        onSave={handleSave}
+        error={saveError ?? undefined}
+      />
     </div>
   );
 }

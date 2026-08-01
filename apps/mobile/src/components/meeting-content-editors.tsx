@@ -22,12 +22,14 @@ function Field({
   onChange,
   placeholder,
   keyboardType = 'default',
+  error,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   keyboardType?: 'default' | 'numeric';
+  error?: string;
 }) {
   const theme = useTheme();
   return (
@@ -41,17 +43,39 @@ function Field({
         placeholder={placeholder}
         placeholderTextColor={theme.textSecondary}
         keyboardType={keyboardType}
-        style={[styles.input, { borderColor: theme.border }]}
+        accessibilityLabel={label}
+        style={[
+          styles.input,
+          { borderColor: error ? theme.danger : theme.border },
+        ]}
       />
+      {error ? (
+        <ThemedText type="small" style={{ color: theme.danger }}>
+          {error}
+        </ThemedText>
+      ) : null}
     </View>
   );
 }
 
-function SaveBar({ saving, onSave }: { saving: boolean; onSave: () => void }) {
+function SaveBar({
+  saving,
+  onSave,
+  error,
+}: {
+  saving: boolean;
+  onSave: () => void;
+  error?: string;
+}) {
   const { t } = useTranslation();
   const theme = useTheme();
   return (
     <View style={styles.saveRow}>
+      {error ? (
+        <ThemedText type="small" style={{ color: theme.danger }}>
+          {error}
+        </ThemedText>
+      ) : null}
       <Pressable
         onPress={onSave}
         disabled={saving}
@@ -70,12 +94,34 @@ function SaveBar({ saving, onSave }: { saving: boolean; onSave: () => void }) {
   );
 }
 
+const SONGS = new Set(Array.from({ length: 161 }, (_, i) => i + 1));
+
+function isValidDateRange(value: string): boolean {
+  const match = /^(\d{8})-(\d{8})$/.exec(value);
+  if (!match) return false;
+  const [start, end] = [match[1], match[2]];
+  const valid = (s: string) => {
+    const y = Number(s.slice(0, 4));
+    const m = Number(s.slice(4, 6));
+    const d = Number(s.slice(6, 8));
+    if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+    return !Number.isNaN(new Date(y, m - 1, d).getTime());
+  };
+  return valid(start) && valid(end) && end >= start;
+}
+
+function isValidSongNumber(value: string): boolean {
+  if (value.trim() === '') return true;
+  const n = Number(value);
+  return Number.isInteger(n) && SONGS.has(n);
+}
+
 function BasicEditor({
   initial,
   onSave,
 }: {
   initial: Record<string, unknown>;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   const { t } = useTranslation();
   const [number, setNumber] = useState(
@@ -85,14 +131,22 @@ function BasicEditor({
   );
   const [theme, setTheme] = useState(String(initial.theme ?? ''));
   const [saving, setSaving] = useState(false);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave({
+      if (number.trim() !== '' && !Number.isInteger(Number(number))) {
+        setFieldError(t('meetingContent.errorInvalidNumber'));
+        return;
+      }
+      setFieldError(null);
+      const ok = await onSave({
         number: number.trim() === '' ? null : Number(number),
         theme,
       });
+      if (!ok) setSaveError(t('meetingContent.errorSave'));
     } finally {
       setSaving(false);
     }
@@ -105,13 +159,18 @@ function BasicEditor({
         value={number}
         onChange={setNumber}
         keyboardType="numeric"
+        error={fieldError ?? undefined}
       />
       <Field
         label={t('meetingContent.theme')}
         value={theme}
         onChange={setTheme}
       />
-      <SaveBar saving={saving} onSave={handleSave} />
+      <SaveBar
+        saving={saving}
+        onSave={handleSave}
+        error={saveError ?? undefined}
+      />
     </View>
   );
 }
@@ -123,7 +182,7 @@ function SentinelaEditor({
 }: {
   initial: SentinelaItem;
   songTitle?: (num: number | null | undefined) => string | null;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   const { t } = useTranslation();
   const [week, setWeek] = useState(initial.week ?? '');
@@ -143,11 +202,24 @@ function SentinelaEditor({
     initial.songs?.closing?.title ?? '',
   );
   const [saving, setSaving] = useState(false);
+  const [openError, setOpenError] = useState<string | null>(null);
+  const [closeError, setCloseError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave({
+      if (!isValidSongNumber(openNum)) {
+        setOpenError(t('meetingContent.errorInvalidSong'));
+        return;
+      }
+      if (!isValidSongNumber(closeNum)) {
+        setCloseError(t('meetingContent.errorInvalidSong'));
+        return;
+      }
+      setOpenError(null);
+      setCloseError(null);
+      const ok = await onSave({
         week,
         theme,
         songs: {
@@ -161,6 +233,7 @@ function SentinelaEditor({
           },
         },
       });
+      if (!ok) setSaveError(t('meetingContent.errorSave'));
     } finally {
       setSaving(false);
     }
@@ -177,6 +250,7 @@ function SentinelaEditor({
             value={openNum}
             onChange={setOpenNum}
             keyboardType="numeric"
+            error={openError ?? undefined}
           />
           {songTitle && openNum ? (
             <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
@@ -199,6 +273,7 @@ function SentinelaEditor({
             value={closeNum}
             onChange={setCloseNum}
             keyboardType="numeric"
+            error={closeError ?? undefined}
           />
           {songTitle && closeNum ? (
             <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
@@ -214,7 +289,11 @@ function SentinelaEditor({
           />
         </View>
       </View>
-      <SaveBar saving={saving} onSave={handleSave} />
+      <SaveBar
+        saving={saving}
+        onSave={handleSave}
+        error={saveError ?? undefined}
+      />
     </View>
   );
 }
@@ -224,7 +303,7 @@ function ApostilaEditor({
   onSave,
 }: {
   initial: ApostilaSemana;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -238,6 +317,9 @@ function ApostilaEditor({
   );
   const [secoes, setSecoes] = useState<ApostilaSecao[]>(initial.secoes ?? []);
   const [saving, setSaving] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
+  const [songError, setSongError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function updateSecao(index: number, patch: Partial<ApostilaSecao>) {
     setSecoes((prev) =>
@@ -296,7 +378,20 @@ function ApostilaEditor({
   async function handleSave() {
     setSaving(true);
     try {
-      await onSave({
+      if (dateRange.trim() !== '' && !isValidDateRange(dateRange)) {
+        setDateError(t('meetingContent.errorInvalidDateRange'));
+        return;
+      }
+      if (
+        !isValidSongNumber(canticoInicial) ||
+        !isValidSongNumber(canticoFinal)
+      ) {
+        setSongError(t('meetingContent.errorInvalidSong'));
+        return;
+      }
+      setDateError(null);
+      setSongError(null);
+      const ok = await onSave({
         semana,
         dateRange,
         canticoInicial:
@@ -304,6 +399,7 @@ function ApostilaEditor({
         canticoFinal: canticoFinal.trim() === '' ? null : Number(canticoFinal),
         secoes,
       });
+      if (!ok) setSaveError(t('meetingContent.errorSave'));
     } finally {
       setSaving(false);
     }
@@ -316,6 +412,7 @@ function ApostilaEditor({
           label={t('meetingContent.dateRange')}
           value={dateRange}
           onChange={setDateRange}
+          error={dateError ?? undefined}
         />
         <View style={styles.row}>
           <View style={styles.narrowField}>
@@ -324,6 +421,7 @@ function ApostilaEditor({
               value={canticoInicial}
               onChange={setCanticoInicial}
               keyboardType="numeric"
+              error={songError ?? undefined}
             />
           </View>
           <View style={styles.narrowField}>
@@ -332,6 +430,7 @@ function ApostilaEditor({
               value={canticoFinal}
               onChange={setCanticoFinal}
               keyboardType="numeric"
+              error={songError ?? undefined}
             />
           </View>
         </View>
@@ -448,7 +547,11 @@ function ApostilaEditor({
           </ThemedView>
         ))}
 
-        <SaveBar saving={saving} onSave={handleSave} />
+        <SaveBar
+          saving={saving}
+          onSave={handleSave}
+          error={saveError ?? undefined}
+        />
       </View>
   );
 }
@@ -462,7 +565,7 @@ export function ItemEditor({
   type: string;
   item: MeetingContentItem;
   songTitle?: (num: number | null | undefined) => string | null;
-  onSave: (data: Record<string, unknown>) => Promise<void>;
+  onSave: (data: Record<string, unknown>) => Promise<boolean>;
 }) {
   switch (type) {
     case 'apostila':
