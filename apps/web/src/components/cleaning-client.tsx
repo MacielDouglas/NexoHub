@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
-  CLEANING_TYPES,
   type CleaningType,
   type CleaningUnit,
   type Gender,
@@ -46,6 +45,13 @@ type SectorFormValues = {
   gender: Gender;
 };
 
+type CleaningConfig = {
+  weeklyEnabled: boolean;
+  weeklyDayOfWeek: number | null;
+  weeklyIntervalWeeks: number;
+  generalEnabled: boolean;
+};
+
 function sectorDisplayName(
   sector: CleaningSector,
   t: (key: string) => string,
@@ -66,18 +72,14 @@ function sectorDisplayTask(
 
 export function CleaningClient() {
   const { t } = useTranslation();
-  const [config, setConfig] = useState<{
-    weeklyEnabled: boolean;
-    weeklyDayOfWeek: number | null;
-    weeklyIntervalWeeks: number;
-  } | null>(null);
+  const [config, setConfig] = useState<CleaningConfig | null>(null);
   const [sectors, setSectors] = useState<CleaningSector[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<{
+  const [modal, setModal] = useState<{
     type: CleaningType;
     sector: CleaningSector | null;
   } | null>(null);
-  const [savingWeekly, setSavingWeekly] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   const fetchAll = useCallback(async () => {
     const res = await fetch("/api/cleaning");
@@ -91,14 +93,8 @@ export function CleaningClient() {
     fetchAll().finally(() => setLoading(false));
   }, [fetchAll]);
 
-  async function updateWeekly(
-    update: Partial<{
-      weeklyEnabled: boolean;
-      weeklyDayOfWeek: number | null;
-      weeklyIntervalWeeks: number;
-    }>,
-  ) {
-    setSavingWeekly(true);
+  async function updateConfig(update: Partial<CleaningConfig>) {
+    setSavingConfig(true);
     try {
       const res = await fetch("/api/cleaning", {
         method: "PUT",
@@ -110,7 +106,7 @@ export function CleaningClient() {
         setConfig(data.config);
       }
     } finally {
-      setSavingWeekly(false);
+      setSavingConfig(false);
     }
   }
 
@@ -129,187 +125,257 @@ export function CleaningClient() {
   }
 
   async function handleSaved() {
-    setEditing(null);
+    setModal(null);
     await fetchAll();
   }
 
-  if (loading) {
+  if (loading || !config) {
     return <p className="text-muted-foreground">{t("common.loading")}</p>;
   }
 
+  const weeklySectors = sectors
+    .filter((s) => s.type === "weekly")
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const generalSectors = sectors
+    .filter((s) => s.type === "general")
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const meetingSectors = sectors
+    .filter((s) => s.type === "meeting")
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
   return (
-    <div className="space-y-10">
-      <WeeklyConfigSection
-        config={config}
-        saving={savingWeekly}
-        onUpdate={updateWeekly}
-      />
+    <div className="space-y-8">
+      <section>
+        <h2 className="text-lg font-semibold">{t("cleaning.types.meeting")}</h2>
+        <p className="mt-0.5 mb-4 text-sm text-muted-foreground">
+          {t("cleaning.typesSubtitle.meeting")}
+        </p>
 
-      {CLEANING_TYPES.map((type) => {
-        const typeSectors = sectors
-          .filter((s) => s.type === type)
-          .sort((a, b) => a.sortOrder - b.sortOrder);
-        const isEditingType =
-          editing?.type === type || editing?.sector?.type === type;
-        return (
-          <section key={type}>
-            <h2 className="text-lg font-semibold">
-              {t(`cleaning.types.${type}`)}
-            </h2>
-            <p className="mt-0.5 mb-4 text-sm text-muted-foreground">
-              {t(`cleaning.typesSubtitle.${type}`)}
-            </p>
+        <SectorList
+          sectors={meetingSectors}
+          onEdit={(sector) => setModal({ type: "meeting", sector })}
+          onDelete={handleDelete}
+          onAdd={() => setModal({ type: "meeting", sector: null })}
+        />
+      </section>
 
-            {typeSectors.length === 0 ? (
-              <p className="mb-4 text-sm text-muted-foreground">
-                {t("cleaning.noSectors")}
-              </p>
-            ) : (
-              <div className="mb-4 space-y-2">
-                {typeSectors.map((sector) => (
-                  <SectorCard
-                    key={sector.id}
-                    sector={sector}
-                    onEdit={() => setEditing({ type, sector })}
-                    onDelete={() => handleDelete(sector.id)}
-                    onRestore={
-                      sector.defaultKey
-                        ? () => handleRestore(sector.id)
-                        : undefined
-                    }
-                  />
-                ))}
-              </div>
-            )}
+      <section>
+        <h2 className="text-lg font-semibold">{t("cleaning.types.weekly")}</h2>
+        <p className="mt-0.5 mb-4 text-sm text-muted-foreground">
+          {t("cleaning.typesSubtitle.weekly")}
+        </p>
 
-            {isEditingType ? (
-              <SectorForm
-                sector={editing?.sector ?? null}
-                type={type}
-                onCancel={() => setEditing(null)}
-                onSaved={handleSaved}
+        {!config.weeklyEnabled ? (
+          <EnableCard
+            label={t("cleaning.enableWeekly")}
+            disabled={savingConfig}
+            onEnable={() => updateConfig({ weeklyEnabled: true })}
+          />
+        ) : (
+          <>
+            <div className="mb-4 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
+              <WeeklySettings
+                config={config}
+                saving={savingConfig}
+                onUpdate={updateConfig}
               />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setEditing({ type, sector: null })}
-                className="rounded-xl bg-[#1F2937] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-              >
-                {t("cleaning.addSector")}
-              </button>
-            )}
-          </section>
-        );
-      })}
+            </div>
+            <SectorList
+              sectors={weeklySectors}
+              onEdit={(sector) => setModal({ type: "weekly", sector })}
+              onDelete={handleDelete}
+              onAdd={() => setModal({ type: "weekly", sector: null })}
+            />
+          </>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold">{t("cleaning.types.general")}</h2>
+        <p className="mt-0.5 mb-4 text-sm text-muted-foreground">
+          {t("cleaning.typesSubtitle.general")}
+        </p>
+
+        {!config.generalEnabled ? (
+          <EnableCard
+            label={t("cleaning.enableGeneral")}
+            disabled={savingConfig}
+            onEnable={() => updateConfig({ generalEnabled: true })}
+          />
+        ) : (
+          <SectorList
+            sectors={generalSectors}
+            onEdit={(sector) => setModal({ type: "general", sector })}
+            onDelete={handleDelete}
+            onAdd={() => setModal({ type: "general", sector: null })}
+          />
+        )}
+      </section>
+
+      {modal && (
+        <SectorModal
+          type={modal.type}
+          sector={modal.sector}
+          onRestore={
+            modal.sector?.defaultKey
+              ? async () => {
+                  if (modal.sector) {
+                    await handleRestore(modal.sector.id);
+                  }
+                  setModal((m) => (m ? { ...m, sector: null } : null));
+                }
+              : undefined
+          }
+          onCancel={() => setModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   );
 }
 
-function WeeklyConfigSection({
+function EnableCard({
+  label,
+  disabled,
+  onEnable,
+}: {
+  label: string;
+  disabled: boolean;
+  onEnable: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onEnable}
+      disabled={disabled}
+      className="w-full rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 text-sm font-medium text-[#2563EB] transition-colors hover:border-[#2563EB]/50 disabled:opacity-50"
+    >
+      {label}
+    </button>
+  );
+}
+
+function WeeklySettings({
   config,
   saving,
   onUpdate,
 }: {
-  config: {
-    weeklyEnabled: boolean;
-    weeklyDayOfWeek: number | null;
-    weeklyIntervalWeeks: number;
-  } | null;
+  config: CleaningConfig;
   saving: boolean;
-  onUpdate: (update: {
-    weeklyEnabled: boolean;
-    weeklyDayOfWeek: number | null;
-    weeklyIntervalWeeks: number;
-  }) => void;
+  onUpdate: (update: Partial<CleaningConfig>) => void;
 }) {
   const { t } = useTranslation();
-  const [enabled, setEnabled] = useState(config?.weeklyEnabled ?? false);
-  const [dayOfWeek, setDayOfWeek] = useState(config?.weeklyDayOfWeek ?? 3);
+  const [dayOfWeek, setDayOfWeek] = useState(config.weeklyDayOfWeek ?? 3);
   const [intervalWeeks, setIntervalWeeks] = useState(
-    config?.weeklyIntervalWeeks ?? 1,
+    config.weeklyIntervalWeeks ?? 1,
   );
 
-  function handleSave() {
-    onUpdate({
-      weeklyEnabled: enabled,
-      weeklyDayOfWeek: dayOfWeek,
-      weeklyIntervalWeeks: intervalWeeks,
-    });
-  }
-
   return (
-    <section className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
-      <h2 className="text-lg font-semibold">{t("cleaning.types.weekly")}</h2>
-      <p className="mt-0.5 text-sm text-muted-foreground">
-        {t("cleaning.typesSubtitle.weekly")}
-      </p>
-
-      <div className="mt-4 space-y-4">
-        <label className="flex items-center gap-2 text-sm font-medium">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className="size-4 rounded border-border"
-          />
-          {t("cleaning.weeklyEnabled")}
+    <div className="space-y-4">
+      <div>
+        <label htmlFor="weekly-day" className="mb-2 block text-sm font-medium">
+          {t("cleaning.weeklyDayOfWeek")}
         </label>
-
-        {enabled && (
-          <>
-            <div>
-              <label
-                htmlFor="weekly-day"
-                className="mb-2 block text-sm font-medium"
-              >
-                {t("cleaning.weeklyDayOfWeek")}
-              </label>
-              <select
-                id="weekly-day"
-                value={dayOfWeek}
-                onChange={(e) => setDayOfWeek(Number(e.target.value))}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-              >
-                {DAY_KEYS.map((key, index) => (
-                  <option key={key} value={index}>
-                    {t(`settings.days.${key}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="weekly-interval"
-                className="mb-2 block text-sm font-medium"
-              >
-                {t("cleaning.weeklyIntervalWeeks")}
-              </label>
-              <select
-                id="weekly-interval"
-                value={intervalWeeks}
-                onChange={(e) => setIntervalWeeks(Number(e.target.value))}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-              >
-                {[1, 2, 3, 4].map((n) => (
-                  <option key={n} value={n}>
-                    {n} {n === 1 ? t("common.week") : t("common.weeks")}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </>
-        )}
-
+        <select
+          id="weekly-day"
+          value={dayOfWeek}
+          onChange={(e) => setDayOfWeek(Number(e.target.value))}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+        >
+          {DAY_KEYS.map((key, index) => (
+            <option key={key} value={index}>
+              {t(`settings.days.${key}`)}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label
+          htmlFor="weekly-interval"
+          className="mb-2 block text-sm font-medium"
+        >
+          {t("cleaning.weeklyIntervalWeeks")}
+        </label>
+        <select
+          id="weekly-interval"
+          value={intervalWeeks}
+          onChange={(e) => setIntervalWeeks(Number(e.target.value))}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+        >
+          {[1, 2, 3, 4].map((n) => (
+            <option key={n} value={n}>
+              {n} {n === 1 ? t("common.week") : t("common.weeks")}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex gap-3">
         <button
           type="button"
-          onClick={handleSave}
+          onClick={() =>
+            onUpdate({
+              weeklyDayOfWeek: dayOfWeek,
+              weeklyIntervalWeeks: intervalWeeks,
+            })
+          }
           disabled={saving}
           className="rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {t("common.save")}
         </button>
+        <button
+          type="button"
+          onClick={() => onUpdate({ weeklyEnabled: false })}
+          disabled={saving}
+          className="rounded-xl border border-red-500 px-5 py-2.5 text-sm font-medium text-red-500 transition-opacity hover:opacity-80 disabled:opacity-50"
+        >
+          {t("cleaning.disable")}
+        </button>
       </div>
-    </section>
+    </div>
+  );
+}
+
+function SectorList({
+  sectors,
+  onEdit,
+  onDelete,
+  onAdd,
+}: {
+  sectors: CleaningSector[];
+  onEdit: (sector: CleaningSector) => void;
+  onDelete: (id: string) => void;
+  onAdd: () => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <div>
+      {sectors.length === 0 ? (
+        <p className="mb-4 text-sm text-muted-foreground">
+          {t("cleaning.noSectors")}
+        </p>
+      ) : (
+        <div className="mb-4 space-y-2">
+          {sectors.map((sector) => (
+            <SectorCard
+              key={sector.id}
+              sector={sector}
+              onEdit={() => onEdit(sector)}
+              onDelete={() => onDelete(sector.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onAdd}
+        className="rounded-xl bg-[#1F2937] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+      >
+        {t("cleaning.addSector")}
+      </button>
+    </div>
   );
 }
 
@@ -317,80 +383,63 @@ function SectorCard({
   sector,
   onEdit,
   onDelete,
-  onRestore,
 }: {
   sector: CleaningSector;
   onEdit: () => void;
   onDelete: () => void;
-  onRestore?: () => void;
 }) {
   const { t } = useTranslation();
-  const isDefault = sector.defaultKey !== null;
 
   return (
-    <div className="rounded-2xl bg-card px-5 py-3.5 shadow-sm ring-1 ring-border">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-medium">{sectorDisplayName(sector, t)}</p>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {sectorDisplayTask(sector, t)}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t(`cleaning.units.${sector.unit}`)}
-            {sector.type === "meeting" && sector.peopleCount
-              ? ` · ${sector.peopleCount} ${t("common.people")}`
-              : ""}
-            {sector.type === "meeting" && sector.allowYoung
-              ? ` · ${t("cleaning.allowYoung")}`
-              : ""}
-            {sector.type === "meeting"
-              ? ` · ${t(`cleaning.genders.${sector.gender}`)}`
-              : ""}
-          </p>
-        </div>
-        <div className="flex shrink-0 gap-3">
-          {onRestore && (
-            <button
-              type="button"
-              onClick={onRestore}
-              className="text-sm font-medium text-[#7C3AED] hover:underline"
-            >
-              {t("cleaning.restoreDefault")}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onEdit}
-            className="text-sm font-medium text-[#2563EB] hover:underline"
-          >
-            {t("common.edit")}
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="text-sm font-medium text-red-500 hover:underline"
-          >
-            {t("common.remove")}
-          </button>
-        </div>
-      </div>
-      {isDefault && (
-        <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
-          {t("cleaning.sectors")}
+    <div className="flex items-start justify-between gap-3 rounded-2xl bg-card px-5 py-3.5 shadow-sm ring-1 ring-border">
+      <div className="min-w-0">
+        <p className="font-medium">{sectorDisplayName(sector, t)}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {sectorDisplayTask(sector, t)}
         </p>
-      )}
+        <p className="mt-1 text-xs text-muted-foreground">
+          {t(`cleaning.units.${sector.unit}`)}
+          {sector.type === "meeting" && sector.peopleCount
+            ? ` · ${sector.peopleCount} ${t("common.people")}`
+            : ""}
+          {sector.type === "meeting" && sector.allowYoung
+            ? ` · ${t("cleaning.allowYoung")}`
+            : ""}
+          {sector.type === "meeting"
+            ? ` · ${t(`cleaning.genders.${sector.gender}`)}`
+            : ""}
+        </p>
+      </div>
+      <div className="flex shrink-0 gap-3">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-sm font-medium text-[#2563EB] hover:underline"
+        >
+          {t("common.edit")}
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="text-sm font-medium text-red-500 hover:underline"
+        >
+          {t("common.remove")}
+        </button>
+      </div>
     </div>
   );
 }
 
-function SectorForm({
+function SectorModal({
   type,
   sector,
+  onRestore,
   onCancel,
   onSaved,
 }: {
   type: CleaningType;
   sector: CleaningSector | null;
+  onRestore?: () => void;
   onCancel: () => void;
   onSaved: () => void;
 }) {
@@ -417,6 +466,7 @@ function SectorForm({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   async function handleSubmit() {
     if (!form.name.trim()) {
@@ -460,120 +510,144 @@ function SectorForm({
     }
   }
 
+  async function handleRestore() {
+    if (!onRestore) return;
+    setRestoring(true);
+    try {
+      await onRestore();
+    } finally {
+      setRestoring(false);
+    }
+  }
+
   return (
-    <div className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
-      <h3 className="mb-4 text-lg font-semibold">
-        {sector ? t("cleaning.editSector") : t("cleaning.newSector")}
-      </h3>
-      <div className="space-y-4">
-        <div>
-          <label
-            htmlFor="sector-name"
-            className="mb-2 block text-sm font-medium"
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6 shadow-xl ring-1 ring-border">
+        <h3 className="mb-4 text-lg font-semibold">
+          {sector ? t("cleaning.editSector") : t("cleaning.newSector")}
+        </h3>
+
+        {onRestore && (
+          <button
+            type="button"
+            onClick={handleRestore}
+            disabled={restoring}
+            className="mb-4 w-full rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {t("cleaning.sectorName")}
-          </label>
-          <input
-            id="sector-name"
-            type="text"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder={t("cleaning.sectorName")}
-            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="sector-task"
-            className="mb-2 block text-sm font-medium"
-          >
-            {t("cleaning.task")}
-          </label>
-          <textarea
-            id="sector-task"
-            value={form.task}
-            onChange={(e) => setForm({ ...form, task: e.target.value })}
-            rows={3}
-            placeholder={t("cleaning.task")}
-            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-          />
-        </div>
-
-        <div>
-          <span className="mb-2 block text-sm font-medium">
-            {t("cleaning.unit")}
-          </span>
-          <UnitPicker
-            type={type}
-            selected={form.unit}
-            onSelect={(unit) => setForm({ ...form, unit })}
-          />
-        </div>
-
-        {type === "meeting" && (
-          <>
-            <div>
-              <label
-                htmlFor="sector-people-count"
-                className="mb-2 block text-sm font-medium"
-              >
-                {t("cleaning.peopleCount")}
-              </label>
-              <input
-                id="sector-people-count"
-                type="number"
-                min={1}
-                value={form.peopleCount}
-                onChange={(e) =>
-                  setForm({ ...form, peopleCount: e.target.value })
-                }
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
-              />
-            </div>
-
-            <label className="flex items-center gap-2 text-sm font-medium">
-              <input
-                type="checkbox"
-                checked={form.allowYoung}
-                onChange={(e) =>
-                  setForm({ ...form, allowYoung: e.target.checked })
-                }
-                className="size-4 rounded border-border"
-              />
-              {t("cleaning.allowYoung")}
-            </label>
-
-            <div>
-              <span className="mb-2 block text-sm font-medium">
-                {t("cleaning.gender")}
-              </span>
-              <GenderPicker
-                selected={form.gender}
-                onSelect={(gender) => setForm({ ...form, gender })}
-              />
-            </div>
-          </>
+            {t("cleaning.restoreDefault")}
+          </button>
         )}
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="sector-name"
+              className="mb-2 block text-sm font-medium"
+            >
+              {t("cleaning.sectorName")}
+            </label>
+            <input
+              id="sector-name"
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder={t("cleaning.sectorName")}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+            />
+          </div>
 
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={saving}
-            className="flex-1 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {t("common.save")}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background"
-          >
-            {t("common.cancel")}
-          </button>
+          <div>
+            <label
+              htmlFor="sector-task"
+              className="mb-2 block text-sm font-medium"
+            >
+              {t("cleaning.task")}
+            </label>
+            <textarea
+              id="sector-task"
+              value={form.task}
+              onChange={(e) => setForm({ ...form, task: e.target.value })}
+              rows={3}
+              placeholder={t("cleaning.task")}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+            />
+          </div>
+
+          <div>
+            <span className="mb-2 block text-sm font-medium">
+              {t("cleaning.unit")}
+            </span>
+            <UnitPicker
+              type={type}
+              selected={form.unit}
+              onSelect={(unit) => setForm({ ...form, unit })}
+            />
+          </div>
+
+          {type === "meeting" && (
+            <>
+              <div>
+                <label
+                  htmlFor="sector-people-count"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  {t("cleaning.peopleCount")}
+                </label>
+                <input
+                  id="sector-people-count"
+                  type="number"
+                  min={1}
+                  value={form.peopleCount}
+                  onChange={(e) =>
+                    setForm({ ...form, peopleCount: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={form.allowYoung}
+                  onChange={(e) =>
+                    setForm({ ...form, allowYoung: e.target.checked })
+                  }
+                  className="size-4 rounded border-border"
+                />
+                {t("cleaning.allowYoung")}
+              </label>
+
+              <div>
+                <span className="mb-2 block text-sm font-medium">
+                  {t("cleaning.gender")}
+                </span>
+                <GenderPicker
+                  selected={form.gender}
+                  onSelect={(gender) => setForm({ ...form, gender })}
+                />
+              </div>
+            </>
+          )}
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={saving}
+              className="flex-1 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {t("common.save")}
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background"
+            >
+              {t("common.cancel")}
+            </button>
+          </div>
         </div>
       </div>
     </div>

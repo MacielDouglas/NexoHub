@@ -177,13 +177,14 @@ model SpecialEvent {
 }
 
 model CleaningConfig {
-  id                 String   @id @default(cuid())
-  organizationId     String   @unique
-  weeklyEnabled      Boolean  @default(false)
-  weeklyDayOfWeek    Int?
-  weeklyIntervalWeeks Int     @default(1)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  organizationId      String   @unique
+  weeklyEnabled       Boolean  @default(false)
+  weeklyDayOfWeek     Int?
+  weeklyIntervalWeeks Int      @default(1)
+  generalEnabled      Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   sectors      CleaningSector[]

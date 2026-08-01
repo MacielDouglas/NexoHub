@@ -18,6 +18,7 @@ export async function GET() {
       weeklyEnabled: config.weeklyEnabled,
       weeklyDayOfWeek: config.weeklyDayOfWeek,
       weeklyIntervalWeeks: config.weeklyIntervalWeeks,
+      generalEnabled: config.generalEnabled,
     },
     sectors: config.sectors,
   });
@@ -35,8 +36,12 @@ export async function PUT(request: Request) {
 
   const config = await getOrCreateCleaningConfig(member.organizationId);
 
-  const { weeklyEnabled, weeklyDayOfWeek, weeklyIntervalWeeks } =
-    await request.json();
+  const {
+    weeklyEnabled,
+    weeklyDayOfWeek,
+    weeklyIntervalWeeks,
+    generalEnabled,
+  } = await request.json();
 
   const updated = await prisma.cleaningConfig.update({
     where: { id: config.id },
@@ -46,6 +51,7 @@ export async function PUT(request: Request) {
         weeklyDayOfWeek: weeklyDayOfWeek ?? null,
       }),
       ...(weeklyIntervalWeeks !== undefined && { weeklyIntervalWeeks }),
+      ...(generalEnabled !== undefined && { generalEnabled }),
     },
   });
 
@@ -55,6 +61,7 @@ export async function PUT(request: Request) {
       weeklyEnabled: updated.weeklyEnabled,
       weeklyDayOfWeek: updated.weeklyDayOfWeek,
       weeklyIntervalWeeks: updated.weeklyIntervalWeeks,
+      generalEnabled: updated.generalEnabled,
     },
   });
 }

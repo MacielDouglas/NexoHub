@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Switch, TextInput, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  StyleSheet,
+  Switch,
+  TextInput,
+  View,
+} from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { ThemedText } from "@/components/themed-text";
@@ -8,7 +15,6 @@ import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { apiFetch } from "@/lib/api";
 import {
-  CLEANING_TYPES,
   type CleaningType,
   type CleaningUnit,
   type Gender,
@@ -49,6 +55,13 @@ type SectorFormValues = {
   gender: Gender;
 };
 
+type CleaningConfig = {
+  weeklyEnabled: boolean;
+  weeklyDayOfWeek: number | null;
+  weeklyIntervalWeeks: number;
+  generalEnabled: boolean;
+};
+
 function sectorDisplayName(
   sector: CleaningSector,
   t: (key: string) => string,
@@ -68,19 +81,15 @@ function sectorDisplayTask(
 }
 
 export function CleaningSettings() {
-  const theme = useTheme();
   const { t } = useTranslation();
-  const [config, setConfig] = useState<{
-    weeklyEnabled: boolean;
-    weeklyDayOfWeek: number | null;
-    weeklyIntervalWeeks: number;
-  } | null>(null);
+  const [config, setConfig] = useState<CleaningConfig | null>(null);
   const [sectors, setSectors] = useState<CleaningSector[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<{
+  const [modal, setModal] = useState<{
     type: CleaningType;
     sector: CleaningSector | null;
   } | null>(null);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   async function fetchAll() {
     const res = await apiFetch("/api/cleaning");
@@ -110,6 +119,22 @@ export function CleaningSettings() {
     };
   }, []);
 
+  async function updateConfig(update: Partial<CleaningConfig>) {
+    setSavingConfig(true);
+    try {
+      const res = await apiFetch("/api/cleaning", {
+        method: "PUT",
+        body: JSON.stringify(update),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setConfig(data.config);
+      }
+    } finally {
+      setSavingConfig(false);
+    }
+  }
+
   async function handleDelete(id: string) {
     const res = await apiFetch(`/api/cleaning/sectors/${id}`, {
       method: "DELETE",
@@ -125,11 +150,11 @@ export function CleaningSettings() {
   }
 
   async function handleSaved() {
-    setEditing(null);
+    setModal(null);
     await fetchAll();
   }
 
-  if (loading) {
+  if (loading || !config) {
     return (
       <ThemedText themeColor="textSecondary" style={styles.loadingText}>
         {t("common.loading")}
@@ -137,161 +162,199 @@ export function CleaningSettings() {
     );
   }
 
+  const meetingSectors = sectors
+    .filter((s) => s.type === "meeting")
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const weeklySectors = sectors
+    .filter((s) => s.type === "weekly")
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const generalSectors = sectors
+    .filter((s) => s.type === "general")
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+
   return (
     <ThemedView style={styles.container}>
-      <WeeklyConfigSection
-        config={config}
-        onSaved={() => fetchAll()}
-      />
+      <ThemedView style={styles.section}>
+        <ThemedText type="default" style={styles.sectionTitle}>
+          {t("cleaning.types.meeting")}
+        </ThemedText>
+        <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
+          {t("cleaning.typesSubtitle.meeting")}
+        </ThemedText>
 
-      {CLEANING_TYPES.map((type) => {
-        const typeSectors = sectors
-          .filter((s) => s.type === type)
-          .sort((a, b) => a.sortOrder - b.sortOrder);
-        const isEditingType =
-          editing?.type === type || editing?.sector?.type === type;
-        return (
-          <ThemedView key={type} style={styles.section}>
-            <ThemedText type="default" style={styles.sectionTitle}>
-              {t(`cleaning.types.${type}`)}
-            </ThemedText>
-            <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
-              {t(`cleaning.typesSubtitle.${type}`)}
-            </ThemedText>
+        <SectorList
+          sectors={meetingSectors}
+          onEdit={(sector) => setModal({ type: "meeting", sector })}
+          onDelete={handleDelete}
+          onAdd={() => setModal({ type: "meeting", sector: null })}
+        />
+      </ThemedView>
 
-            {typeSectors.length === 0 ? (
-              <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.three }}>
-                {t("cleaning.noSectors")}
-              </ThemedText>
-            ) : (
-              <ThemedView style={styles.sectorsList}>
-                {typeSectors.map((sector) => (
-                  <SectorCard
-                    key={sector.id}
-                    sector={sector}
-                    onEdit={() => setEditing({ type, sector })}
-                    onDelete={() => handleDelete(sector.id)}
-                    onRestore={
-                      sector.defaultKey
-                        ? () => handleRestore(sector.id)
-                        : undefined
-                    }
-                  />
-                ))}
-              </ThemedView>
-            )}
+      <ThemedView style={styles.section}>
+        <ThemedText type="default" style={styles.sectionTitle}>
+          {t("cleaning.types.weekly")}
+        </ThemedText>
+        <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
+          {t("cleaning.typesSubtitle.weekly")}
+        </ThemedText>
 
-            {isEditingType ? (
-              <SectorForm
-                sector={editing?.sector ?? null}
-                type={type}
-                onCancel={() => setEditing(null)}
-                onSaved={handleSaved}
-              />
-            ) : (
-              <Pressable
-                onPress={() => setEditing({ type, sector: null })}
-                style={({ pressed }) => [
-                  styles.secondaryBtn,
-                  { backgroundColor: theme.backgroundSelected },
-                  pressed && { opacity: 0.8 },
-                ]}
-              >
-                <ThemedText style={{ fontWeight: "600" }}>
-                  {t("cleaning.addSector")}
-                </ThemedText>
-              </Pressable>
-            )}
-          </ThemedView>
-        );
-      })}
+        {!config.weeklyEnabled ? (
+          <EnableCard
+            label={t("cleaning.enableWeekly")}
+            disabled={savingConfig}
+            onEnable={() => updateConfig({ weeklyEnabled: true })}
+          />
+        ) : (
+          <>
+            <WeeklySettings
+              config={config}
+              saving={savingConfig}
+              onUpdate={updateConfig}
+            />
+            <SectorList
+              sectors={weeklySectors}
+              onEdit={(sector) => setModal({ type: "weekly", sector })}
+              onDelete={handleDelete}
+              onAdd={() => setModal({ type: "weekly", sector: null })}
+            />
+          </>
+        )}
+      </ThemedView>
+
+      <ThemedView style={styles.section}>
+        <ThemedText type="default" style={styles.sectionTitle}>
+          {t("cleaning.types.general")}
+        </ThemedText>
+        <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
+          {t("cleaning.typesSubtitle.general")}
+        </ThemedText>
+
+        {!config.generalEnabled ? (
+          <EnableCard
+            label={t("cleaning.enableGeneral")}
+            disabled={savingConfig}
+            onEnable={() => updateConfig({ generalEnabled: true })}
+          />
+        ) : (
+          <SectorList
+            sectors={generalSectors}
+            onEdit={(sector) => setModal({ type: "general", sector })}
+            onDelete={handleDelete}
+            onAdd={() => setModal({ type: "general", sector: null })}
+          />
+        )}
+      </ThemedView>
+
+      {modal && (
+        <SectorModal
+          type={modal.type}
+          sector={modal.sector}
+          onRestore={
+            modal.sector?.defaultKey
+              ? async () => {
+                  if (modal.sector) {
+                    await handleRestore(modal.sector.id);
+                  }
+                  setModal((m) => (m ? { ...m, sector: null } : null));
+                }
+              : undefined
+          }
+          onCancel={() => setModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </ThemedView>
   );
 }
 
-function WeeklyConfigSection({
-  config,
-  onSaved,
+function EnableCard({
+  label,
+  disabled,
+  onEnable,
 }: {
-  config: {
-    weeklyEnabled: boolean;
-    weeklyDayOfWeek: number | null;
-    weeklyIntervalWeeks: number;
-  } | null;
-  onSaved: () => void;
+  label: string;
+  disabled: boolean;
+  onEnable: () => void;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Pressable
+      onPress={onEnable}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.enableCard,
+        { borderColor: theme.primary },
+        pressed && { opacity: 0.8 },
+        disabled && { opacity: 0.5 },
+      ]}
+    >
+      <ThemedText style={{ color: theme.primary, fontWeight: "600", textAlign: "center" }}>
+        {label}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
+function WeeklySettings({
+  config,
+  saving,
+  onUpdate,
+}: {
+  config: CleaningConfig;
+  saving: boolean;
+  onUpdate: (update: Partial<CleaningConfig>) => void;
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const [enabled, setEnabled] = useState(config?.weeklyEnabled ?? false);
-  const [dayOfWeek, setDayOfWeek] = useState(config?.weeklyDayOfWeek ?? 3);
+  const [dayOfWeek, setDayOfWeek] = useState(config.weeklyDayOfWeek ?? 3);
   const [intervalWeeks, setIntervalWeeks] = useState(
-    config?.weeklyIntervalWeeks ?? 1,
+    config.weeklyIntervalWeeks ?? 1,
   );
-  const [saving, setSaving] = useState(false);
-
-  async function handleSave() {
-    setSaving(true);
-    try {
-      const res = await apiFetch("/api/cleaning", {
-        method: "PUT",
-        body: JSON.stringify({
-          weeklyEnabled: enabled,
-          weeklyDayOfWeek: dayOfWeek,
-          weeklyIntervalWeeks: intervalWeeks,
-        }),
-      });
-      if (res.ok) await onSaved();
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <ThemedView type="backgroundElement" style={styles.weeklyCard}>
-      <ThemedText type="default" style={styles.sectionTitle}>
-        {t("cleaning.types.weekly")}
-      </ThemedText>
-      <ThemedText themeColor="textSecondary" style={styles.sectionSubtitle}>
-        {t("cleaning.typesSubtitle.weekly")}
-      </ThemedText>
-
       <ThemedView style={styles.field}>
-        <ThemedText type="small">{t("cleaning.weeklyEnabled")}</ThemedText>
-        <Switch
-          value={enabled}
-          onValueChange={setEnabled}
-          trackColor={{ true: theme.primary }}
-        />
+        <ThemedText type="small">{t("cleaning.weeklyDayOfWeek")}</ThemedText>
+        <DayPicker selected={dayOfWeek} onSelect={setDayOfWeek} />
       </ThemedView>
 
-      {enabled && (
-        <>
-          <ThemedView style={styles.field}>
-            <ThemedText type="small">{t("cleaning.weeklyDayOfWeek")}</ThemedText>
-            <DayPicker selected={dayOfWeek} onSelect={setDayOfWeek} />
-          </ThemedView>
+      <ThemedView style={styles.field}>
+        <ThemedText type="small">{t("cleaning.weeklyIntervalWeeks")}</ThemedText>
+        <IntervalPicker selected={intervalWeeks} onSelect={setIntervalWeeks} />
+      </ThemedView>
 
-          <ThemedView style={styles.field}>
-            <ThemedText type="small">{t("cleaning.weeklyIntervalWeeks")}</ThemedText>
-            <IntervalPicker selected={intervalWeeks} onSelect={setIntervalWeeks} />
-          </ThemedView>
-        </>
-      )}
-
-      <Pressable
-        onPress={handleSave}
-        disabled={saving}
-        style={({ pressed }) => [
-          styles.primaryBtn,
-          { backgroundColor: theme.primary },
-          pressed && { opacity: 0.8 },
-          saving && { opacity: 0.5 },
-        ]}
-      >
-        <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>
-          {t("common.save")}
-        </ThemedText>
-      </Pressable>
+      <ThemedView style={styles.actionsRow}>
+        <Pressable
+          onPress={() =>
+            onUpdate({ weeklyDayOfWeek: dayOfWeek, weeklyIntervalWeeks: intervalWeeks })
+          }
+          disabled={saving}
+          style={({ pressed }) => [
+            styles.primaryBtn,
+            { backgroundColor: theme.primary },
+            pressed && { opacity: 0.8 },
+            saving && { opacity: 0.5 },
+          ]}
+        >
+          <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>
+            {t("common.save")}
+          </ThemedText>
+        </Pressable>
+        <Pressable
+          onPress={() => onUpdate({ weeklyEnabled: false })}
+          disabled={saving}
+          style={({ pressed }) => [
+            styles.dangerBtn,
+            pressed && { opacity: 0.8 },
+            saving && { opacity: 0.5 },
+          ]}
+        >
+          <ThemedText style={{ color: theme.danger, fontWeight: "600" }}>
+            {t("cleaning.disable")}
+          </ThemedText>
+        </Pressable>
+      </ThemedView>
     </ThemedView>
   );
 }
@@ -370,20 +433,66 @@ function IntervalPicker({
   );
 }
 
+function SectorList({
+  sectors,
+  onEdit,
+  onDelete,
+  onAdd,
+}: {
+  sectors: CleaningSector[];
+  onEdit: (sector: CleaningSector) => void;
+  onDelete: (id: string) => void;
+  onAdd: () => void;
+}) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+
+  return (
+    <ThemedView style={styles.sectorsContainer}>
+      {sectors.length === 0 ? (
+        <ThemedText type="small" themeColor="textSecondary" style={{ marginBottom: Spacing.three }}>
+          {t("cleaning.noSectors")}
+        </ThemedText>
+      ) : (
+        <ThemedView style={styles.sectorsList}>
+          {sectors.map((sector) => (
+            <SectorCard
+              key={sector.id}
+              sector={sector}
+              onEdit={() => onEdit(sector)}
+              onDelete={() => onDelete(sector.id)}
+            />
+          ))}
+        </ThemedView>
+      )}
+
+      <Pressable
+        onPress={onAdd}
+        style={({ pressed }) => [
+          styles.secondaryBtn,
+          { backgroundColor: theme.backgroundSelected },
+          pressed && { opacity: 0.8 },
+        ]}
+      >
+        <ThemedText style={{ fontWeight: "600" }}>
+          {t("cleaning.addSector")}
+        </ThemedText>
+      </Pressable>
+    </ThemedView>
+  );
+}
+
 function SectorCard({
   sector,
   onEdit,
   onDelete,
-  onRestore,
 }: {
   sector: CleaningSector;
   onEdit: () => void;
   onDelete: () => void;
-  onRestore?: () => void;
 }) {
   const theme = useTheme();
   const { t } = useTranslation();
-  const isDefault = sector.defaultKey !== null;
 
   return (
     <ThemedView type="backgroundElement" style={styles.sectorCard}>
@@ -408,13 +517,6 @@ function SectorCard({
         </ThemedText>
       </ThemedView>
       <ThemedView style={styles.sectorActions}>
-        {onRestore && (
-          <Pressable onPress={onRestore} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
-            <ThemedText style={{ color: theme.secondary, fontSize: 13 }}>
-              {t("cleaning.restoreDefault")}
-            </ThemedText>
-          </Pressable>
-        )}
         <Pressable onPress={onEdit} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
           <ThemedText style={{ color: theme.primary, fontSize: 13 }}>
             {t("common.edit")}
@@ -426,23 +528,20 @@ function SectorCard({
           </ThemedText>
         </Pressable>
       </ThemedView>
-      {isDefault && (
-        <ThemedText type="small" themeColor="textSecondary" style={styles.defaultBadge}>
-          {t("cleaning.sectors")}
-        </ThemedText>
-      )}
     </ThemedView>
   );
 }
 
-function SectorForm({
+function SectorModal({
   type,
   sector,
+  onRestore,
   onCancel,
   onSaved,
 }: {
   type: CleaningType;
   sector: CleaningSector | null;
+  onRestore?: () => void;
   onCancel: () => void;
   onSaved: () => void;
 }) {
@@ -470,6 +569,7 @@ function SectorForm({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   async function handleSubmit() {
     if (!form.name.trim()) {
@@ -511,86 +611,128 @@ function SectorForm({
     }
   }
 
+  async function handleRestore() {
+    if (!onRestore) return;
+    setRestoring(true);
+    try {
+      await onRestore();
+    } finally {
+      setRestoring(false);
+    }
+  }
+
   return (
-    <ThemedView type="backgroundElement" style={styles.formCard}>
-      <ThemedText type="default" style={{ fontWeight: "600", marginBottom: Spacing.three }}>
-        {sector ? t("cleaning.editSector") : t("cleaning.newSector")}
-      </ThemedText>
+    <Modal visible transparent animationType="slide" onRequestClose={onCancel}>
+      <View style={styles.modalOverlay}>
+        <ThemedView type="backgroundElement" style={styles.modalContent}>
+          <ThemedText type="default" style={{ fontWeight: "600", marginBottom: Spacing.three }}>
+            {sector ? t("cleaning.editSector") : t("cleaning.newSector")}
+          </ThemedText>
 
-      <ThemedView style={styles.field}>
-        <ThemedText type="small">{t("cleaning.sectorName")}</ThemedText>
-        <TextInput
-          value={form.name}
-          onChangeText={(name) => setForm({ ...form, name })}
-          placeholder={t("cleaning.sectorName")}
-          placeholderTextColor={theme.textSecondary}
-          style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
-        />
-      </ThemedView>
+          {onRestore && (
+            <Pressable
+              onPress={handleRestore}
+              disabled={restoring}
+              style={({ pressed }) => [
+                styles.restoreBtn,
+                { backgroundColor: theme.secondary },
+                pressed && { opacity: 0.8 },
+                restoring && { opacity: 0.5 },
+              ]}
+            >
+              <ThemedText style={{ color: theme.secondaryForeground, fontWeight: "600" }}>
+                {t("cleaning.restoreDefault")}
+              </ThemedText>
+            </Pressable>
+          )}
 
-      <ThemedView style={styles.field}>
-        <ThemedText type="small">{t("cleaning.task")}</ThemedText>
-        <TextInput
-          value={form.task}
-          onChangeText={(task) => setForm({ ...form, task })}
-          placeholder={t("cleaning.task")}
-          placeholderTextColor={theme.textSecondary}
-          multiline
-          style={[styles.input, styles.taskInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
-        />
-      </ThemedView>
-
-      <ThemedView style={styles.field}>
-        <ThemedText type="small">{t("cleaning.unit")}</ThemedText>
-        <UnitPicker type={type} selected={form.unit} onSelect={(unit) => setForm({ ...form, unit })} />
-      </ThemedView>
-
-      {type === "meeting" && (
-        <>
           <ThemedView style={styles.field}>
-            <ThemedText type="small">{t("cleaning.peopleCount")}</ThemedText>
+            <ThemedText type="small">{t("cleaning.sectorName")}</ThemedText>
             <TextInput
-              value={form.peopleCount}
-              onChangeText={(peopleCount) => setForm({ ...form, peopleCount })}
-              keyboardType="number-pad"
+              value={form.name}
+              onChangeText={(name) => setForm({ ...form, name })}
+              placeholder={t("cleaning.sectorName")}
+              placeholderTextColor={theme.textSecondary}
               style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
             />
           </ThemedView>
 
           <ThemedView style={styles.field}>
-            <ThemedText type="small">{t("cleaning.allowYoung")}</ThemedText>
-            <Switch
-              value={form.allowYoung}
-              onValueChange={(allowYoung) => setForm({ ...form, allowYoung })}
-              trackColor={{ true: theme.primary }}
+            <ThemedText type="small">{t("cleaning.task")}</ThemedText>
+            <TextInput
+              value={form.task}
+              onChangeText={(task) => setForm({ ...form, task })}
+              placeholder={t("cleaning.task")}
+              placeholderTextColor={theme.textSecondary}
+              multiline
+              style={[styles.input, styles.taskInput, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
             />
           </ThemedView>
 
           <ThemedView style={styles.field}>
-            <ThemedText type="small">{t("cleaning.gender")}</ThemedText>
-            <GenderPicker selected={form.gender} onSelect={(gender) => setForm({ ...form, gender })} />
+            <ThemedText type="small">{t("cleaning.unit")}</ThemedText>
+            <UnitPicker type={type} selected={form.unit} onSelect={(unit) => setForm({ ...form, unit })} />
           </ThemedView>
-        </>
-      )}
 
-      {error && <ThemedText type="small" style={{ color: theme.danger }}>{error}</ThemedText>}
+          {type === "meeting" && (
+            <>
+              <ThemedView style={styles.field}>
+                <ThemedText type="small">{t("cleaning.peopleCount")}</ThemedText>
+                <TextInput
+                  value={form.peopleCount}
+                  onChangeText={(peopleCount) => setForm({ ...form, peopleCount })}
+                  keyboardType="number-pad"
+                  style={[styles.input, { backgroundColor: theme.background, color: theme.text, borderColor: theme.border }]}
+                />
+              </ThemedView>
 
-      <ThemedView style={styles.actionsRow}>
-        <Pressable
-          onPress={handleSubmit}
-          disabled={saving}
-          style={({ pressed }) => [styles.primaryBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.8 }, saving && { opacity: 0.5 }]}
-        >
-          <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>{t("common.save")}</ThemedText>
-        </Pressable>
-        <Pressable
-          onPress={onCancel}
-          style={({ pressed }) => [styles.secondaryBtn, { backgroundColor: theme.backgroundSelected }, pressed && { opacity: 0.8 }]}
-        >
-          <ThemedText style={{ fontWeight: "600" }}>{t("common.cancel")}</ThemedText>
-        </Pressable>
-      </ThemedView>
-    </ThemedView>
+              <ThemedView style={styles.field}>
+                <ThemedText type="small">{t("cleaning.allowYoung")}</ThemedText>
+                <Switch
+                  value={form.allowYoung}
+                  onValueChange={(allowYoung) => setForm({ ...form, allowYoung })}
+                  trackColor={{ true: theme.primary }}
+                />
+              </ThemedView>
+
+              <ThemedView style={styles.field}>
+                <ThemedText type="small">{t("cleaning.gender")}</ThemedText>
+                <GenderPicker selected={form.gender} onSelect={(gender) => setForm({ ...form, gender })} />
+              </ThemedView>
+            </>
+          )}
+
+          {error && <ThemedText type="small" style={{ color: theme.danger }}>{error}</ThemedText>}
+
+          <ThemedView style={styles.actionsRow}>
+            <Pressable
+              onPress={handleSubmit}
+              disabled={saving}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                { backgroundColor: theme.primary },
+                pressed && { opacity: 0.8 },
+                saving && { opacity: 0.5 },
+              ]}
+            >
+              <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>
+                {t("common.save")}
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={onCancel}
+              style={({ pressed }) => [
+                styles.secondaryBtn,
+                { backgroundColor: theme.backgroundSelected },
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <ThemedText style={{ fontWeight: "600" }}>{t("common.cancel")}</ThemedText>
+            </Pressable>
+          </ThemedView>
+        </ThemedView>
+      </View>
+    </Modal>
   );
 }
 
@@ -615,7 +757,11 @@ function UnitPicker({
           <Pressable
             key={unit}
             onPress={() => onSelect(unit)}
-            style={[styles.typeChip, { borderColor: theme.primary }, active && { backgroundColor: theme.primary }]}
+            style={[
+              styles.typeChip,
+              { borderColor: theme.primary },
+              active && { backgroundColor: theme.primary },
+            ]}
           >
             <ThemedText
               type="small"
@@ -648,7 +794,11 @@ function GenderPicker({
           <Pressable
             key={gender}
             onPress={() => onSelect(gender)}
-            style={[styles.typeChip, { borderColor: theme.primary }, active && { backgroundColor: theme.primary }]}
+            style={[
+              styles.typeChip,
+              { borderColor: theme.primary },
+              active && { backgroundColor: theme.primary },
+            ]}
           >
             <ThemedText
               type="small"
@@ -669,21 +819,31 @@ const styles = StyleSheet.create({
   sectionTitle: { fontWeight: "700" },
   sectionSubtitle: { marginTop: -Spacing.one },
   loadingText: { textAlign: "center", marginTop: Spacing.four },
-  weeklyCard: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.three },
+  enableCard: {
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderRadius: Spacing.three,
+    paddingVertical: Spacing.five,
+    alignItems: "center",
+  },
+  weeklyCard: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.three, marginBottom: Spacing.three },
   field: { gap: Spacing.one },
   input: { borderRadius: Spacing.two, borderWidth: 1, paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, fontSize: 16 },
   taskInput: { minHeight: 80, textAlignVertical: "top" },
   dayGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.one },
   dayChip: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two, borderWidth: 1, minWidth: 92 },
+  sectorsContainer: { gap: Spacing.three },
   sectorsList: { gap: Spacing.two },
-  sectorCard: { flexDirection: "column", gap: Spacing.two, padding: Spacing.three, borderRadius: Spacing.three },
-  sectorInfo: { gap: Spacing.one },
+  sectorCard: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: Spacing.two, padding: Spacing.three, borderRadius: Spacing.three },
+  sectorInfo: { flex: 1, gap: Spacing.one },
   sectorActions: { flexDirection: "row", gap: Spacing.three, marginLeft: Spacing.two },
-  defaultBadge: { fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
-  formCard: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.three },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", padding: Spacing.four },
+  modalContent: { borderRadius: Spacing.three, padding: Spacing.four, gap: Spacing.three, maxHeight: "85%" },
+  restoreBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center" },
   typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.one },
   typeChip: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two, borderWidth: 1 },
   actionsRow: { flexDirection: "row", gap: Spacing.two, marginTop: Spacing.one },
   primaryBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1 },
   secondaryBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1 },
+  dangerBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1, borderWidth: 1, borderColor: "#DC2626" },
 });
