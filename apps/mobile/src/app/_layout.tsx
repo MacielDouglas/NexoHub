@@ -1,11 +1,11 @@
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { AuthProvider } from '@/lib/auth-context';
-import '@/i18n';
+import { AnimatedSplashOverlay } from "@/components/animated-icon";
+import { AuthProvider } from "@/lib/auth-context";
+import "@/i18n";
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (

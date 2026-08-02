@@ -1,8 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import i18n, { normalizeLanguage } from "@/i18n";
 import { apiFetch } from "./api";
-import { authClient, updateLanguage } from "./auth-client";
+import { authClient } from "./auth-client";
 
 export interface Session {
   user: {
@@ -46,13 +53,40 @@ async function fetchOrganizationState(userId: string): Promise<{
 }> {
   try {
     const res = await apiFetch("/api/members");
-    if (!res.ok) return { hasOrganization: false, role: null };
+    console.log("[auth] /api/members status:", res.status);
+
+    if (!res.ok) {
+      const text = await res.text();
+      console.log("[auth] /api/members body:", text);
+      return { hasOrganization: false, role: null };
+    }
+
     const data = await res.json();
+    console.log("[auth] /api/members json:", data);
+
     const members: { userId: string; role: string }[] = data.members ?? [];
-    const current = members.find((m) => m.userId === userId);
-    return { hasOrganization: true, role: current?.role ?? null };
-  } catch {
+    const current = members.find((member) => member.userId === userId);
+
+    return {
+      hasOrganization: true,
+      role: current?.role ?? null,
+    };
+  } catch (error) {
+    console.log("[auth] /api/members error:", error);
     return { hasOrganization: false, role: null };
+  }
+}
+
+async function persistLanguage(language: string): Promise<boolean> {
+  try {
+    const response = await apiFetch("/api/user/language", {
+      method: "PATCH",
+      body: JSON.stringify({ language }),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
   }
 }
 
@@ -66,15 +100,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadSession = useCallback(async () => {
     try {
       const { data } = await authClient.getSession();
+
       if (!mounted.current) return;
+
       if (data) {
         const sessionData = data as unknown as Session;
         setSession(sessionData);
+
         if (sessionData.user.language) {
-          i18n.changeLanguage(normalizeLanguage(sessionData.user.language));
+          await i18n.changeLanguage(
+            normalizeLanguage(sessionData.user.language),
+          );
         }
+
         const org = await fetchOrganizationState(sessionData.user.id);
+
         if (!mounted.current) return;
+
         setHasOrganization(org.hasOrganization);
         setOrganizationRole(org.role);
       } else {
@@ -89,65 +131,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOrganizationRole(null);
       }
     } finally {
-      if (mounted.current) setIsLoading(false);
+      if (mounted.current) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
     mounted.current = true;
-    async function load() {
-      try {
-        const { data } = await authClient.getSession();
-        if (cancelled || !mounted.current) return;
-        if (data) {
-          const sessionData = data as unknown as Session;
-          setSession(sessionData);
-          if (sessionData.user.language) {
-            i18n.changeLanguage(normalizeLanguage(sessionData.user.language));
-          }
-          const org = await fetchOrganizationState(sessionData.user.id);
-          if (cancelled || !mounted.current) return;
-          setHasOrganization(org.hasOrganization);
-          setOrganizationRole(org.role);
-        } else {
-          setSession(null);
-          setHasOrganization(false);
-          setOrganizationRole(null);
-        }
-      } catch {
-        if (!cancelled && mounted.current) {
-          setSession(null);
-          setHasOrganization(false);
-          setOrganizationRole(null);
-        }
-      } finally {
-        if (!cancelled && mounted.current) setIsLoading(false);
-      }
-    }
 
-    load();
+    const run = async () => {
+      await loadSession();
+    };
+
+    void run();
+
     return () => {
-      cancelled = true;
       mounted.current = false;
     };
-  }, []);
+  }, [loadSession]);
 
-  async function handleSignOut() {
+  const handleSignOut = useCallback(async () => {
     await authClient.signOut();
+    if (!mounted.current) return;
+
     setSession(null);
     setHasOrganization(false);
     setOrganizationRole(null);
-  }
+  }, []);
 
-  async function handleSetLanguage(lang: string) {
-    const normalized = normalizeLanguage(lang);
-    i18n.changeLanguage(normalized);
-    const ok = await updateLanguage(normalized);
-    if (ok && session) {
-      setSession({ ...session, user: { ...session.user, language: normalized } });
-    }
-  }
+  const handleSetLanguage = useCallback(
+    async (lang: string) => {
+      const normalized = normalizeLanguage(lang);
+      await i18n.changeLanguage(normalized);
+
+      const ok = await persistLanguage(normalized);
+
+      if (ok && session && mounted.current) {
+        setSession({
+          ...session,
+          user: {
+            ...session.user,
+            language: normalized,
+          },
+        });
+      }
+    },
+    [session],
+  );
 
   return (
     <AuthContext.Provider

@@ -23,7 +23,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#2563EB] via-[#3B5BDB] to-[#7C3AED] p-6">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-linear-to-br from-[#2563EB] via-[#3B5BDB] to-[#7C3AED] p-6">
       <div
         className="absolute inset-0 opacity-20"
         style={{
@@ -38,7 +38,7 @@ export default function LoginPage() {
       <div className="relative w-full max-w-md">
         <div className="rounded-3xl bg-white p-8 shadow-2xl">
           <div className="mb-8 flex flex-col items-center gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED] shadow-lg">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-[#2563EB] to-[#7C3AED] shadow-lg">
               <span className="text-3xl font-bold text-white">N</span>
             </div>
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900">

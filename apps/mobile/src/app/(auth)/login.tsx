@@ -8,7 +8,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { authClient } from "@/lib/auth-client";
+import { signInWithGoogleIdToken } from "@/lib/google-sign-in";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginScreen() {
@@ -23,23 +23,22 @@ export default function LoginScreen() {
     setIsSigningIn(true);
 
     try {
-      const result = await authClient.signIn.social({
-        provider: "google",
-        callbackURL: "/",
-      });
+      const result = await signInWithGoogleIdToken();
 
       if (result?.error) {
-        console.error("Erro ao iniciar login com Google:", result.error);
+        console.error("Erro ao autenticar com Google:", result.error);
         setErrorMessage(t("login.signInError"));
-        setIsSigningIn(false);
         return;
       }
 
       await refreshSession();
       router.replace("/(tabs)");
     } catch (error) {
-      console.error("Erro ao iniciar login com Google:", error);
-      setErrorMessage(t("login.signInError"));
+      console.error("Erro ao autenticar com Google:", error);
+      setErrorMessage(
+        error instanceof Error ? error.message : t("login.signInError"),
+      );
+    } finally {
       setIsSigningIn(false);
     }
   }
@@ -74,7 +73,10 @@ export default function LoginScreen() {
 
       <ThemedView style={styles.bottomSection}>
         {errorMessage ? (
-          <ThemedText type="small" style={[styles.errorText, { color: theme.danger }]}>
+          <ThemedText
+            type="small"
+            style={[styles.errorText, { color: theme.danger }]}
+          >
             {errorMessage}
           </ThemedText>
         ) : null}

@@ -5,12 +5,10 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": [
-      "nexohub",
-      "com.googleusercontent.apps.795969729961-lh7l31kqvvdkt0miag5i4d14vb7mulu9"
-    ],
+    "scheme": "nexohub",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.douglasmaciel.nexohub",
       "icon": "./assets/expo.icon"
     },
     "android": {
