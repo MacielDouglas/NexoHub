@@ -15,7 +15,7 @@ export default async function AdminLayout({
   }
 
   if (session.user.globalRole !== "super_user") {
-    redirect("/dashboard");
+    redirect("/app");
   }
 
   return (

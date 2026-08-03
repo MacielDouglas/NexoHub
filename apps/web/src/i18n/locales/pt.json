@@ -36,6 +36,27 @@
     "admin": "Admin",
     "meetingContent": "Conteúdo das Reuniões"
   },
+  "OrganizationNavigation": {
+    "organization": "Organização",
+    "currentOrganization": "Organização atual",
+    "menu": "Menu",
+    "openMenu": "Abrir menu",
+    "closeMenu": "Fechar menu",
+    "sidebarAria": "Menu lateral da organização",
+    "mobileMenuAria": "Menu mobile da organização",
+    "searchPlaceholder": "Buscar dentro do app...",
+    "noEmail": "Sem e-mail",
+    "otherOrganizations": "Outras organizações",
+    "overview": "Visão geral",
+    "meetings": "Reuniões",
+    "people": "Pessoas",
+    "groups": "Grupos",
+    "meetingContent": "Conteúdo das reuniões",
+    "families": "Famílias",
+    "cleaning": "Designação de limpeza",
+    "outlines": "Discursos",
+    "settings": "Configurações"
+  },
   "welcome": {
     "title": "Bem-vindo ao Nexohub",
     "subtitle": "Organize as reuniões e designações da sua congregação. Entre com o código de convite enviado pelo responsável da sua congregação.",

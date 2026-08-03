@@ -20,7 +20,7 @@ export default async function WelcomePage() {
   });
 
   if (member) {
-    redirect("/dashboard");
+    redirect("/app");
   }
 
   if (session.user.globalRole === "owner") {

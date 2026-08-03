@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         purpose: "member",
         organizationSlug: organization.slug,
-        next: "/dashboard",
+        next: "/app",
       });
     }
 

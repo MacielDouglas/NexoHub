@@ -114,7 +114,7 @@ export function AdminClient() {
       toast.error(data?.error ?? "Erro");
       return;
     }
-    router.push("/dashboard");
+    router.push("/app");
     router.refresh();
   }
 
@@ -143,7 +143,7 @@ export function AdminClient() {
       <header className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-[#2563EB] to-[#7C3AED]">
               <span className="text-lg font-bold text-white">N</span>
             </div>
             <span className="text-lg font-semibold">Nexohub</span>
@@ -153,7 +153,7 @@ export function AdminClient() {
         <div className="flex items-center gap-4">
           <LanguageSwitcher />
           <Link
-            href="/dashboard"
+            href="/app"
             className="text-sm text-zinc-500 hover:text-zinc-800"
             onClick={exitOrg}
           >

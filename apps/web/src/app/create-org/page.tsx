@@ -24,7 +24,7 @@ export default async function CreateOrgPage() {
   });
 
   if (member) {
-    redirect("/dashboard");
+    redirect("/app");
   }
 
   return <CreateOrgClient lang={session.user.language} />;

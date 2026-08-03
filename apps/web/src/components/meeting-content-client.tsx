@@ -1,5 +1,4 @@
 "use client";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -13,10 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 import { ItemEditor } from "./meeting-content-editors";
 import {
-  CONTENT_TABS,
   type ContentTabKey,
   emptyItemData,
   formatContentIssue,
@@ -27,21 +24,20 @@ import {
 } from "./meeting-content-types";
 
 type FlatContent = MeetingContent & { items: MeetingContentItem[] };
-
 function numberKey(item: MeetingContentItem): number {
   const n = (item.data as { number?: number | null })?.number;
   return typeof n === "number" ? n : Number.MAX_SAFE_INTEGER;
 }
-
 export function MeetingContentClient({
+  tab,
   role,
 }: {
+  tab: ContentTabKey;
   role?: string;
   isSuperUser?: boolean;
 }) {
   const { t } = useTranslation();
   const canManage = role === "owner" || role === "admin";
-  const [tab, setTab] = useState<ContentTabKey>("apostila");
   const [contents, setContents] = useState<MeetingContent[]>([]);
   const [flat, setFlat] = useState<FlatContent[]>([]);
   const [selected, setSelected] = useState<LoadedContent | null>(null);
@@ -58,9 +54,7 @@ export function MeetingContentClient({
     existingTitle: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const isFlat = tab === "discursos" || tab === "canticos";
-
   const fetchContents = useCallback(async () => {
     const res = await fetch("/api/meeting-content");
     if (res.ok) {
@@ -68,7 +62,6 @@ export function MeetingContentClient({
       if (data.contents) setContents(data.contents);
     }
   }, []);
-
   const fetchFlat = useCallback(async (type: ContentTabKey) => {
     const res = await fetch(`/api/meeting-content?type=${type}&includeItems=1`);
     if (res.ok) {
@@ -76,7 +69,6 @@ export function MeetingContentClient({
       if (data.contents) setFlat(data.contents);
     }
   }, []);
-
   const refreshCurrent = useCallback(async () => {
     if (tab === "discursos" || tab === "canticos") {
       await fetchFlat(tab);
@@ -84,7 +76,6 @@ export function MeetingContentClient({
       await fetchContents();
     }
   }, [tab, fetchContents, fetchFlat]);
-
   useEffect(() => {
     let cancelled = false;
     async function init() {
@@ -97,7 +88,6 @@ export function MeetingContentClient({
       cancelled = true;
     };
   }, [refreshCurrent]);
-
   useEffect(() => {
     async function loadSongs() {
       const res = await fetch(
@@ -119,7 +109,6 @@ export function MeetingContentClient({
     }
     void loadSongs();
   }, []);
-
   async function openContent(content: MeetingContent) {
     setSelected(null);
     const res = await fetch(`/api/meeting-content/${content.id}`);
@@ -128,7 +117,6 @@ export function MeetingContentClient({
       if (data.content) setSelected(data.content);
     }
   }
-
   async function handleImport(file: File) {
     setUploading(true);
     setUploadError(null);
@@ -143,16 +131,11 @@ export function MeetingContentClient({
           body: form,
         });
       };
-
       const res = await doUpload(false);
-
       if (res.status === 409) {
         const data = await res.json().catch(() => null);
         const existing = data?.existing as { title?: string } | undefined;
-        setPendingReplace({
-          file,
-          existingTitle: existing?.title ?? "",
-        });
+        setPendingReplace({ file, existingTitle: existing?.title ?? "" });
         return;
       } else if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -167,7 +150,6 @@ export function MeetingContentClient({
         }
         return;
       }
-
       setSelected(null);
       await refreshCurrent();
       setSongTitles(new Map());
@@ -178,7 +160,6 @@ export function MeetingContentClient({
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
-
   async function runReplaceImport(file: File) {
     setUploading(true);
     setUploadError(null);
@@ -205,7 +186,6 @@ export function MeetingContentClient({
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
-
   async function loadSongTitles() {
     const res = await fetch(
       "/api/meeting-content?type=canticos&includeItems=1",
@@ -224,7 +204,6 @@ export function MeetingContentClient({
       setSongTitles(map);
     }
   }
-
   async function handleDeleteContent(contentId: string) {
     const res = await fetch(`/api/meeting-content/${contentId}`, {
       method: "DELETE",
@@ -237,7 +216,6 @@ export function MeetingContentClient({
       toast.error(t("meetingContent.importError"));
     }
   }
-
   async function handleDeleteAll() {
     const res = await fetch(`/api/meeting-content?type=${tab}`, {
       method: "DELETE",
@@ -249,7 +227,6 @@ export function MeetingContentClient({
       toast.error(t("meetingContent.importError"));
     }
   }
-
   async function handleCreateEmpty() {
     const res = await fetch("/api/meeting-content", {
       method: "POST",
@@ -262,7 +239,6 @@ export function MeetingContentClient({
       await openContent(data.content);
     }
   }
-
   async function saveItem(
     item: MeetingContentItem,
     data: Record<string, unknown>,
@@ -301,7 +277,6 @@ export function MeetingContentClient({
     }
     return true;
   }
-
   async function addItem() {
     if (!selected) return;
     const res = await fetch(`/api/meeting-content/${selected.id}/items`, {
@@ -316,7 +291,6 @@ export function MeetingContentClient({
       );
     }
   }
-
   async function deleteItem(itemId: string) {
     if (!selected) return;
     const res = await fetch(`/api/meeting-content/items/${itemId}`, {
@@ -330,7 +304,6 @@ export function MeetingContentClient({
       );
     }
   }
-
   async function addFlatItem() {
     let target = flat[0];
     if (!target) {
@@ -357,7 +330,6 @@ export function MeetingContentClient({
       );
     }
   }
-
   async function deleteFlatItem(item: MeetingContentItem) {
     const res = await fetch(`/api/meeting-content/items/${item.id}`, {
       method: "DELETE",
@@ -375,7 +347,6 @@ export function MeetingContentClient({
       toast.error(t("meetingContent.importError"));
     }
   }
-
   const tabContents = contents
     .filter((c) => c.type === tab)
     .sort(
@@ -390,47 +361,25 @@ export function MeetingContentClient({
       num == null ? null : (songTitles.get(num) ?? null),
     [songTitles],
   );
-
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
+      {" "}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold">{t("meetingContent.title")}</h1>
+        {" "}
+        <h1 className="text-2xl font-semibold">{t("meetingContent.title")}</h1>{" "}
         <p className="mt-1 text-muted-foreground">
-          {t("meetingContent.subtitle")}
-        </p>
-      </div>
-
-      <div className="mb-8 flex gap-1.5 rounded-xl bg-muted p-1.5">
-        {CONTENT_TABS.map(({ key, icon }) => {
-          const active = tab === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => {
-                setTab(key);
-                setSelected(null);
-              }}
-              className={cn(
-                "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <span className="mr-1.5">{icon}</span>
-              {t(`meetingContent.tabs.${key}`)}
-            </button>
-          );
-        })}
-      </div>
-
+          {" "}
+          {t("meetingContent.subtitle")}{" "}
+        </p>{" "}
+      </div>{" "}
       {loading ? (
         <p className="text-muted-foreground">{t("common.loading")}</p>
       ) : isFlat ? (
         <>
+          {" "}
           {canManage && (
             <div className="mb-6 flex flex-wrap items-center gap-3">
+              {" "}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -440,24 +389,26 @@ export function MeetingContentClient({
                   const file = e.target.files?.[0];
                   if (file) void handleImport(file);
                 }}
-              />
+              />{" "}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
               >
+                {" "}
                 {uploading
                   ? t("meetingContent.importing")
-                  : t("meetingContent.importFile")}
-              </button>
+                  : t("meetingContent.importFile")}{" "}
+              </button>{" "}
               {uploadError && (
                 <span className="text-sm text-destructive" role="alert">
-                  {uploadError}
+                  {" "}
+                  {uploadError}{" "}
                 </span>
-              )}
+              )}{" "}
             </div>
-          )}
+          )}{" "}
           <FlatView
             type={tab}
             items={flatItems}
@@ -467,7 +418,7 @@ export function MeetingContentClient({
             onSaveItem={saveItem}
             onDeleteItem={deleteFlatItem}
             onDeleteAll={() => setConfirmDeleteAll(true)}
-          />
+          />{" "}
         </>
       ) : selected ? (
         <SelectedView
@@ -481,8 +432,10 @@ export function MeetingContentClient({
         />
       ) : (
         <>
+          {" "}
           {canManage && (
             <div className="mb-6 flex flex-wrap items-center gap-3">
+              {" "}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -492,40 +445,45 @@ export function MeetingContentClient({
                   const file = e.target.files?.[0];
                   if (file) void handleImport(file);
                 }}
-              />
+              />{" "}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
               >
+                {" "}
                 {uploading
                   ? t("meetingContent.importing")
-                  : t("meetingContent.importFile")}
-              </button>
+                  : t("meetingContent.importFile")}{" "}
+              </button>{" "}
               <button
                 type="button"
                 onClick={handleCreateEmpty}
                 className="rounded-xl bg-background px-5 py-2.5 text-sm font-medium text-foreground ring-1 ring-border transition-colors hover:bg-muted"
               >
-                {t("meetingContent.createEmpty")}
-              </button>
+                {" "}
+                {t("meetingContent.createEmpty")}{" "}
+              </button>{" "}
               {uploadError && (
                 <span className="text-sm text-destructive" role="alert">
-                  {uploadError}
+                  {" "}
+                  {uploadError}{" "}
                 </span>
-              )}
+              )}{" "}
             </div>
-          )}
-
+          )}{" "}
           {tabContents.length === 0 ? (
             <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-5 py-12 ring-1 ring-border">
+              {" "}
               <p className="text-muted-foreground">
-                {t("meetingContent.empty")}
-              </p>
+                {" "}
+                {t("meetingContent.empty")}{" "}
+              </p>{" "}
             </div>
           ) : (
             <div className="space-y-3">
+              {" "}
               {tabContents.map((content) => (
                 <ContentCard
                   key={content.id}
@@ -535,29 +493,34 @@ export function MeetingContentClient({
                   onOpen={() => openContent(content)}
                   onDelete={() => setConfirmDelete(content)}
                 />
-              ))}
+              ))}{" "}
             </div>
-          )}
+          )}{" "}
         </>
-      )}
-
+      )}{" "}
       <AlertDialog
         open={confirmDelete != null}
         onOpenChange={(open) => {
           if (!open) setConfirmDelete(null);
         }}
       >
+        {" "}
         <AlertDialogContent>
+          {" "}
           <AlertDialogHeader>
+            {" "}
             <AlertDialogTitle>
-              {t("meetingContent.deleteConfirmTitle")}
-            </AlertDialogTitle>
+              {" "}
+              {t("meetingContent.deleteConfirmTitle")}{" "}
+            </AlertDialogTitle>{" "}
             <AlertDialogDescription>
-              {t("meetingContent.deleteConfirmDescription")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+              {" "}
+              {t("meetingContent.deleteConfirmDescription")}{" "}
+            </AlertDialogDescription>{" "}
+          </AlertDialogHeader>{" "}
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            {" "}
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>{" "}
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -565,29 +528,35 @@ export function MeetingContentClient({
                 setConfirmDelete(null);
               }}
             >
-              {t("common.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
+              {" "}
+              {t("common.delete")}{" "}
+            </AlertDialogAction>{" "}
+          </AlertDialogFooter>{" "}
+        </AlertDialogContent>{" "}
+      </AlertDialog>{" "}
       <AlertDialog
         open={confirmDeleteAll}
         onOpenChange={(open) => {
           if (!open) setConfirmDeleteAll(false);
         }}
       >
+        {" "}
         <AlertDialogContent>
+          {" "}
           <AlertDialogHeader>
+            {" "}
             <AlertDialogTitle>
-              {t("meetingContent.removeAllConfirmTitle")}
-            </AlertDialogTitle>
+              {" "}
+              {t("meetingContent.removeAllConfirmTitle")}{" "}
+            </AlertDialogTitle>{" "}
             <AlertDialogDescription>
-              {t("meetingContent.removeAllConfirm")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+              {" "}
+              {t("meetingContent.removeAllConfirm")}{" "}
+            </AlertDialogDescription>{" "}
+          </AlertDialogHeader>{" "}
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            {" "}
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>{" "}
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -595,46 +564,52 @@ export function MeetingContentClient({
                 void handleDeleteAll();
               }}
             >
-              {t("common.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
+              {" "}
+              {t("common.delete")}{" "}
+            </AlertDialogAction>{" "}
+          </AlertDialogFooter>{" "}
+        </AlertDialogContent>{" "}
+      </AlertDialog>{" "}
       <AlertDialog
         open={pendingReplace != null}
         onOpenChange={(open) => {
           if (!open) setPendingReplace(null);
         }}
       >
+        {" "}
         <AlertDialogContent>
+          {" "}
           <AlertDialogHeader>
+            {" "}
             <AlertDialogTitle>
-              {t("meetingContent.duplicateConfirmTitle")}
-            </AlertDialogTitle>
+              {" "}
+              {t("meetingContent.duplicateConfirmTitle")}{" "}
+            </AlertDialogTitle>{" "}
             <AlertDialogDescription>
+              {" "}
               {t("meetingContent.duplicateConfirm", {
                 title: pendingReplace?.existingTitle ?? "",
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+              })}{" "}
+            </AlertDialogDescription>{" "}
+          </AlertDialogHeader>{" "}
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            {" "}
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>{" "}
             <AlertDialogAction
               onClick={() => {
                 if (pendingReplace) void runReplaceImport(pendingReplace.file);
                 setPendingReplace(null);
               }}
             >
-              {t("meetingContent.duplicateConfirmReplace")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              {" "}
+              {t("meetingContent.duplicateConfirmReplace")}{" "}
+            </AlertDialogAction>{" "}
+          </AlertDialogFooter>{" "}
+        </AlertDialogContent>{" "}
+      </AlertDialog>{" "}
     </div>
   );
 }
-
 function ContentCard({
   type,
   content,
@@ -650,18 +625,22 @@ function ContentCard({
 }) {
   const { t } = useTranslation();
   const issue = formatContentIssue(type, content);
-
   return (
     <div className="rounded-2xl bg-card ring-1 ring-border">
+      {" "}
       <div className="flex items-center justify-between gap-3 px-5 py-4">
+        {" "}
         <div className="min-w-0">
+          {" "}
           {issue && (
             <p className="text-lg font-semibold text-primary">{issue}</p>
-          )}
+          )}{" "}
           <p className="truncate font-medium">
-            {content.title || t("meetingContent.untitled")}
-          </p>
+            {" "}
+            {content.title || t("meetingContent.untitled")}{" "}
+          </p>{" "}
           <p className="text-sm text-muted-foreground">
+            {" "}
             {[
               type === "apostila" ? content.coverTitle : null,
               content.symbol,
@@ -670,32 +649,34 @@ function ContentCard({
               }),
             ]
               .filter(Boolean)
-              .join(" · ")}
-          </p>
-        </div>
+              .join(" · ")}{" "}
+          </p>{" "}
+        </div>{" "}
         <div className="flex shrink-0 items-center gap-3">
+          {" "}
           <button
             type="button"
             onClick={onOpen}
             className="text-sm font-medium text-primary hover:underline"
           >
-            {canManage ? t("common.edit") : t("meetingContent.view")}
-          </button>
+            {" "}
+            {canManage ? t("common.edit") : t("meetingContent.view")}{" "}
+          </button>{" "}
           {canManage && (
             <button
               type="button"
               onClick={onDelete}
               className="text-sm font-medium text-destructive hover:underline"
             >
-              {t("common.delete")}
+              {" "}
+              {t("common.delete")}{" "}
             </button>
-          )}
-        </div>
-      </div>
+          )}{" "}
+        </div>{" "}
+      </div>{" "}
     </div>
   );
 }
-
 function SelectedView({
   content,
   canManage,
@@ -719,48 +700,54 @@ function SelectedView({
   const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
   return (
     <div>
+      {" "}
       <button
         type="button"
         onClick={onBack}
         className="mb-4 text-sm font-medium text-primary hover:underline"
       >
-        ← {t("meetingContent.back")}
-      </button>
-
+        {" "}
+        ← {t("meetingContent.back")}{" "}
+      </button>{" "}
       <div className="mb-6 flex items-center justify-between gap-3">
+        {" "}
         <div className="min-w-0">
+          {" "}
           {formatContentIssue(content.type, content) && (
             <p className="text-lg font-semibold text-primary">
-              {formatContentIssue(content.type, content)}
+              {" "}
+              {formatContentIssue(content.type, content)}{" "}
             </p>
-          )}
+          )}{" "}
           <h2 className="truncate text-lg font-semibold">
-            {content.title || t("meetingContent.untitled")}
-          </h2>
+            {" "}
+            {content.title || t("meetingContent.untitled")}{" "}
+          </h2>{" "}
           {content.coverTitle && (
             <p className="text-sm text-muted-foreground">
-              {content.coverTitle}
+              {" "}
+              {content.coverTitle}{" "}
             </p>
-          )}
-        </div>
+          )}{" "}
+        </div>{" "}
         {canManage && (
           <button
             type="button"
             onClick={onAddItem}
             className="shrink-0 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
           >
-            + {t("meetingContent.addItem")}
+            {" "}
+            + {t("meetingContent.addItem")}{" "}
           </button>
-        )}
-      </div>
-
+        )}{" "}
+      </div>{" "}
       {content.items.length === 0 ? (
         <p className="text-muted-foreground">{t("meetingContent.noItems")}</p>
       ) : (
         <div className="space-y-3">
+          {" "}
           {content.items.map((item) => {
             const editing = editingId === item.id;
             const expanded = expandedId === item.id;
@@ -769,9 +756,12 @@ function SelectedView({
                 key={item.id}
                 className="rounded-2xl bg-card p-5 ring-1 ring-border"
               >
+                {" "}
                 <div className="mb-3 flex items-start justify-between gap-3">
-                  <ItemSummary type={content.type} item={item} />
+                  {" "}
+                  <ItemSummary type={content.type} item={item} />{" "}
                   <div className="flex shrink-0 gap-3">
+                    {" "}
                     <button
                       type="button"
                       onClick={() => setExpandedId(expanded ? null : item.id)}
@@ -779,39 +769,44 @@ function SelectedView({
                       aria-controls={`item-detail-${item.id}`}
                       className="text-sm font-medium text-primary hover:underline"
                     >
+                      {" "}
                       {expanded
                         ? t("meetingContent.hideContent")
-                        : t("meetingContent.viewContent")}
-                    </button>
+                        : t("meetingContent.viewContent")}{" "}
+                    </button>{" "}
                     {canManage && (
                       <>
+                        {" "}
                         <button
                           type="button"
                           onClick={() => setEditingId(editing ? null : item.id)}
                           className="text-sm font-medium text-primary hover:underline"
                         >
-                          {editing ? t("common.cancel") : t("common.edit")}
-                        </button>
+                          {" "}
+                          {editing ? t("common.cancel") : t("common.edit")}{" "}
+                        </button>{" "}
                         <button
                           type="button"
                           onClick={() => onDeleteItem(item.id)}
                           className="text-sm font-medium text-destructive hover:underline"
                         >
-                          {t("common.remove")}
-                        </button>
+                          {" "}
+                          {t("common.remove")}{" "}
+                        </button>{" "}
                       </>
-                    )}
-                  </div>
-                </div>
+                    )}{" "}
+                  </div>{" "}
+                </div>{" "}
                 {expanded && (
                   <div id={`item-detail-${item.id}`}>
+                    {" "}
                     <ItemDetail
                       type={content.type}
                       item={item}
                       songTitle={songTitle}
-                    />
+                    />{" "}
                   </div>
-                )}
+                )}{" "}
                 {editing && canManage && (
                   <ItemEditor
                     type={content.type}
@@ -823,16 +818,15 @@ function SelectedView({
                       return ok;
                     }}
                   />
-                )}
+                )}{" "}
               </div>
             );
-          })}
+          })}{" "}
         </div>
-      )}
+      )}{" "}
     </div>
   );
 }
-
 function FlatView({
   type,
   items,
@@ -858,7 +852,6 @@ function FlatView({
   const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-
   const filtered = useMemo(() => {
     const q = query.trim().toLocaleLowerCase();
     if (!q) return items;
@@ -869,37 +862,37 @@ function FlatView({
       return number.includes(q) || theme.toLocaleLowerCase().includes(q);
     });
   }, [items, query]);
-
   const addButton = canManage ? (
     <button
       type="button"
       onClick={onAdd}
       className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
     >
-      + {t("meetingContent.addItem")}
+      {" "}
+      + {t("meetingContent.addItem")}{" "}
     </button>
   ) : null;
-
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-5 py-12 ring-1 ring-border">
-        <p className="text-muted-foreground">{t("meetingContent.empty")}</p>
-        {canManage && addButton}
+        {" "}
+        <p className="text-muted-foreground">{t("meetingContent.empty")}</p>{" "}
+        {canManage && addButton}{" "}
       </div>
     );
   }
-
   return (
     <div>
+      {" "}
       <div className="mb-2 flex items-baseline justify-between gap-3">
+        {" "}
         <p className="text-sm text-muted-foreground" aria-live="polite">
+          {" "}
           {query.trim()
-            ? t("meetingContent.searchResultsCount", {
-                count: filtered.length,
-              })
-            : t("meetingContent.itemCount", { count: items.length })}
-        </p>
-      </div>
+            ? t("meetingContent.searchResultsCount", { count: filtered.length })
+            : t("meetingContent.itemCount", { count: items.length })}{" "}
+        </p>{" "}
+      </div>{" "}
       <input
         type="search"
         value={query}
@@ -907,47 +900,57 @@ function FlatView({
         placeholder={t("meetingContent.searchPlaceholder")}
         aria-label={t("meetingContent.searchLabel")}
         className="mb-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
-      />
+      />{" "}
       {filtered.length === 0 ? (
         <p className="text-muted-foreground">
-          {t("meetingContent.noSearchResults")}
+          {" "}
+          {t("meetingContent.noSearchResults")}{" "}
         </p>
       ) : (
         <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-border">
+          {" "}
           <ul className="divide-y divide-border">
+            {" "}
             {filtered.map((item) => {
               const d = item.data as { number?: number | null; theme?: string };
               const editing = editingId === item.id;
               return (
                 <li key={item.id} className="px-5 py-3">
+                  {" "}
                   <div className="flex items-center justify-between gap-3">
+                    {" "}
                     <p className="min-w-0 truncate font-medium">
+                      {" "}
                       {d.number != null ? (
                         <span className="mr-1.5 font-semibold text-primary">
-                          {d.number}.
+                          {" "}
+                          {d.number}.{" "}
                         </span>
-                      ) : null}
-                      {d.theme || "—"}
-                    </p>
+                      ) : null}{" "}
+                      {d.theme || "—"}{" "}
+                    </p>{" "}
                     {canManage && (
                       <div className="flex shrink-0 gap-3">
+                        {" "}
                         <button
                           type="button"
                           onClick={() => setEditingId(editing ? null : item.id)}
                           className="text-sm font-medium text-primary hover:underline"
                         >
-                          {editing ? t("common.cancel") : t("common.edit")}
-                        </button>
+                          {" "}
+                          {editing ? t("common.cancel") : t("common.edit")}{" "}
+                        </button>{" "}
                         <button
                           type="button"
                           onClick={() => onDeleteItem(item)}
                           className="text-sm font-medium text-destructive hover:underline"
                         >
-                          {t("common.remove")}
-                        </button>
+                          {" "}
+                          {t("common.remove")}{" "}
+                        </button>{" "}
                       </div>
-                    )}
-                  </div>
+                    )}{" "}
+                  </div>{" "}
                   {editing && canManage && (
                     <ItemEditor
                       type={type}
@@ -959,30 +962,30 @@ function FlatView({
                         return ok;
                       }}
                     />
-                  )}
+                  )}{" "}
                 </li>
               );
-            })}
-          </ul>
+            })}{" "}
+          </ul>{" "}
         </div>
-      )}
-
+      )}{" "}
       <div className="mt-4 flex items-center justify-between gap-3">
-        {addButton}
+        {" "}
+        {addButton}{" "}
         {canManage && (
           <button
             type="button"
             onClick={onDeleteAll}
             className="text-sm font-medium text-destructive hover:underline"
           >
-            {t("meetingContent.removeAll")}
+            {" "}
+            {t("meetingContent.removeAll")}{" "}
           </button>
-        )}
-      </div>
+        )}{" "}
+      </div>{" "}
     </div>
   );
 }
-
 function ItemSummary({
   type,
   item,
@@ -992,7 +995,6 @@ function ItemSummary({
 }) {
   const { t } = useTranslation();
   const data = item.data;
-
   if (type === "apostila") {
     const d = data as unknown as {
       semana?: string;
@@ -1001,40 +1003,41 @@ function ItemSummary({
     };
     return (
       <div className="min-w-0">
-        <p className="truncate font-medium">{d.semana || "—"}</p>
+        {" "}
+        <p className="truncate font-medium">{d.semana || "—"}</p>{" "}
         <p className="text-sm text-muted-foreground">
+          {" "}
           {[
             formatWeekRange(d.dateRange),
             t("meetingContent.sectionCount", { count: d.secoes?.length ?? 0 }),
           ]
             .filter(Boolean)
-            .join(" · ")}
-        </p>
+            .join(" · ")}{" "}
+        </p>{" "}
       </div>
     );
   }
-
   if (type === "sentinela") {
     const d = data as unknown as { week?: string; theme?: string };
     return (
       <div className="min-w-0">
-        <p className="truncate font-medium">{d.theme || "—"}</p>
-        <p className="text-sm text-muted-foreground">{d.week}</p>
+        {" "}
+        <p className="truncate font-medium">{d.theme || "—"}</p>{" "}
+        <p className="text-sm text-muted-foreground">{d.week}</p>{" "}
       </div>
     );
   }
-
   const d = data as unknown as { number?: number | null; theme?: string };
   return (
     <div className="min-w-0">
+      {" "}
       <p className="truncate font-medium">
-        {d.number != null ? `${d.number}. ` : ""}
-        {d.theme || "—"}
-      </p>
+        {" "}
+        {d.number != null ? `${d.number}. ` : ""} {d.theme || "—"}{" "}
+      </p>{" "}
     </div>
   );
 }
-
 function formatWeekRange(dateRange: string | undefined): string {
   if (!dateRange) return "";
   const m = dateRange.match(/^(\d{4})(\d{2})(\d{2})-(\d{4})(\d{2})(\d{2})$/);
@@ -1045,7 +1048,6 @@ function formatWeekRange(dateRange: string | undefined): string {
   }
   return `${d1}/${m1}/${y1} - ${d2}/${m2}/${y2}`;
 }
-
 function ItemDetail({
   type,
   item,
@@ -1057,7 +1059,6 @@ function ItemDetail({
 }) {
   const { t } = useTranslation();
   const data = item.data as Record<string, unknown>;
-
   if (type === "apostila") {
     const d = data as unknown as {
       secoes?: Array<{
@@ -1076,44 +1077,52 @@ function ItemDetail({
     const secoes = d.secoes ?? [];
     return (
       <div className="space-y-4 rounded-xl bg-muted/50 p-4">
+        {" "}
         {secoes.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {t("meetingContent.noItems")}
+            {" "}
+            {t("meetingContent.noItems")}{" "}
           </p>
         ) : (
           secoes.map((sec, si) => (
             <div key={`${sec.secao ?? si}`}>
+              {" "}
               <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="font-semibold">{sec.secao || "—"}</p>
+                {" "}
+                <p className="font-semibold">{sec.secao || "—"}</p>{" "}
                 {sec.cancionMedia != null && (
                   <span className="text-sm text-muted-foreground">
-                    {t("meetingContent.middleSong")}: {sec.cancionMedia}
+                    {" "}
+                    {t("meetingContent.middleSong")}: {sec.cancionMedia}{" "}
                   </span>
-                )}
-              </div>
+                )}{" "}
+              </div>{" "}
               <div className="space-y-1.5">
+                {" "}
                 {(sec.partes ?? []).map((p, pi) => (
                   <div key={`${p.order}-${p.parte}-${pi}`} className="text-sm">
+                    {" "}
                     <span className="font-medium">
-                      {p.order != null ? `${p.order}. ` : ""}
-                      {p.parte || "—"}
-                    </span>
-                    {p.tema && p.tema !== p.parte ? ` — ${p.tema}` : ""}
+                      {" "}
+                      {p.order != null ? `${p.order}. ` : ""} {p.parte ||
+                        "—"}{" "}
+                    </span>{" "}
+                    {p.tema && p.tema !== p.parte ? ` — ${p.tema}` : ""}{" "}
                     <span className="text-muted-foreground">
+                      {" "}
                       {[p.tempo, p.modalidade, p.fonte]
                         .filter(Boolean)
-                        .join(" · ")}
-                    </span>
+                        .join(" · ")}{" "}
+                    </span>{" "}
                   </div>
-                ))}
-              </div>
+                ))}{" "}
+              </div>{" "}
             </div>
           ))
-        )}
+        )}{" "}
       </div>
     );
   }
-
   if (type === "sentinela") {
     const d = data as unknown as {
       week?: string;
@@ -1125,36 +1134,42 @@ function ItemDetail({
     };
     return (
       <div className="space-y-1.5 rounded-xl bg-muted/50 p-4 text-sm">
+        {" "}
         <p>
-          <span className="font-medium">{t("meetingContent.theme")}: </span>
-          {d.theme || "—"}
-        </p>
+          {" "}
+          <span className="font-medium">{t("meetingContent.theme")}: </span>{" "}
+          {d.theme || "—"}{" "}
+        </p>{" "}
         <p>
-          <span className="font-medium">{t("meetingContent.week")}: </span>
-          {d.week || "—"}
-        </p>
+          {" "}
+          <span className="font-medium">{t("meetingContent.week")}: </span>{" "}
+          {d.week || "—"}{" "}
+        </p>{" "}
         <p>
+          {" "}
           <span className="font-medium">
+            {" "}
             {t("meetingContent.openingSong")}:{" "}
-          </span>
-          {d.songs?.opening?.number != null ? d.songs.opening.number : "—"}
+          </span>{" "}
+          {d.songs?.opening?.number != null ? d.songs.opening.number : "—"}{" "}
           {songTitle(d.songs?.opening?.number)
             ? ` — ${songTitle(d.songs?.opening?.number)}`
-            : ""}
-        </p>
+            : ""}{" "}
+        </p>{" "}
         <p>
+          {" "}
           <span className="font-medium">
+            {" "}
             {t("meetingContent.closingSong")}:{" "}
-          </span>
-          {d.songs?.closing?.number != null ? d.songs.closing.number : "—"}
+          </span>{" "}
+          {d.songs?.closing?.number != null ? d.songs.closing.number : "—"}{" "}
           {songTitle(d.songs?.closing?.number)
             ? ` — ${songTitle(d.songs?.closing?.number)}`
-            : ""}
-        </p>
+            : ""}{" "}
+        </p>{" "}
       </div>
     );
   }
-
   const d = data as unknown as { theme?: string };
   return (
     <div className="rounded-xl bg-muted/50 p-4 text-sm">{d.theme || "—"}</div>

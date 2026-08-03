@@ -40,7 +40,7 @@ export function CreateOrgClient({ lang }: { lang?: string | null }) {
         return;
       }
       toast.success(t("createOrg.success"));
-      router.push("/dashboard");
+      router.push("/app");
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -48,7 +48,7 @@ export function CreateOrgClient({ lang }: { lang?: string | null }) {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#2563EB] via-[#3B5BDB] to-[#7C3AED] p-6">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-linear-to-br from-[#2563EB] via-[#3B5BDB] to-[#7C3AED] p-6">
       <I18nSync lang={lang} />
       <div
         className="absolute inset-0 opacity-20"
@@ -65,7 +65,7 @@ export function CreateOrgClient({ lang }: { lang?: string | null }) {
       <div className="relative w-full max-w-md">
         <Card className="border-0 bg-white shadow-2xl">
           <CardHeader className="items-center text-center">
-            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#7C3AED] shadow-lg">
+            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-[#2563EB] to-[#7C3AED] shadow-lg">
               <span className="text-3xl font-bold text-white">N</span>
             </div>
             <CardTitle className="text-2xl font-semibold tracking-tight">

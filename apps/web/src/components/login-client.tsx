@@ -15,7 +15,7 @@ export function LoginClient() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: "/app",
       });
     } finally {
       setIsSigningIn(false);

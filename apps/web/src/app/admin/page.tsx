@@ -11,7 +11,7 @@ export default async function AdminPage() {
   }
 
   if (session.user.globalRole !== "super_user") {
-    redirect("/dashboard");
+    redirect("/app");
   }
 
   return <AdminClient />;
