@@ -169,6 +169,7 @@
     "minutes": "{{count}}min",
     "specialEvents": "Eventos Especiais",
     "specialEventsSubtitle": "Cadastre os eventos especiais opcionais do ano.",
+    "assignments": "Atribuição de tarefas em breve.",
     "noSpecialEvents": "Nenhum evento especial cadastrado.",
     "newSpecialEvent": "Novo evento especial",
     "editSpecialEvent": "Editar evento especial",

@@ -47,7 +47,8 @@ export async function signInWithGoogleIdToken() {
 
   const userInfo = await GoogleSignin.signIn();
   const idToken =
-    "data" in userInfo ? userInfo.data?.idToken : userInfo.idToken;
+    userInfo?.data?.idToken ??
+    (userInfo as { idToken?: string | null } | null)?.idToken;
 
   const accessToken = await GoogleSignin.getTokens()
     .then((tokens) => tokens.accessToken)

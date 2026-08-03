@@ -1,18 +1,18 @@
-import { router } from "expo-router";
-import { useState } from "react";
-import { Pressable, StyleSheet } from "react-native";
-import { useTranslation } from "react-i18next";
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
-import { signInWithGoogleIdToken } from "@/lib/google-sign-in";
-import { useAuth } from "@/lib/auth-context";
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { ThemedText } from '@/components/themed-text';
+import { Spacing } from '@/constants/theme';
+import { signInWithGoogleIdToken } from '@/lib/google-sign-in';
+import { useAuth } from '@/lib/auth-context';
 
 export default function LoginScreen() {
-  const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { refreshSession } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
@@ -26,17 +26,17 @@ export default function LoginScreen() {
       const result = await signInWithGoogleIdToken();
 
       if (result?.error) {
-        console.error("Erro ao autenticar com Google:", result.error);
-        setErrorMessage(t("login.signInError"));
+        console.error('Erro ao autenticar com Google:', result.error);
+        setErrorMessage(t('login.signInError'));
         return;
       }
 
       await refreshSession();
-      router.replace("/(tabs)");
+      router.replace('/(tabs)');
     } catch (error) {
-      console.error("Erro ao autenticar com Google:", error);
+      console.error('Erro ao autenticar com Google:', error);
       setErrorMessage(
-        error instanceof Error ? error.message : t("login.signInError"),
+        error instanceof Error ? error.message : t('login.signInError'),
       );
     } finally {
       setIsSigningIn(false);
@@ -44,132 +44,141 @@ export default function LoginScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.gradientHeader}>
-        <ThemedView style={styles.languageRow}>
-          <LanguageSwitcher />
-        </ThemedView>
+    <LinearGradient
+      colors={['#2563EB', '#3B5BDB', '#7C3AED']}
+      style={styles.gradient}
+    >
+      <View style={[styles.glow, styles.glowTop]} pointerEvents="none" />
+      <View style={[styles.glow, styles.glowBottom]} pointerEvents="none" />
 
-        <ThemedView style={styles.heroSection}>
-          <ThemedView style={styles.logoContainer}>
-            <ThemedView type="primary" style={styles.logoPlaceholder}>
+      <View style={[styles.languageWrap, { top: insets.top + Spacing.three, right: Spacing.four }]}>
+        <LanguageSwitcher />
+      </View>
+
+      <View style={styles.centerWrap}>
+        <View style={styles.card} pointerEvents="box-none">
+          <View style={styles.brandWrap}>
+            <LinearGradient
+              colors={['#2563EB', '#7C3AED']}
+              style={styles.logo}
+            >
               <ThemedText style={styles.logoText}>N</ThemedText>
-            </ThemedView>
-          </ThemedView>
+            </LinearGradient>
+            <ThemedText style={styles.appName}>Nexohub</ThemedText>
+            <ThemedText style={styles.tagline}>{t('common.appTagline')}</ThemedText>
+          </View>
 
-          <ThemedText type="title" style={styles.appName}>
-            Nexohub
-          </ThemedText>
+          {errorMessage ? (
+            <ThemedText type="small" style={styles.errorText}>
+              {errorMessage}
+            </ThemedText>
+          ) : null}
 
-          <ThemedText
-            type="subtitle"
-            themeColor="textSecondary"
-            style={styles.subtitle}
+          <Pressable
+            disabled={isSigningIn}
+            onPress={handleGoogleSignIn}
+            style={({ pressed }) => [
+              styles.googleButton,
+              (pressed || isSigningIn) && styles.googleButtonPressed,
+              isSigningIn && styles.googleButtonDisabled,
+            ]}
           >
-            {t("common.appTagline")}
-          </ThemedText>
-        </ThemedView>
-      </ThemedView>
+            <GoogleGlyph />
+            <ThemedText style={styles.googleButtonText}>
+              {isSigningIn ? t('login.signingIn') : t('login.signInWithGoogle')}
+            </ThemedText>
+          </Pressable>
 
-      <ThemedView style={styles.bottomSection}>
-        {errorMessage ? (
-          <ThemedText
-            type="small"
-            style={[styles.errorText, { color: theme.danger }]}
-          >
-            {errorMessage}
+          <ThemedText type="small" style={styles.termsText}>
+            {t('login.terms')}
           </ThemedText>
-        ) : null}
+        </View>
+      </View>
+    </LinearGradient>
+  );
+}
 
-        <Pressable
-          disabled={isSigningIn}
-          onPress={handleGoogleSignIn}
-          style={({ pressed }) => [
-            styles.googleButton,
-            { backgroundColor: theme.primary },
-            (pressed || isSigningIn) && styles.googleButtonPressed,
-            isSigningIn && styles.googleButtonDisabled,
-          ]}
-        >
-          <ThemedText
-            style={[styles.googleButtonText, { color: theme.primaryForeground }]}
-          >
-            {isSigningIn ? t("login.signingIn") : t("login.signInWithGoogle")}
-          </ThemedText>
-        </Pressable>
-
-        <ThemedText type="small" themeColor="textSecondary" style={styles.termsText}>
-          {t("login.terms")}
-        </ThemedText>
-      </ThemedView>
-    </ThemedView>
+function GoogleGlyph() {
+  return (
+    <View style={styles.googleGlyph}>
+      <ThemedText style={styles.googleGlyphText}>G</ThemedText>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  gradientHeader: {
-    flex: 1,
-    backgroundColor: "#7C3AED",
-    paddingTop: Spacing.five,
-    justifyContent: "space-between",
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
-    overflow: "hidden",
+  gradient: { flex: 1 },
+  glow: {
+    position: 'absolute',
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: 'rgba(255,255,255,0.10)',
   },
-  languageRow: {
-    alignItems: "center",
-    alignSelf: "center",
-    marginTop: Spacing.three,
-  },
-  heroSection: {
+  glowTop: { top: -80, right: -60 },
+  glowBottom: { bottom: -80, left: -60 },
+  languageWrap: { position: 'absolute', zIndex: 2 },
+  centerWrap: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: Spacing.two,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: Spacing.four,
   },
-  logoContainer: { marginBottom: Spacing.three },
-  logoPlaceholder: {
-    width: 80,
-    height: 80,
+  card: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#ffffff',
     borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  logoText: { fontSize: 36, fontWeight: "700", color: "#ffffff" },
-  appName: { textAlign: "center", color: "#ffffff" },
-  subtitle: { textAlign: "center", color: "#e2e8f0" },
-  bottomSection: {
-    gap: Spacing.three,
+    paddingVertical: Spacing.five,
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    paddingBottom: Spacing.six,
-    alignItems: "center",
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 12,
+    gap: Spacing.three,
+  },
+  brandWrap: {
+    alignItems: 'center',
+    gap: Spacing.two,
+    marginBottom: Spacing.three,
+  },
+  logo: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: { fontSize: 32, fontWeight: '700', color: '#ffffff' },
+  appName: { fontSize: 28, fontWeight: '600', color: '#1F2937', letterSpacing: -0.5 },
+  tagline: { fontSize: 14, color: '#6B7280' },
+  errorText: {
+    color: '#DC2626',
+    textAlign: 'center',
+    maxWidth: 320,
+    alignSelf: 'center',
   },
   googleButton: {
-    width: "100%",
-    maxWidth: 400,
     height: 52,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
+    borderRadius: 14,
+    backgroundColor: '#2563EB',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: Spacing.two,
-    shadowColor: "#2563EB",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
   },
   googleButtonPressed: { opacity: 0.8 },
-  googleButtonDisabled: { opacity: 0.5 },
-  googleButtonText: { fontSize: 17, fontWeight: "600" },
-  errorText: { textAlign: "center", maxWidth: 320 },
-  termsText: { textAlign: "center", maxWidth: 320 },
+  googleButtonDisabled: { opacity: 0.6 },
+  googleButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
+  googleGlyph: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleGlyphText: { fontSize: 15, fontWeight: '700', color: '#2563EB' },
+  termsText: { textAlign: 'center', color: '#9CA3AF', fontSize: 12, marginTop: Spacing.two },
 });

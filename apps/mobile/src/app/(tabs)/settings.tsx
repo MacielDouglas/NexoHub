@@ -7,6 +7,7 @@ import { useRouter } from "expo-router";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { CleaningSettings } from "@/components/cleaning-settings";
+import { SectionNav, type SectionNavItem } from "@/components/section-nav";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { apiFetch } from "@/lib/api";
@@ -63,6 +64,32 @@ const EMPTY_EVENT_FORM: SpecialEventFormValues = {
   location: "",
 };
 
+const SETTINGS_SECTIONS: SectionNavItem[] = [
+  {
+    id: "meetings",
+    label: "Reuniões",
+    shortLabel: "Reuniões",
+    description: "Horários semanais e eventos especiais",
+    icon: "📅",
+  },
+  {
+    id: "cleaning",
+    label: "Limpeza",
+    shortLabel: "Limpeza",
+    description: "Tipos de limpeza e setores",
+    icon: "✨",
+  },
+  {
+    id: "assignments",
+    label: "Designações",
+    shortLabel: "Designações",
+    description: "Atribuição de tarefas em breve",
+    icon: "📋",
+  },
+];
+
+type SettingsTabKey = (typeof SETTINGS_SECTIONS)[number]["id"];
+
 export default function SettingsScreen() {
   const safeAreaInsets = useSafeAreaInsets();
   const theme = useTheme();
@@ -72,7 +99,7 @@ export default function SettingsScreen() {
   const [configs, setConfigs] = useState<MeetingConfig[]>([]);
   const [events, setEvents] = useState<SpecialEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"meeting" | "cleaning">("meeting");
+  const [tab, setTab] = useState<SettingsTabKey>("meetings");
 
   const insets = {
     ...safeAreaInsets,
@@ -137,35 +164,12 @@ export default function SettingsScreen() {
           {t("settings.subtitle")}
         </ThemedText>
 
-        <ThemedView style={styles.tabBar}>
-          {(
-            [
-              ["meeting", "settings.tabMeeting"],
-              ["cleaning", "settings.tabCleaning"],
-            ] as const
-          ).map(([value, label]) => {
-            const active = tab === value;
-            return (
-              <Pressable
-                key={value}
-                onPress={() => setTab(value)}
-                style={[
-                  styles.tab,
-                  active && { backgroundColor: theme.backgroundElement },
-                ]}
-              >
-                <ThemedText
-                  type="small"
-                  style={[
-                    active ? { fontWeight: "600" } : { color: theme.textSecondary },
-                  ]}
-                >
-                  {t(label)}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </ThemedView>
+        <SectionNav
+          items={SETTINGS_SECTIONS}
+          activeId={tab}
+          onSelect={setTab}
+          ariaLabel={t("settings.title")}
+        />
 
         {loading ? (
           <ThemedText themeColor="textSecondary" style={{ textAlign: "center", marginTop: Spacing.four }}>
@@ -173,7 +177,7 @@ export default function SettingsScreen() {
           </ThemedText>
         ) : (
           <>
-            {tab === "meeting" ? (
+            {tab === "meetings" ? (
               <>
                 <ThemedView style={styles.section}>
                   <ThemedText type="default" style={styles.sectionTitle}>{t("settings.meetingDays")}</ThemedText>
@@ -202,8 +206,14 @@ export default function SettingsScreen() {
                   <SpecialEventsSection events={events} onChanged={fetchAll} />
                 </ThemedView>
               </>
-            ) : (
+            ) : tab === "cleaning" ? (
               <CleaningSettings />
+            ) : (
+              <ThemedView style={styles.section}>
+                <ThemedText themeColor="textSecondary">
+                  {t("settings.assignments")}
+                </ThemedText>
+              </ThemedView>
             )}
 
             <SignOutSection onSignOut={async () => {
@@ -665,20 +675,6 @@ const styles = StyleSheet.create({
   container: { maxWidth: MaxContentWidth, flexGrow: 1, paddingHorizontal: Spacing.four, paddingTop: Spacing.six },
   title: { marginBottom: Spacing.one },
   subtitle: { marginBottom: Spacing.four },
-  tabBar: {
-    flexDirection: "row",
-    gap: Spacing.one,
-    borderRadius: Spacing.three,
-    backgroundColor: "#EEF2F8",
-    padding: Spacing.one,
-    marginBottom: Spacing.four,
-  },
-  tab: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
-  },
   section: { gap: Spacing.three, marginBottom: Spacing.five },
   sectionTitle: { fontWeight: "700" },
   sectionSubtitle: { marginTop: -Spacing.one },

@@ -1,10 +1,12 @@
 import * as DocumentPicker from 'expo-document-picker';
+import { File } from 'expo-file-system';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ItemEditor } from '@/components/meeting-content-editors';
+import { SectionNav, type SectionNavItem } from '@/components/section-nav';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -12,8 +14,6 @@ import { useTheme } from '@/hooks/use-theme';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import {
-  CONTENT_TABS,
-  type ContentTabKey,
   emptyItemData,
   formatContentIssue,
   issueKey,
@@ -30,6 +30,39 @@ function numberKey(item: MeetingContentItem): number {
   const n = (item.data as { number?: number | null })?.number;
   return typeof n === 'number' ? n : Number.MAX_SAFE_INTEGER;
 }
+
+const MEETING_CONTENT_SECTIONS: SectionNavItem[] = [
+  {
+    id: 'apostila',
+    label: 'Apostila',
+    shortLabel: 'Apostila',
+    description: 'Reunião da semana',
+    icon: '📘',
+  },
+  {
+    id: 'sentinela',
+    label: 'Sentinela',
+    shortLabel: 'Sentinela',
+    description: 'Estudo da Sentinela',
+    icon: '📖',
+  },
+  {
+    id: 'discursos',
+    label: 'Discursos',
+    shortLabel: 'Discursos',
+    description: 'Discursos públicos',
+    icon: '🎤',
+  },
+  {
+    id: 'canticos',
+    label: 'Cânticos',
+    shortLabel: 'Cânticos',
+    description: 'Cânticos',
+    icon: '🎵',
+  },
+];
+
+type ContentTabKey = (typeof MEETING_CONTENT_SECTIONS)[number]['id'];
 
 export default function MeetingContentScreen() {
   const safeAreaInsets = useSafeAreaInsets();
@@ -152,15 +185,15 @@ export default function MeetingContentScreen() {
       const doUpload = (replace: boolean) => {
         const form = new FormData();
         form.append('type', tab);
-        if (asset.file) {
-          form.append('file', asset.file as unknown as Blob, asset.name);
-        } else {
-          form.append('file', {
-            uri: asset.uri,
-            name: asset.name,
-            type: asset.mimeType ?? 'application/octet-stream',
-          } as unknown as Blob);
+        const file = new File(asset.uri);
+        if (!file.name.toLowerCase().endsWith('.jwpub')) {
+          try {
+            file.rename(asset.name);
+          } catch {
+            // ignora: nome original já é usável
+          }
         }
+        form.append('file', file);
         if (replace) form.append('replace', 'true');
         return apiFetch('/api/meeting-content/import', {
           method: 'POST',
@@ -412,33 +445,15 @@ export default function MeetingContentScreen() {
           {t('meetingContent.subtitle')}
         </ThemedText>
 
-        <ThemedView type="backgroundSelected" style={styles.tabsRow}>
-          {CONTENT_TABS.map(({ key, icon }) => {
-            const active = tab === key;
-            return (
-              <Pressable
-                key={key}
-                onPress={() => {
-                  setTab(key);
-                  setSelected(null);
-                }}
-                style={({ pressed }) => [
-                  styles.tab,
-                  active && { backgroundColor: theme.backgroundElement },
-                  pressed && { opacity: 0.8 },
-                ]}
-              >
-                <ThemedText
-                  type="smallBold"
-                  themeColor={active ? 'text' : 'textSecondary'}
-                  numberOfLines={1}
-                >
-                  {icon} {t(`meetingContent.tabs.${key}`)}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </ThemedView>
+        <SectionNav
+          items={MEETING_CONTENT_SECTIONS}
+          activeId={tab}
+          onSelect={(key) => {
+            setTab(key);
+            setSelected(null);
+          }}
+          ariaLabel={t('meetingContent.title')}
+        />
 
         {loading ? (
           <ThemedText themeColor="textSecondary" style={{ textAlign: 'center', marginTop: Spacing.four }}>
@@ -1106,19 +1121,6 @@ const styles = StyleSheet.create({
   },
   title: { marginBottom: Spacing.one },
   subtitle: { marginBottom: Spacing.four },
-  tabsRow: {
-    flexDirection: 'row',
-    borderRadius: Spacing.three,
-    padding: Spacing.half,
-    marginBottom: Spacing.four,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.one,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-  },
   actionsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
