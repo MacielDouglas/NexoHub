@@ -1,22 +1,14 @@
 import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
-
-import es from "./locales/es.json";
-import pt from "./locales/pt.json";
+import type { SupportedLanguage } from "./resources";
+import { normalizeLanguage, resources } from "./resources";
 
 export const SUPPORTED_LANGUAGES = ["pt", "es"] as const;
-export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
+export type { SupportedLanguage };
+
+export { normalizeLanguage } from "./resources";
 
 export const LANGUAGE_STORAGE_KEY = "nexohub_language";
-
-export function normalizeLanguage(
-  lang: string | null | undefined,
-): SupportedLanguage {
-  if (!lang) return "pt";
-  const code = lang.toLowerCase().split("-")[0];
-  if (code === "es") return "es";
-  return "pt";
-}
 
 export function detectDeviceLanguage(): SupportedLanguage {
   if (typeof window === "undefined") return "pt";
@@ -30,10 +22,7 @@ export function detectDeviceLanguage(): SupportedLanguage {
 }
 
 i18next.use(initReactI18next).init({
-  resources: {
-    pt: { translation: pt },
-    es: { translation: es },
-  },
+  resources,
   lng: "pt",
   fallbackLng: "pt",
   supportedLngs: ["pt", "es"],

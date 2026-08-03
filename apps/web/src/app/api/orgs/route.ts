@@ -1,8 +1,10 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { generateUniqueSlug } from "@/lib/invite-utils";
 import { prisma } from "@/lib/prisma";
+import { orgNameSchema } from "@/lib/schemas";
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -28,44 +30,35 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name } = await request.json();
+  try {
+    const { name } = orgNameSchema.parse(await readJsonRequest(request));
 
-  if (!name || typeof name !== "string" || !name.trim()) {
-    return NextResponse.json(
-      { error: "O nome da congregação é obrigatório" },
-      { status: 400 },
-    );
-  }
+    const trimmedName = name.trim();
 
-  const trimmedName = name.trim();
-  if (trimmedName.length < 3) {
-    return NextResponse.json(
-      { error: "O nome deve ter pelo menos 3 caracteres" },
-      { status: 400 },
-    );
-  }
-
-  const slug = await generateUniqueSlug(trimmedName, async (candidate) => {
-    const existing = await prisma.organization.findUnique({
-      where: { slug: candidate },
+    const slug = await generateUniqueSlug(trimmedName, async (candidate) => {
+      const existing = await prisma.organization.findUnique({
+        where: { slug: candidate },
+      });
+      return Boolean(existing);
     });
-    return Boolean(existing);
-  });
 
-  const organization = await prisma.organization.create({
-    data: {
-      name: trimmedName,
-      slug,
-    },
-  });
+    const organization = await prisma.organization.create({
+      data: {
+        name: trimmedName,
+        slug,
+      },
+    });
 
-  await prisma.member.create({
-    data: {
-      organizationId: organization.id,
-      userId: session.user.id,
-      role: "owner",
-    },
-  });
+    await prisma.member.create({
+      data: {
+        organizationId: organization.id,
+        userId: session.user.id,
+        role: "owner",
+      },
+    });
 
-  return NextResponse.json({ organization }, { status: 201 });
+    return NextResponse.json({ organization }, { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

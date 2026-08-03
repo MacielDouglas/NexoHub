@@ -1,7 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { canManageMeetingContent, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
+import { meetingContentUpdateSchema } from "@/lib/schemas";
 
 export async function GET(
   _request: Request,
@@ -55,18 +57,24 @@ export async function PUT(
     );
   }
 
-  const { title, symbol, coverTitle } = await request.json();
+  try {
+    const body = meetingContentUpdateSchema.parse(
+      await readJsonRequest(request),
+    );
 
-  const updated = await prisma.meetingContent.update({
-    where: { id },
-    data: {
-      ...(title !== undefined && { title }),
-      ...(symbol !== undefined && { symbol }),
-      ...(coverTitle !== undefined && { coverTitle }),
-    },
-  });
+    const updated = await prisma.meetingContent.update({
+      where: { id },
+      data: {
+        ...(body.title !== undefined && { title: body.title }),
+        ...(body.symbol !== undefined && { symbol: body.symbol }),
+        ...(body.coverTitle !== undefined && { coverTitle: body.coverTitle }),
+      },
+    });
 
-  return NextResponse.json({ content: updated });
+    return NextResponse.json({ content: updated });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
 
 export async function DELETE(

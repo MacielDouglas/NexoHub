@@ -1,8 +1,10 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
+import { memberRoleSchema } from "@/lib/schemas";
 
 export async function PATCH(
   request: Request,
@@ -31,10 +33,11 @@ export async function PATCH(
     );
   }
 
-  const { role } = await request.json();
-
-  if (!role || !["owner", "admin", "member"].includes(role)) {
-    return NextResponse.json({ error: "Papel inválido" }, { status: 400 });
+  let role: string;
+  try {
+    ({ role } = memberRoleSchema.parse(await readJsonRequest(request)));
+  } catch (error) {
+    return handleApiError(error);
   }
 
   if (member.role === "admin") {

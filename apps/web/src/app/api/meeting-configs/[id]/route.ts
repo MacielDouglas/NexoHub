@@ -1,7 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { canManageConfig, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
+import { updateMeetingConfigSchema } from "@/lib/schemas";
 
 export async function GET(
   _request: Request,
@@ -55,20 +57,26 @@ export async function PUT(
     );
   }
 
-  const { type, dayOfWeek, startTime, isActive } = await request.json();
+  try {
+    const body = updateMeetingConfigSchema.parse(
+      await readJsonRequest(request),
+    );
 
-  const config = await prisma.meetingConfig.update({
-    where: { id },
-    data: {
-      ...(type !== undefined && { type }),
-      ...(dayOfWeek !== undefined && { dayOfWeek }),
-      ...(startTime !== undefined && { startTime }),
-      ...(isActive !== undefined && { isActive }),
-    },
-    include: { parts: { orderBy: { sortOrder: "asc" } } },
-  });
+    const config = await prisma.meetingConfig.update({
+      where: { id },
+      data: {
+        ...(body.type !== undefined && { type: body.type }),
+        ...(body.dayOfWeek !== undefined && { dayOfWeek: body.dayOfWeek }),
+        ...(body.startTime !== undefined && { startTime: body.startTime }),
+        ...(body.isActive !== undefined && { isActive: body.isActive }),
+      },
+      include: { parts: { orderBy: { sortOrder: "asc" } } },
+    });
 
-  return NextResponse.json({ config });
+    return NextResponse.json({ config });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
 
 export async function DELETE(

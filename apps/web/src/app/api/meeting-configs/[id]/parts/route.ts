@@ -1,7 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { canManageConfig, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
+import { createPartSchema } from "@/lib/schemas";
 
 export async function POST(
   request: Request,
@@ -29,25 +31,22 @@ export async function POST(
     );
   }
 
-  const { name, durationMinutes, sortOrder, description } =
-    await request.json();
+  try {
+    const { name, durationMinutes, sortOrder, description } =
+      createPartSchema.parse(await readJsonRequest(request));
 
-  if (!name || sortOrder === undefined) {
-    return NextResponse.json(
-      { error: "Campos obrigatórios: name, sortOrder" },
-      { status: 400 },
-    );
+    const part = await prisma.meetingPart.create({
+      data: {
+        meetingConfigId: id,
+        name,
+        durationMinutes: durationMinutes ?? null,
+        sortOrder,
+        description: description ?? null,
+      },
+    });
+
+    return NextResponse.json({ part }, { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
   }
-
-  const part = await prisma.meetingPart.create({
-    data: {
-      meetingConfigId: id,
-      name,
-      durationMinutes,
-      sortOrder,
-      description,
-    },
-  });
-
-  return NextResponse.json({ part }, { status: 201 });
 }

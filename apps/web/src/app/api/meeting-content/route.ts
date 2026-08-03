@@ -1,7 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { canManageMeetingContent, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
+import { meetingContentCreateSchema } from "@/lib/schemas";
 
 export const MEETING_CONTENT_TYPES = [
   "apostila",
@@ -50,23 +52,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
 
-  const { type, title, symbol, coverTitle } = await request.json();
+  try {
+    const { type, title, symbol, coverTitle } =
+      meetingContentCreateSchema.parse(await readJsonRequest(request));
 
-  if (!type || !MEETING_CONTENT_TYPES.includes(type)) {
-    return NextResponse.json({ error: "Tipo inválido" }, { status: 400 });
+    const content = await prisma.meetingContent.create({
+      data: {
+        organizationId: member.organizationId,
+        type,
+        title: title ?? "",
+        symbol: symbol ?? null,
+        coverTitle: coverTitle ?? null,
+      },
+    });
+
+    return NextResponse.json({ content }, { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
   }
-
-  const content = await prisma.meetingContent.create({
-    data: {
-      organizationId: member.organizationId,
-      type,
-      title: title ?? "",
-      symbol: symbol ?? null,
-      coverTitle: coverTitle ?? null,
-    },
-  });
-
-  return NextResponse.json({ content }, { status: 201 });
 }
 
 export async function DELETE(request: Request) {

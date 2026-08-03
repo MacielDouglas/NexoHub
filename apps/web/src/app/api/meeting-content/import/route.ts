@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { MAX_UPLOAD_BYTES } from "@/lib/jwpub/constants";
 import { extractJwpub } from "@/lib/jwpub/extract";
 import { canManageMeetingContent, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
@@ -38,6 +39,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "O arquivo deve ter extensão .jwpub" },
         { status: 400 },
+      );
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: "O arquivo excede o limite de 100MB" },
+        { status: 413 },
       );
     }
 
@@ -121,9 +129,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ content, items: result.items }, { status: 201 });
   } catch (e) {
     const err = e as Error & { code?: string };
+    console.error("[meeting-content/import]", err);
+    const message =
+      err.code === "BAD_SIZE"
+        ? "O arquivo excede o limite de 100MB"
+        : err.code === "BAD_MAGIC"
+          ? "O arquivo enviado não é um .jwpub válido"
+          : err.code === "BAD_MANIFEST"
+            ? "O arquivo enviado está com o manifest inválido"
+            : err.code === "TYPE_MISMATCH"
+              ? "O arquivo selecionado não corresponde ao tipo escolhido"
+              : "Falha na extração do arquivo";
     return NextResponse.json(
       {
-        error: err.message || "Falha na extração",
+        error: message,
         code: err.code || "EXTRACT_FAIL",
       },
       { status: 422 },

@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { isValidDateRange, isValidSongNumber } from "@/lib/content-validation";
 import {
   type ApostilaParte,
   type ApostilaSecao,
@@ -15,28 +16,6 @@ import {
 export type SongTitleResolver = (
   num: number | null | undefined,
 ) => string | null;
-
-const SONGS = new Set(Array.from({ length: 161 }, (_, i) => i + 1));
-
-function isValidDateRange(value: string): boolean {
-  const match = /^(\d{8})-(\d{8})$/.exec(value);
-  if (!match) return false;
-  const [start, end] = [match[1], match[2]];
-  const valid = (s: string) => {
-    const y = Number(s.slice(0, 4));
-    const m = Number(s.slice(4, 6));
-    const d = Number(s.slice(6, 8));
-    if (m < 1 || m > 12 || d < 1 || d > 31) return false;
-    return !Number.isNaN(new Date(y, m - 1, d).getTime());
-  };
-  return valid(start) && valid(end) && end >= start;
-}
-
-function isValidSongNumber(value: string): boolean {
-  if (value.trim() === "") return true;
-  const n = Number(value);
-  return Number.isInteger(n) && SONGS.has(n);
-}
 
 export function ItemEditor({
   type,

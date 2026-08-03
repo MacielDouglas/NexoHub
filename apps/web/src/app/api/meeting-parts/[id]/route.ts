@@ -1,7 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { canManageConfig, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
+import { updatePartSchema } from "@/lib/schemas";
 
 export async function PUT(
   request: Request,
@@ -30,20 +32,27 @@ export async function PUT(
     );
   }
 
-  const { name, durationMinutes, sortOrder, description } =
-    await request.json();
+  try {
+    const body = updatePartSchema.parse(await readJsonRequest(request));
 
-  const updated = await prisma.meetingPart.update({
-    where: { id },
-    data: {
-      ...(name !== undefined && { name }),
-      ...(durationMinutes !== undefined && { durationMinutes }),
-      ...(sortOrder !== undefined && { sortOrder }),
-      ...(description !== undefined && { description }),
-    },
-  });
+    const updated = await prisma.meetingPart.update({
+      where: { id },
+      data: {
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.durationMinutes !== undefined && {
+          durationMinutes: body.durationMinutes,
+        }),
+        ...(body.sortOrder !== undefined && { sortOrder: body.sortOrder }),
+        ...(body.description !== undefined && {
+          description: body.description,
+        }),
+      },
+    });
 
-  return NextResponse.json({ part: updated });
+    return NextResponse.json({ part: updated });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
 
 export async function DELETE(

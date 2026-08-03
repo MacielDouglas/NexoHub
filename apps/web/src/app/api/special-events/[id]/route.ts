@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { canManageConfig, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
 import {
@@ -36,8 +37,17 @@ export async function PUT(
     );
   }
 
-  const body = await request.json();
-  const { type, date: dateStr, endDate: endDateStr, time, location } = body;
+  let body: Record<string, unknown>;
+  try {
+    body = (await readJsonRequest(request)) as Record<string, unknown>;
+  } catch (error) {
+    return handleApiError(error);
+  }
+  const type = body.type as string | undefined;
+  const dateStr = body.date as string | undefined;
+  const endDateStr = body.endDate as string | undefined;
+  const time = body.time as string | undefined;
+  const location = body.location as string | undefined;
 
   const nextType = type ?? existing.type;
   if (!isSpecialEventType(nextType)) {
@@ -75,7 +85,7 @@ export async function PUT(
     nextEndDate = null;
   }
 
-  const nextTime = time !== undefined ? (time as string) : existing.time;
+  const nextTime = time !== undefined ? time : existing.time;
   if (fields.time && !nextTime) {
     return NextResponse.json(
       { error: "Campo obrigatório: time" },
@@ -83,8 +93,7 @@ export async function PUT(
     );
   }
 
-  const nextLocation =
-    location !== undefined ? (location as string) : existing.location;
+  const nextLocation = location !== undefined ? location : existing.location;
   if (fields.location && !nextLocation) {
     return NextResponse.json(
       { error: "Campo obrigatório: location" },

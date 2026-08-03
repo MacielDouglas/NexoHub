@@ -1,8 +1,10 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { getOrCreateCleaningConfig } from "@/lib/cleaning-config";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { canManageConfig, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
+import { cleaningConfigUpdateSchema } from "@/lib/schemas";
 
 export async function GET() {
   const member = await getUserOrg(await headers());
@@ -36,32 +38,39 @@ export async function PUT(request: Request) {
 
   const config = await getOrCreateCleaningConfig(member.organizationId);
 
-  const {
-    weeklyEnabled,
-    weeklyDayOfWeek,
-    weeklyIntervalWeeks,
-    generalEnabled,
-  } = await request.json();
+  try {
+    const body = cleaningConfigUpdateSchema.parse(
+      await readJsonRequest(request),
+    );
 
-  const updated = await prisma.cleaningConfig.update({
-    where: { id: config.id },
-    data: {
-      ...(weeklyEnabled !== undefined && { weeklyEnabled }),
-      ...(weeklyDayOfWeek !== undefined && {
-        weeklyDayOfWeek: weeklyDayOfWeek ?? null,
-      }),
-      ...(weeklyIntervalWeeks !== undefined && { weeklyIntervalWeeks }),
-      ...(generalEnabled !== undefined && { generalEnabled }),
-    },
-  });
+    const updated = await prisma.cleaningConfig.update({
+      where: { id: config.id },
+      data: {
+        ...(body.weeklyEnabled !== undefined && {
+          weeklyEnabled: body.weeklyEnabled,
+        }),
+        ...(body.weeklyDayOfWeek !== undefined && {
+          weeklyDayOfWeek: body.weeklyDayOfWeek,
+        }),
+        ...(body.weeklyIntervalWeeks !== undefined && {
+          weeklyIntervalWeeks: body.weeklyIntervalWeeks,
+        }),
+        ...(body.generalEnabled !== undefined && {
+          generalEnabled: body.generalEnabled,
+        }),
+      },
+    });
 
-  return NextResponse.json({
-    config: {
-      id: updated.id,
-      weeklyEnabled: updated.weeklyEnabled,
-      weeklyDayOfWeek: updated.weeklyDayOfWeek,
-      weeklyIntervalWeeks: updated.weeklyIntervalWeeks,
-      generalEnabled: updated.generalEnabled,
-    },
-  });
+    return NextResponse.json({
+      config: {
+        id: updated.id,
+        weeklyEnabled: updated.weeklyEnabled,
+        weeklyDayOfWeek: updated.weeklyDayOfWeek,
+        weeklyIntervalWeeks: updated.weeklyIntervalWeeks,
+        generalEnabled: updated.generalEnabled,
+      },
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

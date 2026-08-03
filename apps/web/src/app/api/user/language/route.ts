@@ -1,7 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
+import { updateLanguageSchema } from "@/lib/schemas";
 
 export async function PATCH(request: Request) {
   const session = await auth.api.getSession({
@@ -12,16 +14,18 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
-  const { language } = await request.json();
+  try {
+    const { language } = updateLanguageSchema.parse(
+      await readJsonRequest(request),
+    );
 
-  if (language !== "pt" && language !== "es") {
-    return NextResponse.json({ error: "Idioma inválido" }, { status: 400 });
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { language },
+    });
+
+    return NextResponse.json({ message: "Idioma atualizado" });
+  } catch (error) {
+    return handleApiError(error);
   }
-
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { language },
-  });
-
-  return NextResponse.json({ message: "Idioma atualizado" });
 }

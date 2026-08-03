@@ -1,7 +1,5 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,24 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-type MeetingConfig = {
-  id: string;
-  type: string;
-  dayOfWeek: number;
-  startTime: string;
-  isActive: boolean;
-  parts: { id: string }[];
-};
-
-type SpecialEvent = {
-  id: string;
-  type: string;
-  date: string;
-  endDate: string | null;
-  time: string | null;
-  location: string | null;
-};
+import { getServerT } from "@/i18n/server";
+import { auth } from "@/lib/auth";
+import { getUserOrg } from "@/lib/org-utils";
+import { prisma } from "@/lib/prisma";
+import { serializeSpecialEvent } from "@/lib/special-events";
 
 const DAY_KEYS = [
   "sunday",
@@ -50,6 +35,8 @@ const EVENT_EMOJI: Record<string, string> = {
   specialMeeting: "👥",
 };
 
+type T = ReturnType<typeof getServerT>;
+
 function eventEmoji(type: string): string {
   return EVENT_EMOJI[type] ?? "⭐";
 }
@@ -66,7 +53,7 @@ function nextDateForDay(dayOfWeek: number, time: string): Date {
   return next;
 }
 
-function formatDate(date: Date, t: (key: string) => string): string {
+function formatDate(date: Date, t: T): string {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const tomorrow = new Date(today);
@@ -80,8 +67,8 @@ function formatDate(date: Date, t: (key: string) => string): string {
 }
 
 function formatEventDate(
-  event: SpecialEvent,
-  t: (key: string, opts?: Record<string, unknown>) => string,
+  event: ReturnType<typeof serializeSpecialEvent>,
+  t: T,
 ) {
   const parts: string[] = [event.date];
   if (event.endDate) parts.push(`– ${event.endDate}`);
@@ -89,37 +76,41 @@ function formatEventDate(
   return parts.join(" ");
 }
 
-export default function DashboardPage() {
-  const { t } = useTranslation();
-  const [configs, setConfigs] = useState<MeetingConfig[]>([]);
-  const [events, setEvents] = useState<SpecialEvent[]>([]);
-  const [memberCount, setMemberCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+export default async function DashboardPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
 
-  const fetchAll = useCallback(async () => {
-    const [memberRes, configRes, eventRes] = await Promise.all([
-      fetch("/api/members"),
-      fetch("/api/meeting-configs"),
-      fetch("/api/special-events"),
-    ]);
-    if (memberRes.ok) {
-      const data = await memberRes.json();
-      if (data.members) setMemberCount(data.members.length);
-    }
-    if (configRes.ok) {
-      const data = await configRes.json();
-      if (data.configs) setConfigs(data.configs);
-    }
-    if (eventRes.ok) {
-      const data = await eventRes.json();
-      if (data.events) setEvents(data.events);
-    }
-    setLoading(false);
-  }, []);
+  if (!session) {
+    redirect("/login");
+  }
 
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+  const member = await getUserOrg(await headers());
+
+  if (!member) {
+    if (session.user.globalRole === "super_user") {
+      redirect("/admin");
+    }
+    if (session.user.globalRole === "owner") {
+      redirect("/create-org");
+    }
+    redirect("/welcome");
+  }
+
+  const t = getServerT(session.user.language);
+
+  const [configs, events, memberCount] = await Promise.all([
+    prisma.meetingConfig.findMany({
+      where: { organizationId: member.organizationId },
+      include: { parts: { select: { id: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.specialEvent.findMany({
+      where: { organizationId: member.organizationId },
+      orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.member.count({ where: { organizationId: member.organizationId } }),
+  ]);
+
+  const serializedEvents = events.map(serializeSpecialEvent);
 
   const activeMeetings = configs.filter((c) => c.isActive);
   const upcomingMeetings = activeMeetings
@@ -134,18 +125,10 @@ export default function DashboardPage() {
     new Date().getMonth(),
     new Date().getDate(),
   );
-  const upcomingEvents = events
+  const upcomingEvents = serializedEvents
     .filter((event) => new Date(`${event.date}T00:00:00`) >= today)
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 3);
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-5xl px-6 py-8">
-        <p className="text-muted-foreground">{t("common.loading")}</p>
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">

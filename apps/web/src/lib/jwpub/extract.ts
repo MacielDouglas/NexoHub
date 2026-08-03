@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { MAX_UPLOAD_BYTES } from "./constants";
+import { MAX_EXPANDED_BYTES, MAX_UPLOAD_BYTES } from "./constants";
 import {
   detectType,
   type ExtractType,
@@ -24,6 +24,37 @@ export type JwpubImportResult = {
   items: Record<string, unknown>[];
 };
 
+function assertPathInside(root: string, target: string): void {
+  const r = resolve(root) + sep;
+  const t = resolve(target);
+  if (t !== resolve(root) && !t.startsWith(r)) {
+    throw Object.assign(new Error("Manifest inválido"), {
+      code: "BAD_MANIFEST",
+    });
+  }
+}
+
+function resolveDbPath(inner: string, fileName: unknown): string {
+  if (typeof fileName !== "string" || !fileName) {
+    throw Object.assign(new Error("Manifest inválido"), {
+      code: "BAD_MANIFEST",
+    });
+  }
+  const normalized = fileName.replace(/\\/g, "/");
+  if (
+    normalized.includes("..") ||
+    normalized.startsWith("/") ||
+    /^[a-zA-Z]:/.test(normalized)
+  ) {
+    throw Object.assign(new Error("Manifest inválido"), {
+      code: "BAD_MANIFEST",
+    });
+  }
+  const dbPath = join(inner, normalized);
+  assertPathInside(inner, dbPath);
+  return dbPath;
+}
+
 export async function extractJwpub(buffer: Buffer): Promise<JwpubImportResult> {
   if (buffer.length <= 0 || buffer.length > MAX_UPLOAD_BYTES) {
     throw Object.assign(new Error("Tamanho inválido"), { code: "BAD_SIZE" });
@@ -42,14 +73,19 @@ export async function extractJwpub(buffer: Buffer): Promise<JwpubImportResult> {
     await mkdir(outer, { recursive: true });
     await mkdir(inner, { recursive: true });
 
-    await unzipToDir(filePath, outer);
+    await unzipToDir(filePath, outer, { maxTotalBytes: MAX_EXPANDED_BYTES });
     const manifest = JSON.parse(
       await readFile(join(outer, "manifest.json"), "utf8"),
     );
-    await unzipToDir(join(outer, "contents"), inner);
-    const db = new DatabaseSync(join(inner, manifest.publication.fileName), {
-      readOnly: true,
+    await unzipToDir(join(outer, "contents"), inner, {
+      maxTotalBytes: MAX_EXPANDED_BYTES,
     });
+    const db = new DatabaseSync(
+      resolveDbPath(inner, manifest.publication?.fileName),
+      {
+        readOnly: true,
+      },
+    );
 
     try {
       const { type, pub } = detectType(db);

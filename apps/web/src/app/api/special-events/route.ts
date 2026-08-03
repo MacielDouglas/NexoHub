@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { handleApiError, readJsonRequest } from "@/lib/http";
 import { canManageConfig, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
 import {
@@ -34,17 +35,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
   }
 
-  const body = await request.json();
-  const { type, date: dateStr, endDate: endDateStr, time, location } = body;
+  let body: Record<string, unknown>;
+  try {
+    body = (await readJsonRequest(request)) as Record<string, unknown>;
+  } catch (error) {
+    return handleApiError(error);
+  }
+  const type = body.type as string | undefined;
+  const dateStr = body.date as string | undefined;
+  const endDateStr = body.endDate as string | undefined;
+  const time = body.time as string | undefined;
+  const location = body.location as string | undefined;
 
-  if (!isSpecialEventType(type)) {
+  if (!type || !isSpecialEventType(type)) {
     return NextResponse.json(
       { error: "Tipo de evento inválido" },
       { status: 400 },
     );
   }
 
-  const date = parseEventDate(dateStr);
+  const date = dateStr ? parseEventDate(dateStr) : null;
   if (!date) {
     return NextResponse.json(
       { error: "Campo obrigatório: date (AAAA-MM-DD)" },

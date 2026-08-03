@@ -8,7 +8,9 @@ if (!connectionString) {
 }
 
 if (!connectionString.startsWith("postgresql://")) {
-  throw new Error("DATABASE_URL inválida. Ela precisa começar com postgresql://");
+  throw new Error(
+    "DATABASE_URL inválida. Ela precisa começar com postgresql://",
+  );
 }
 
 const adapter = new PrismaPg({ connectionString });
