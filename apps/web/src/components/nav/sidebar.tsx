@@ -3,7 +3,7 @@
 import { Building2, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getServerT } from "@/i18n/server";
+import { useTranslation } from "react-i18next";
 import { SignOutButton } from "../sign-out-button";
 import { Separator } from "../ui/separator";
 import { getNavItems } from "./nav-items";
@@ -11,23 +11,17 @@ import { getNavItems } from "./nav-items";
 type OrgSidebarProps = {
   currentSlug: string;
   organizationName: string;
-  language: string | null | undefined;
 };
 
-export function Sidebar({
-  currentSlug,
-  organizationName,
-  language,
-}: OrgSidebarProps) {
+export function Sidebar({ currentSlug, organizationName }: OrgSidebarProps) {
   const pathname = usePathname();
-  const t = getServerT(language);
+  const { t } = useTranslation();
   const items = getNavItems(currentSlug);
 
   return (
     <aside className="hidden border-r bg-background/80 lg:sticky lg:top-0 lg:block lg:h-screen">
       <div className="flex h-full flex-col">
         <div className="border-b p-5">
-
           <Link
             href={`/org/${currentSlug}`}
             className="flex items-center gap-3 rounded-md"
