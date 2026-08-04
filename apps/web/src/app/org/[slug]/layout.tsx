@@ -46,7 +46,7 @@ export default async function OrganizationLayout({
         />
         <div className="flex min-h-screen flex-col">
           <div className="flex-1 p-4 md:p-6">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 md:gap-6">
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 rounded-3xl bg-background ring-1 ring-white/10 md:gap-6">
               <MobileDrawer
                 currentOrganization={org}
                 userName={session.user.name ?? "Usuário"}
@@ -54,7 +54,7 @@ export default async function OrganizationLayout({
                 language={session.user.language}
               />
 
-              <main>{children}</main>
+              <main className="px-4 pb-6 sm:px-6 md:px-8">{children}</main>
             </div>
           </div>
         </div>

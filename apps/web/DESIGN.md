@@ -2,13 +2,13 @@
 name: Nexohub
 description: Gerenciador de reuniões e congregação
 colors:
-  primary: "#2563eb"
-  secondary: "#7c3aed"
-  neutral-bg: "#f8fafd"
-  neutral-card: "#ffffff"
-  neutral-muted: "#eef2f8"
-  neutral-muted-foreground: "#64748b"
-  neutral-border: "#e6ebf3"
+  primary: "#ec7000"
+  secondary: "#3a3f4d"
+  neutral-bg: "#0c0c12"
+  neutral-card: "#15161d"
+  neutral-muted: "#1d1f28"
+  neutral-muted-foreground: "#9aa1ad"
+  neutral-border: "#242733"
   bank-ink: "#0c0c12"
   bank-card: "#15161d"
   bank-muted: "#1d1f28"
@@ -16,6 +16,8 @@ colors:
   bank-border: "#242733"
   bank-orange: "#ec7000"
   bank-destructive: "#ff5d6c"
+  light-primary: "#2563eb"
+  light-secondary: "#7c3aed"
 typography:
   body:
     fontFamily: "Geist, system-ui, sans-serif"
@@ -85,49 +87,48 @@ components:
 
 **Creative North Star: "O Balcão da Congregação"**
 
-A aplicação opera em dois mundos coordenados: o **mundo de gestão** (claro, azul primário #2563eb e roxo secundário #7c3aed) que veste o shell da organização — sidebar, navegação, telas de settings — e o **mundo bancário** (tinta `#0c0c12` + laranja Itaú `#ec7000`) que veste a superfície **Pessoas** como se fosse a home de um banco digital: o cadastro da congregação lido como um extrato, com o total em posição de saldo.
+O produto inteiro é um banco digital para a congregação. O mundo Itaú — tinta `#0c0c12` + laranja `#ec7000` — foi **promovido ao `:root` global** e veste todo o app: auth (login, welcome, create-org), o shell da organização (sidebar, drawer, painel arredondado) e todas as páginas `/org/*` (overview, Pessoas, meeting-content, settings) e admin.
 
-O contraste entre o shell claro e o painel escuro de Pessoas é intencional: o painel arredondado (`rounded-3xl`, ring branco a 10%) é um "app dentro do app", uma tela bancária encaixada no dashboard. Números usam `tabular-nums` e peso semibold para escanear como valores. Cards têm cantos generosos, ring sutis no lugar de sombras, e um único glow laranja no hero como momento de assinatura.
+Uma superfície permanece no **mundo claro** como ilha própria: a **dashboard** (`/dashboard`, `/dashboard/members`), protegida pela classe `.light-world` que restaura os tokens luzes (azul `#2563eb` + violeta `#7c3aed`). É uma decisão de escopo do usuário: o app inteiro segue o padrão do banco; a dashboard mantém seu visual operacional claro.
+
+O painel arredondado (`rounded-3xl`, ring branco a 10%) é o "app dentro do app": envolve o conteúdo de todas as rotas `/org/*` via layout. Números usam `tabular-nums` e peso semibold para escanear como valores. Cards têm cantos generosos, ring sutis no lugar de sombras, e um único glow laranja no hero como momento de assinatura.
 
 **Key Characteristics:**
-- Dois mundos coordenados: shell claro (gestão) e superfície Pessoas escura (bancário).
-- Laranja `#ec7000` como único acento no mundo escuro; nunca usado como texto sobre fundo claro.
+- Mundo global escuro Itaú; a dashboard é a única ilha clara (`.light-world`).
+- Laranja `#ec7000` como único acento do mundo escuro; no mundo claro da dashboard, o acento volta a ser azul/violeta.
 - Profundidade por camadas tonais (card sobre ink, muted sobre card) + ring 1px, não por sombras duras.
 - Números tabulares e pesos fortes para leitura de métricas/valores.
 - Cantos: `rounded-3xl` no painel, `rounded-2xl` no hero/linhas, `rounded-full` em buscas e CTA.
 
 ## Colors
 
-A paleta global é clara e neutra com dois acentos de gestão; a paleta `people-banking` é a tinta escura com o laranja de assinatura.
+O `:root` carrega a **paleta Itaú escura** como padrão global. A classe `.light-world` carrega a paleta clara de gestão, aplicada apenas na dashboard.
 
-### Primary
-- **Azul Nexohub** (#2563eb): acento de gestão global — botões, links, sidebar ativa, foco.
+### Primary (global)
+- **Laranja Itaú** (#ec7000): único acento do mundo escuro — CTAs, total do hero, sidebar ativa, ícones de destaque, ring de foco.
 
-### Secondary
-- **Violeta Nexohub** (#7c3aed): acento secundário de gestão — badges, destaques de sexo (herdado do sistema antigo).
+### Secondary (global)
+- **Slate Escuro** (#3a3f4d): acento secundário sobre tinta — badges "Chefe", superfícies secundárias.
 
-### Neutral
-- **Fundo Gelado** (#f8fafd): fundo do shell.
-- **Branco Cartão** (#ffffff): cards do mundo de gestão.
-- **Mist Neutral** (#eef2f8): áreas muted no mundo claro.
-- **Cinza Nevoeiro** (#64748b): texto secundário no mundo claro.
-- **Borda Clara** (#e6ebf3): hairlines do mundo claro.
-
-### people-banking (mundo escuro)
-- **Tinta** (#0c0c12): fundo do painel Pessoas — o "vidro" do app bancário.
+### Neutral (global, sobre tinta)
+- **Tinta** (#0c0c12): fundo global do app.
 - **Cartão Escuro** (#15161d): cards sobre a tinta.
 - **Mist Escuro** (#1d1f28): células compactas e áreas muted.
 - **Cinza Pálido** (#9aa1ad): texto secundário sobre fundo escuro (≥4.5:1).
-- **Laranja Itaú** (#ec7000): único acento do mundo escuro — CTA "Nova pessoa", total, ícones de destaque, ring de foco.
 - **Vermelho Saldo** (#ff5d6c): estados destrutivos (badge "Inativo", remoção) sobre fundo escuro.
 - **Borda Escura** (#242733): hairlines sobre a tinta.
+
+### A ilha clara (#.light-world, só dashboard)
+- **Azul Nexohub** (#2563eb): acento da dashboard — botões, links, foco.
+- **Violeta Nexohub** (#7c3aed): acento secundário da dashboard — hero gradiente, badges.
+- **Fundo Gelado** (#f8fafd), **Branco Cartão** (#ffffff), **Mist Neutral** (#eef2f8), **Cinza Nevoeiro** (#64748b), **Borda Clara** (#e6ebf3).
 
 ### Named Rules
 **A Regra da Raridade Laranja.** No mundo escuro, o laranja `#ec7000` aparece em poucos pontos — CTA, total, glow do hero — e sua raridade é o que o faz parecer uma assinatura, não um tema.
 
 **Trade-off de contraste (decisão de marca).** Texto branco sobre `#ec7000` mede ≈2.8:1 (abaixo do WCAG AA 4.5:1 para texto normal). Este é o laranja da marca Itaú, pinado pelo usuário, e o CTA é usado com weight semibold em tamanho `text-sm`+ com pill amplo. Registro aqui que é um compromisso consciente da identidade; se a acessibilidade estrita for exigida, escurece-se a superfície de texto para `#d35a00` (≈4.6:1) mantendo `#ec7000` para totais e glows.
 
-**A Regra dos Dois Mundos.** O mundo claro é para gestão; o escuro para a leitura de cadastro como extrato. Nenhum token do mundo escuro vaza para o shell global.
+**A Regra das Duas Ilhas.** O mundo escuro Itaú é o padrão global; a dashboard é uma ilha clara isolada por `.light-world`. Nenhum token do mundo escuro vaza para a ilha clara, e nenhum token claro vaza para o resto do app — cada um confinado ao seu escopo.
 
 ## Typography
 
@@ -149,8 +150,8 @@ A paleta global é clara e neutra com dois acentos de gestão; a paleta `people-
 
 ## Layout
 
-- Shell: grid `280px 1fr` com sidebar sticky; conteúdo em container `max-w-7xl` com padding `p-4 sm:p-6`.
-- O painel Pessoas é um bloco `rounded-3xl` de tinta com `ring-1 ring-white/10`, preenchendo o conteúdo.
+- Shell: grid `280px 1fr` com sidebar sticky; conteúdo em container `max-w-7xl` com padding `p-4 md:p-6`.
+- O painel do org é um bloco `rounded-3xl` de tinta com `ring-1 ring-white/10`, vivendo no layout `/org/[slug]` e envolvendo o conteúdo de todas as rotas `*` (overview, Pessoas, meeting-content, settings) via `<main>`.
 - Espaçamento vertical interno do painel: `space-y-6` (grupos) com `space-y-2` dentro das famílias; mais espaço acima do cabeçalho de grupo do que abaixo.
 - Hero: grid de 1 coluna no mobile, células de estatística `grid-cols-2 → sm:grid-cols-3 → lg:grid-cols-5`.
 - Busca: `max-w-md`, pill full.
@@ -195,7 +196,8 @@ O sistema é **plano por camadas tonais**: profundidade vem de stacking de super
 - **Focus:** `border-ring`/`ring-primary/50` (laranja no mundo escuro).
 
 ### Navigation
-- Shell global claro com sidebar (links ativos `bg-primary text-primary-foreground`). Fora do escopo do mundo Pessoas.
+- Shell global escuro com sidebar (links ativos `bg-primary text-primary-foreground`), shared por todas as rotas `/org/*`. A dashboard tem header próprio claro com `DashboardNav` (fora do mundo escuro).
+- SideNav interno (settings/meeting-content) e BottomNav mobile usam os mesmos tokens escuros.
 
 ### Hero "Saldo" (componente de assinatura)
 - Card `rounded-2xl bg-card ring-white/10` com glow radial laranja no canto superior direito (`.bank-hero-glow`).
@@ -207,7 +209,7 @@ O sistema é **plano por camadas tonais**: profundidade vem de stacking de super
 
 ### Do:
 - **Do** usar `tabular-nums` + semibold em todo número que representa métrica.
-- **Do** manter o laranja `#ec7000` confinado ao mundo escuro Pessoas.
+- **Do** manter o laranja `#ec7000` como o acento único do mundo escuro global; confinar o azul/violeta à ilha clara da dashboard (`.light-world`).
 - **Do** definir superfícies com rings de 1px (`white/10`, `white/5`) em vez de sombras.
 - **Do** manter i18n: todas as strings novas/alteradas via `t()` em pt.json/es.json.
 - **Do** usar `rounded-full` para CTA e busca, `rounded-2xl`/`rounded-xl` para cards.
@@ -215,5 +217,5 @@ O sistema é **plano por camadas tonais**: profundidade vem de stacking de super
 ### Don't:
 - **Don't** usar gradientes de texto para destaque — peso e tamanho bastam.
 - **Don't** adicionar cores além do laranja no mundo escuro (sem verde/rosa/ciano como acentos).
-- **Don't** vazar tokens `people-banking` para o shell global (o mundo claro permanece azul/violeta).
+- **Don't** usar tokens azul/violeta do mundo claro fora da dashboard (`.light-world`), nem vazar tokens escuros para dentro dela.
 - **Don't** usar sombras duras com offset zero como default — o sistema é flat com rings.

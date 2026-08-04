@@ -143,8 +143,10 @@ export function AdminClient() {
       <header className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-[#2563EB] to-[#7C3AED]">
-              <span className="text-lg font-bold text-white">N</span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
+              <span className="text-lg font-bold text-primary-foreground">
+                N
+              </span>
             </div>
             <span className="text-lg font-semibold">Nexohub</span>
           </div>
@@ -154,7 +156,7 @@ export function AdminClient() {
           <LanguageSwitcher />
           <Link
             href="/app"
-            className="text-sm text-zinc-500 hover:text-zinc-800"
+            className="text-sm text-muted-foreground hover:text-foreground"
             onClick={exitOrg}
           >
             {t("nav.dashboard")}

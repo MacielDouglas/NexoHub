@@ -57,7 +57,7 @@ export function LanguageSwitcher() {
   }
 
   return (
-    <div className="relative inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="relative inline-flex items-center gap-1 rounded-full border border-border bg-card p-1">
       {(["pt", "es"] as const).map((lang) => (
         <button
           type="button"
@@ -66,8 +66,8 @@ export function LanguageSwitcher() {
           aria-label={t(`language.${lang}`)}
           className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-colors ${
             current === lang
-              ? "bg-[#2563EB] text-white"
-              : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-100"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <span className="text-xs">{FLAGS[lang]}</span>

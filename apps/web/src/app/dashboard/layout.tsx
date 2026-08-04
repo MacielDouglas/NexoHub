@@ -37,7 +37,7 @@ export default async function DashboardLayout({
   const isSuperUser = Boolean(member?.isSuperUser);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="light-world flex min-h-screen flex-col bg-background">
       <I18nSync lang={session.user.language} />
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">

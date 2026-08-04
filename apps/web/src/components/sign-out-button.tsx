@@ -22,7 +22,11 @@ export function SignOutButton({ light = false }: { light?: boolean }) {
       variant="ghost"
       size="sm"
       onClick={handleSignOut}
-      className={light ? "text-white hover:bg-white/10 hover:text-white" : ""}
+      className={
+        light
+          ? "text-muted-foreground hover:bg-white/10 hover:text-foreground"
+          : ""
+      }
     >
       <LogOut className="size-4" />
       {t("nav.signOut")}

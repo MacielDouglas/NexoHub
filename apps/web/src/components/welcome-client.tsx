@@ -50,13 +50,13 @@ export function WelcomeClient({ lang }: { lang?: string | null }) {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-linear-to-br from-[#2563EB] via-[#3B5BDB] to-[#7C3AED] p-6">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-linear-to-br from-[#0c0c12] via-[#14141c] to-[#1a1410] p-6">
       <I18nSync lang={lang} />
       <div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.3) 0, transparent 40%)",
+            "radial-gradient(circle at 20% 30%, rgba(236,112,0,0.18) 0, transparent 40%), radial-gradient(circle at 80% 70%, rgba(236,112,0,0.10) 0, transparent 40%)",
         }}
       />
       <div className="absolute top-5 right-6 flex items-center gap-2">
@@ -65,10 +65,12 @@ export function WelcomeClient({ lang }: { lang?: string | null }) {
       </div>
 
       <div className="relative w-full max-w-md">
-        <Card className="border-0 bg-white shadow-2xl">
+        <Card className="border-0 bg-card shadow-2xl ring-1 ring-white/10">
           <CardHeader className="items-center text-center">
-            <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-[#2563EB] to-[#7C3AED] shadow-lg">
-              <span className="text-3xl font-bold text-white">N</span>
+            <div className="bank-hero-glow mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30">
+              <span className="text-3xl font-bold text-primary-foreground">
+                N
+              </span>
             </div>
             <CardTitle className="text-2xl font-semibold tracking-tight">
               {t("welcome.title")}
@@ -78,17 +80,17 @@ export function WelcomeClient({ lang }: { lang?: string | null }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-5">
-            <ul className="w-full space-y-2 text-sm text-gray-600">
+            <ul className="w-full space-y-2 text-sm text-muted-foreground">
               <li className="flex gap-2">
-                <span className="text-[#2563EB]">•</span>
+                <span className="text-primary">•</span>
                 <span>{t("welcome.feature1")}</span>
               </li>
               <li className="flex gap-2">
-                <span className="text-[#2563EB]">•</span>
+                <span className="text-primary">•</span>
                 <span>{t("welcome.feature2")}</span>
               </li>
               <li className="flex gap-2">
-                <span className="text-[#2563EB]">•</span>
+                <span className="text-primary">•</span>
                 <span>{t("welcome.feature3")}</span>
               </li>
             </ul>
@@ -118,7 +120,7 @@ export function WelcomeClient({ lang }: { lang?: string | null }) {
               >
                 {submitting ? t("common.loading") : t("welcome.enter")}
               </Button>
-              <p className="text-center text-xs text-gray-400">
+              <p className="text-center text-xs text-muted-foreground">
                 {t("welcome.codeHint")}
               </p>
             </div>

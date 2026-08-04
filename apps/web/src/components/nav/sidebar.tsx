@@ -27,6 +27,7 @@ export function Sidebar({
     <aside className="hidden border-r bg-background/80 lg:sticky lg:top-0 lg:block lg:h-screen">
       <div className="flex h-full flex-col">
         <div className="border-b p-5">
+
           <Link
             href={`/org/${currentSlug}`}
             className="flex items-center gap-3 rounded-md"

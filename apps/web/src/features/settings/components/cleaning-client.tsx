@@ -279,7 +279,7 @@ function EnableCard({
       type="button"
       onClick={onEnable}
       disabled={disabled}
-      className="w-full rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 text-sm font-medium text-[#2563EB] transition-colors hover:border-[#2563EB]/50 disabled:opacity-50"
+      className="w-full rounded-2xl border-2 border-dashed border-border bg-card px-6 py-8 text-sm font-medium text-primary transition-colors hover:border-primary/50 disabled:opacity-50"
     >
       {label}
     </button>
@@ -311,7 +311,7 @@ function WeeklySettings({
           id="weekly-day"
           value={dayOfWeek}
           onChange={(e) => setDayOfWeek(Number(e.target.value))}
-          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
         >
           {DAY_KEYS.map((key, index) => (
             <option key={key} value={index}>
@@ -331,7 +331,7 @@ function WeeklySettings({
           id="weekly-interval"
           value={intervalWeeks}
           onChange={(e) => setIntervalWeeks(Number(e.target.value))}
-          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+          className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
         >
           {[1, 2, 3, 4].map((n) => (
             <option key={n} value={n}>
@@ -350,7 +350,7 @@ function WeeklySettings({
             })
           }
           disabled={saving}
-          className="rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {t("common.save")}
         </button>
@@ -445,7 +445,7 @@ function SectorCard({
         <button
           type="button"
           onClick={onEdit}
-          className="text-sm font-medium text-[#2563EB] hover:underline "
+          className="text-sm font-medium text-primary hover:underline "
         >
           {t("common.edit")}
         </button>
@@ -599,7 +599,7 @@ function SectorModal({
                 onChange={(e) =>
                   e.target.value ? selectDefault(e.target.value) : null
                 }
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
               >
                 <option value="">{t("cleaning.custom")}</option>
                 {defaults.map((def) => (
@@ -624,7 +624,7 @@ function SectorModal({
               value={form.name}
               onChange={(e) => updateForm({ name: e.target.value })}
               placeholder={t("cleaning.sectorName")}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
             />
           </div>
 
@@ -641,7 +641,7 @@ function SectorModal({
               onChange={(e) => updateForm({ task: e.target.value })}
               rows={3}
               placeholder={t("cleaning.task")}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
             />
           </div>
 
@@ -671,7 +671,7 @@ function SectorModal({
                   min={1}
                   value={form.peopleCount}
                   onChange={(e) => updateForm({ peopleCount: e.target.value })}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-[#2563EB] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30"
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
                 />
               </div>
 
@@ -705,7 +705,7 @@ function SectorModal({
                 type="button"
                 onClick={handleRestore}
                 disabled={restoring}
-                className="rounded-xl bg-[#7C3AED] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {t("cleaning.restoreDefault")}
               </button>
@@ -714,7 +714,7 @@ function SectorModal({
               type="button"
               onClick={handleSubmit}
               disabled={saving}
-              className="flex-1 rounded-xl bg-[#2563EB] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {t("common.save")}
             </button>
@@ -754,10 +754,10 @@ function UnitPicker({
             type="button"
             onClick={() => onSelect(unit)}
             className={cn(
-              "rounded-lg border border-[#2563EB] px-3 py-1.5 text-center text-sm",
+              "rounded-lg border border-primary px-3 py-1.5 text-center text-sm",
               active
-                ? "bg-[#2563EB] font-medium text-white"
-                : "bg-background text-foreground hover:bg-[#2563EB]/10",
+                ? "bg-primary font-medium text-primary-foreground"
+                : "bg-background text-foreground hover:bg-primary/10",
             )}
           >
             {t(`cleaning.units.${unit}`)}
@@ -787,10 +787,10 @@ function GenderPicker({
             type="button"
             onClick={() => onSelect(gender)}
             className={cn(
-              "rounded-lg border border-[#2563EB] px-3 py-1.5 text-center text-sm",
+              "rounded-lg border border-primary px-3 py-1.5 text-center text-sm",
               active
-                ? "bg-[#2563EB] font-medium text-white"
-                : "bg-background text-foreground hover:bg-[#2563EB]/10",
+                ? "bg-primary font-medium text-primary-foreground"
+                : "bg-background text-foreground hover:bg-primary/10",
             )}
           >
             {t(`cleaning.genders.${gender}`)}
