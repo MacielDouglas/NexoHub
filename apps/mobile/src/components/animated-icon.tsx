@@ -1,14 +1,19 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 
 const DURATION = 600;
 
-export function AnimatedSplashOverlay() {
+interface AnimatedSplashOverlayProps {
+  ready: boolean;
+}
+
+export function AnimatedSplashOverlay({ ready }: AnimatedSplashOverlayProps) {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
   const [opacity] = useState(() => new Animated.Value(1));
+  const laidOut = useRef(false);
 
   useEffect(() => {
     if (!animate) return;
@@ -19,6 +24,14 @@ export function AnimatedSplashOverlay() {
       useNativeDriver: true,
     }).start(() => setVisible(false));
   }, [animate, opacity]);
+
+  useEffect(() => {
+    if (ready && laidOut.current && !animate) {
+      SplashScreen.hideAsync().finally(() => {
+        setAnimate(true);
+      });
+    }
+  }, [ready, animate]);
 
   if (!visible) return null;
 
@@ -31,9 +44,12 @@ export function AnimatedSplashOverlay() {
   ) : (
     <View
       onLayout={() => {
-        SplashScreen.hideAsync().finally(() => {
-          setAnimate(true);
-        });
+        laidOut.current = true;
+        if (ready) {
+          SplashScreen.hideAsync().finally(() => {
+            setAnimate(true);
+          });
+        }
       }}
       style={styles.splashOverlay}>
       {image}
