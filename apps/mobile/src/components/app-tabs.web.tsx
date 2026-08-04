@@ -6,6 +6,7 @@ import {
   TabTriggerSlotProps,
   TabListProps,
 } from 'expo-router/ui';
+import type { Href } from 'expo-router';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +28,9 @@ export default function AppTabs() {
           </TabTrigger>
           <TabTrigger name="members" href="/members" asChild>
             <TabButton>{t('nav.members')}</TabButton>
+          </TabTrigger>
+          <TabTrigger name="people" href={'/people' as Href} asChild>
+            <TabButton>{t('nav.people')}</TabButton>
           </TabTrigger>
           <TabTrigger name="meeting-content" href="/meeting-content" asChild>
             <TabButton>{t('nav.meetingContent')}</TabButton>

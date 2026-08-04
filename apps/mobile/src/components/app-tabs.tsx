@@ -29,6 +29,15 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="people">
+        <NativeTabs.Trigger.Label>{t('nav.people')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf="person.3"
+          src={require('@/assets/images/tabIcons/explore.png')}
+          renderingMode="template"
+        />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="meeting-content">
         <NativeTabs.Trigger.Label>{t('nav.meetingContent')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

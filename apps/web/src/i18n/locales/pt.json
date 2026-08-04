@@ -418,5 +418,67 @@
         }
       }
     }
+  },
+  "people": {
+    "title": "Pessoas",
+    "subtitle": "Cadastro de pessoas da congregação",
+    "titleLabel": "Pessoas cadastradas",
+    "stats": {
+      "total": "Total de pessoas",
+      "active": "Ativas",
+      "families": "Famílias",
+      "men": "Homens",
+      "women": "Mulheres",
+      "servicePrivilege": "Privilégio de serviço"
+    },
+    "noPeople": "Nenhuma pessoa cadastrada ainda.",
+    "noSearchResults": "Nenhuma pessoa encontrada.",
+    "search": "Buscar",
+    "searchPlaceholder": "Buscar por nome ou família...",
+    "add": "Nova pessoa",
+    "edit": "Editar pessoa",
+    "remove": "Remover",
+    "removeConfirmTitle": "Remover pessoa?",
+    "removeConfirmDescription": "{{name}} será removido(a) permanentemente da congregação.",
+    "savedEdit": "Pessoa atualizada com sucesso.",
+    "savedCreate": "Pessoa criada com sucesso.",
+    "deleted": "Pessoa removida.",
+    "activeLabel": "Ativo",
+    "young": "Jovem",
+    "baptized": "Batizado",
+    "cleaning": "Limpeza",
+    "student": "Estudante",
+    "servicePrivilegeLabel": "Privilégio de serviço",
+    "select": "Selecionar",
+    "noFamily": "Sem família",
+    "linkedUser": "Usuário vinculado",
+    "noLinkedUser": "Sem usuário vinculado",
+    "form": {
+      "name": "Nome",
+      "namePlaceholder": "Nome completo",
+      "sex": "Sexo",
+      "familyNameTitle": "Nome da família",
+      "familyNamePlaceholder": "Ex.: Silva",
+      "selectFamily": "Selecione a família",
+      "createNewFamily": "Criar nova família",
+      "linkUser": "Vincular usuário",
+      "selectUser": "Buscar usuário para vincular...",
+      "noUsers": "Nenhum usuário disponível",
+      "sectionObrigatorios": "Dados básicos",
+      "sectionFamilia": "Família",
+      "sectionAspectosGerais": "Aspectos gerais (reuniões)",
+      "sectionDesignacoes": "Designações (reuniões)",
+      "sectionPrivilegios": "Privilégios (reuniões)",
+      "sectionPrivilegiosServico": "Privilégios de serviço (reuniões)",
+      "chefeFamilia": "Chefe de família",
+      "casada": "Casado(a)",
+      "guests": "Solteiro(a)",
+      "gender": "Gênero"
+    },
+    "errors": {
+      "nameRequired": "O nome é obrigatório.",
+      "onlyOwnerAdmin": "Apenas Owner e Admin podem gerenciar pessoas.",
+      "removeBlocked": "Não é possível remover o chefe de família enquanto houver outros membros na família."
+    }
   }
 }
