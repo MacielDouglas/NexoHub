@@ -190,7 +190,11 @@ export async function PATCH(
     privilegioServico: merged.privilegioServico,
   };
 
-  const validationError = validateFamilyRules(formData, familiesWithMarried);
+  const validationError = validateFamilyRules(
+    formData,
+    familiesWithMarried,
+    id,
+  );
   if (validationError) {
     return NextResponse.json({ error: validationError }, { status: 400 });
   }

@@ -417,6 +417,7 @@
     "add": "Nueva persona",
     "edit": "Editar persona",
     "remove": "Eliminar",
+    "noFamilyGroup": "Sin familia",
     "removeConfirmTitle": "¿Eliminar persona?",
     "removeConfirmDescription": "{{name}} se eliminará permanentemente de la congregación.",
     "savedEdit": "Persona actualizada exitosamente.",

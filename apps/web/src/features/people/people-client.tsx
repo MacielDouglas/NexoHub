@@ -7,8 +7,6 @@ import {
   FaMagnifyingGlass,
   FaMars,
   FaPencil,
-  FaPeopleRoof,
-  FaStar,
   FaTrashCan,
   FaUserCheck,
   FaUserPlus,
@@ -43,15 +41,6 @@ type Props = {
   stats: PeopleStats;
 };
 
-const STAT_ICONS = {
-  total: FaUserCheck,
-  active: FaUserCheck,
-  families: FaPeopleRoof,
-  men: FaMars,
-  women: FaVenus,
-  servicePrivilege: FaStar,
-} as const;
-
 export function PeopleClient({
   canManage,
   people,
@@ -76,6 +65,30 @@ export function PeopleClient({
       return p.name.toLowerCase().includes(q) || family.includes(q);
     });
   }, [people, search]);
+
+  const groupedPeople = useMemo(() => {
+    const grouped: Record<string, Person[]> = {};
+    const noFamily: Person[] = [];
+
+    for (const person of filtered) {
+      if (person.family) {
+        const key = person.family.name;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(person);
+      } else {
+        noFamily.push(person);
+      }
+    }
+
+    for (const key of Object.keys(grouped)) {
+      grouped[key].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    noFamily.sort((a, b) => a.name.localeCompare(b.name));
+
+    const familyNames = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+
+    return { grouped, noFamily, familyNames };
+  }, [filtered]);
 
   function openCreate() {
     setEditing(null);
@@ -113,13 +126,21 @@ export function PeopleClient({
     }
   }
 
-  const statCards: { key: keyof PeopleStats; label: string }[] = [
-    { key: "total", label: t("people.stats.total") },
-    { key: "active", label: t("people.stats.active") },
-    { key: "families", label: t("people.stats.families") },
-    { key: "men", label: t("people.stats.men") },
-    { key: "women", label: t("people.stats.women") },
-    { key: "servicePrivilege", label: t("people.stats.servicePrivilege") },
+  const statCards: {
+    key: keyof PeopleStats;
+    label: string;
+    variant: "default" | "secondary" | "destructive" | "outline";
+  }[] = [
+    { key: "total", label: t("people.stats.total"), variant: "default" },
+    { key: "active", label: t("people.stats.active"), variant: "secondary" },
+    { key: "families", label: t("people.stats.families"), variant: "outline" },
+    { key: "men", label: t("people.stats.men"), variant: "default" },
+    { key: "women", label: t("people.stats.women"), variant: "destructive" },
+    {
+      key: "servicePrivilege",
+      label: t("people.stats.servicePrivilege"),
+      variant: "secondary",
+    },
   ];
 
   return (
@@ -139,27 +160,27 @@ export function PeopleClient({
       </div>
 
       <section
-        className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+        className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
         aria-label={t("people.titleLabel")}
       >
-        {statCards.map((card) => {
-          const Icon = STAT_ICONS[card.key];
-          return (
-            <Card key={card.key}>
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-3xl bg-muted text-muted-foreground">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-muted-foreground">
-                    {card.label}
-                  </p>
-                  <p className="text-2xl font-semibold">{stats[card.key]}</p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {statCards.map((card) => (
+          <Card key={card.key}>
+            <CardContent className="p-4">
+              <Badge
+                variant={card.variant}
+                className="h-9 w-9 flex items-center justify-center p-0"
+              >
+                <FaUserCheck className="h-4 w-4" aria-hidden="true" />
+              </Badge>
+              <div className="mt-2">
+                <p className="truncate text-xs text-muted-foreground">
+                  {card.label}
+                </p>
+                <p className="text-xl font-semibold">{stats[card.key]}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </section>
 
       <div className="relative max-w-md">
@@ -178,90 +199,204 @@ export function PeopleClient({
       </div>
 
       <section aria-label={t("people.title")}>
-        {filtered.length === 0 ? (
+        {groupedPeople.familyNames.length === 0 &&
+        groupedPeople.noFamily.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-sm text-muted-foreground">
               {search ? t("people.noSearchResults") : t("people.noPeople")}
             </CardContent>
           </Card>
         ) : (
-          <ul className="space-y-2">
-            {filtered.map((person) => (
-              <li key={person.id}>
-                <Card>
-                  <CardContent className="flex flex-wrap items-center gap-3 p-4">
-                    <div
-                      className={cn(
-                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-                        person.sex === "MALE"
-                          ? "bg-primary/10 text-primary"
-                          : "bg-secondary/10 text-secondary",
-                      )}
-                      aria-hidden="true"
-                    >
-                      {person.sex === "MALE" ? (
-                        <FaMars className="size-4" />
-                      ) : (
-                        <FaVenus className="size-4" />
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate font-medium">{person.name}</p>
-                        {person.family && (
-                          <Badge variant="outline">{person.family.name}</Badge>
-                        )}
-                        {person.chefeFamilia && (
-                          <Badge variant="secondary">Chefe</Badge>
-                        )}
-                      </div>
-                      <div className="mt-1 flex flex-wrap gap-1.5">
-                        {!person.active && (
-                          <Badge variant="destructive">Inativo</Badge>
-                        )}
-                        {person.young && <Badge variant="outline">Jovem</Badge>}
-                        {person.batizado && (
-                          <Badge variant="outline">Batizado</Badge>
-                        )}
-                        {person.casada && (
-                          <Badge variant="outline">Casado(a)</Badge>
-                        )}
-                        {person.privilegioServico && (
-                          <Badge variant="outline">Priv. serviço</Badge>
-                        )}
-                        {person.user && (
-                          <Badge variant="outline">↗ {person.user.name}</Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    {canManage && (
-                      <div className="flex shrink-0 items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => openEdit(person)}
-                          aria-label={t("people.edit")}
+          <div className="space-y-4">
+            {groupedPeople.familyNames.map((familyName) => {
+              const members = groupedPeople.grouped[familyName];
+              return (
+                <div key={familyName} className="space-y-2">
+                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider px-2">
+                    {familyName}
+                  </h3>
+                  {members.map((person) => (
+                    <Card key={person.id}>
+                      <CardContent className="flex flex-wrap items-center gap-3 p-3">
+                        <div
+                          className={cn(
+                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                            person.sex === "MALE"
+                              ? "bg-primary/10 text-primary"
+                              : "bg-secondary/10 text-secondary",
+                          )}
+                          aria-hidden="true"
                         >
-                          <FaPencil aria-hidden="true" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-destructive hover:bg-destructive/10"
-                          aria-label={t("people.remove")}
-                          onClick={() => setDeleting(person)}
-                        >
-                          <FaTrashCan aria-hidden="true" />
-                        </Button>
+                          {person.sex === "MALE" ? (
+                            <FaMars className="size-3" />
+                          ) : (
+                            <FaVenus className="size-3" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-sm">
+                            {person.name}
+                          </p>
+                          <div className="mt-0.5 flex flex-wrap gap-1">
+                            {!person.active && (
+                              <Badge variant="destructive" className="text-xs">
+                                Inativo
+                              </Badge>
+                            )}
+                            {person.young && (
+                              <Badge variant="outline" className="text-xs">
+                                Jovem
+                              </Badge>
+                            )}
+                            {person.batizado && (
+                              <Badge variant="outline" className="text-xs">
+                                Batizado
+                              </Badge>
+                            )}
+                            {person.casada && (
+                              <Badge variant="outline" className="text-xs">
+                                Casado(a)
+                              </Badge>
+                            )}
+                            {person.privilegioServico && (
+                              <Badge variant="outline" className="text-xs">
+                                Priv. serviço
+                              </Badge>
+                            )}
+                            {person.chefeFamilia && (
+                              <Badge variant="secondary" className="text-xs">
+                                Chefe
+                              </Badge>
+                            )}
+                            {person.user && (
+                              <Badge variant="outline" className="text-xs">
+                                ↗ {person.user.name}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+
+                        {canManage && (
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => openEdit(person)}
+                              aria-label={t("people.edit")}
+                            >
+                              <FaPencil aria-hidden="true" className="size-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="text-destructive hover:bg-destructive/10"
+                              aria-label={t("people.remove")}
+                              onClick={() => setDeleting(person)}
+                            >
+                              <FaTrashCan
+                                aria-hidden="true"
+                                className="size-3"
+                              />
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              );
+            })}
+
+            {groupedPeople.noFamily.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider px-2">
+                  {t("people.noFamilyGroup")}
+                </h3>
+                {groupedPeople.noFamily.map((person) => (
+                  <Card key={person.id}>
+                    <CardContent className="flex flex-wrap items-center gap-3 p-3">
+                      <div
+                        className={cn(
+                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                          person.sex === "MALE"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-secondary/10 text-secondary",
+                        )}
+                        aria-hidden="true"
+                      >
+                        {person.sex === "MALE" ? (
+                          <FaMars className="size-3" />
+                        ) : (
+                          <FaVenus className="size-3" />
+                        )}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
-          </ul>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-sm">
+                          {person.name}
+                        </p>
+                        <div className="mt-0.5 flex flex-wrap gap-1">
+                          {!person.active && (
+                            <Badge variant="destructive" className="text-xs">
+                              Inativo
+                            </Badge>
+                          )}
+                          {person.young && (
+                            <Badge variant="outline" className="text-xs">
+                              Jovem
+                            </Badge>
+                          )}
+                          {person.batizado && (
+                            <Badge variant="outline" className="text-xs">
+                              Batizado
+                            </Badge>
+                          )}
+                          {person.casada && (
+                            <Badge variant="outline" className="text-xs">
+                              Casado(a)
+                            </Badge>
+                          )}
+                          {person.privilegioServico && (
+                            <Badge variant="outline" className="text-xs">
+                              Priv. serviço
+                            </Badge>
+                          )}
+                          {person.user && (
+                            <Badge variant="outline" className="text-xs">
+                              ↗ {person.user.name}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {canManage && (
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => openEdit(person)}
+                            aria-label={t("people.edit")}
+                          >
+                            <FaPencil aria-hidden="true" className="size-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-destructive hover:bg-destructive/10"
+                            aria-label={t("people.remove")}
+                            onClick={() => setDeleting(person)}
+                          >
+                            <FaTrashCan aria-hidden="true" className="size-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </section>
 

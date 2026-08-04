@@ -94,9 +94,11 @@ export function validateFamilyRules(
   existingFamilies: {
     id: string;
     name: string;
+    chefeId?: string | null;
     marriedMaleId?: string | null;
     marriedFemaleId?: string | null;
   }[],
+  currentPersonId?: string,
 ): string | null {
   if (data.chefeFamilia) {
     if (data.young) return "Jovem não pode ser chefe de família";
@@ -104,21 +106,27 @@ export function validateFamilyRules(
       return "Digite o nome da família para o chefe";
     const nameLower = data.familyName.trim().toLowerCase();
     const conflict = existingFamilies.find(
-      (f) => f.name.toLowerCase() === nameLower,
+      (f) =>
+        f.name.toLowerCase() === nameLower && f.chefeId !== currentPersonId,
     );
     if (conflict) return "Já existe uma família com este nome";
   }
 
   if (data.casada) {
     if (data.young) return "Pessoa casada não pode ser jovem";
-    if (!data.familyId) return "Pessoa casada deve pertencer a uma família";
-    const family = existingFamilies.find((f) => f.id === data.familyId);
-    if (!family) return "Família selecionada não existe";
-    if (data.sex === "MALE" && family.marriedMaleId) {
-      return "Esta família já tem um homem casado";
-    }
-    if (data.sex === "FEMALE" && family.marriedFemaleId) {
-      return "Esta família já tem uma mulher casada";
+    const hasFamily =
+      Boolean(data.familyId) ||
+      (data.chefeFamilia && Boolean(data.familyName?.trim()));
+    if (!hasFamily) return "Pessoa casada deve pertencer a uma família";
+    if (data.familyId) {
+      const family = existingFamilies.find((f) => f.id === data.familyId);
+      if (!family) return "Família selecionada não existe";
+      if (data.sex === "MALE" && family.marriedMaleId) {
+        return "Esta família já tem um homem casado";
+      }
+      if (data.sex === "FEMALE" && family.marriedFemaleId) {
+        return "Esta família já tem uma mulher casada";
+      }
     }
   }
 

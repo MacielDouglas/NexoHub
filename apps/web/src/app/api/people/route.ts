@@ -183,7 +183,11 @@ export async function POST(request: Request) {
     marriedFemaleId: f.people.find((p) => p.sex === "FEMALE")?.id ?? null,
   }));
 
-  const validationError = validateFamilyRules(input, familiesWithMarried);
+  const validationError = validateFamilyRules(
+    input,
+    familiesWithMarried,
+    undefined,
+  );
   if (validationError) {
     return NextResponse.json({ error: validationError }, { status: 400 });
   }
