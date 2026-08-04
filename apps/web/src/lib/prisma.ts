@@ -13,6 +13,15 @@ if (!connectionString.startsWith("postgresql://")) {
   );
 }
 
-const adapter = new PrismaPg({ connectionString });
+const adapter = new PrismaPg({
+  connectionString: normalizeSslMode(connectionString),
+});
+
+function normalizeSslMode(url: string): string {
+  if (url.includes("sslmode=require")) {
+    return url.replace("sslmode=require", "sslmode=verify-full");
+  }
+  return url;
+}
 
 export const prisma = new PrismaClient({ adapter });

@@ -49,6 +49,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   const response = await fetch(`${API_URL}${normalizedPath}`, {
     ...options,
     headers,
+    credentials: "omit",
   });
 
   console.log("[apiFetch] status:", response.status, normalizedPath);
