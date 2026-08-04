@@ -117,6 +117,41 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Itaú dark world — escopo da página Pessoas. */
+.people-banking {
+  --background: #0c0c12;
+  --foreground: #f5f6f8;
+  --card: #15161d;
+  --card-foreground: #f5f6f8;
+  --popover: #171821;
+  --popover-foreground: #f5f6f8;
+  --muted: #1d1f28;
+  --muted-foreground: #9aa1ad;
+  --accent: #1d1f28;
+  --accent-foreground: #f5f6f8;
+  --destructive: #ff5d6c;
+  --border: #242733;
+  --input: #242733;
+  --ring: #ec7000;
+  --primary: #ec7000;
+  --primary-foreground: #ffffff;
+  --secondary: #3a3f4d;
+  --secondary-foreground: #f5f6f8;
+  --chart-1: #ec7000;
+  --chart-2: #f5f6f8;
+  --chart-3: #9aa1ad;
+  --chart-4: #3a3f4d;
+  --chart-5: #242733;
+}
+
+.people-banking .bank-hero-glow {
+  background: radial-gradient(
+    ellipse 120% 90% at 100% 0%,
+    rgb(236 112 0 / 0.18),
+    transparent 55%
+  );
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

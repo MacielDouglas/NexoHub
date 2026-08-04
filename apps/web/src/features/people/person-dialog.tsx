@@ -291,7 +291,7 @@ export function PersonDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="people-banking sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {person ? t("people.edit") : t("people.add")}
@@ -348,7 +348,9 @@ export function PersonDialog({
                       ) : (
                         <FaVenus aria-hidden="true" />
                       )}
-                      {sex === "MALE" ? "Masculino" : "Feminino"}
+                      {sex === "MALE"
+                        ? t("people.form.sexMale")
+                        : t("people.form.sexFemale")}
                     </button>
                   );
                 })}
