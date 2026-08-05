@@ -86,6 +86,7 @@ model Organization {
   cleaningConfig    CleaningConfig?
   cleaningSchedules CleaningSchedule[]
   meetingContents   MeetingContent[]
+  meetings          Meeting[]
   families          Family[]
   people            Person[]
   subOrganizations  SubOrganization[]
@@ -165,6 +166,42 @@ model MeetingPart {
   updatedAt       DateTime @updatedAt
 
   meetingConfig MeetingConfig @relation(fields: [meetingConfigId], references: [id], onDelete: Cascade)
+}
+
+model Meeting {
+  id             String   @id @default(cuid())
+  organizationId String
+  type           String   // "midweek" | "weekend" | "memorial"
+  weekStart      DateTime
+  program        Json?    // programa personalizado (seções/partes/tempos)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignments  MeetingAssignment[]
+
+  @@unique([organizationId, type, weekStart])
+  @@index([organizationId, weekStart])
+}
+
+model MeetingAssignment {
+  id            String  @id @default(cuid())
+  meetingId     String
+  role          String
+  sortOrder     Int     @default(0)
+  personId      String?
+  contentItemId String?
+  value         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  meeting       Meeting             @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  person        Person?             @relation(fields: [personId], references: [id], onDelete: SetNull)
+  contentItem   MeetingContentItem? @relation(fields: [contentItemId], references: [id], onDelete: SetNull)
+
+  @@index([meetingId])
+  @@index([personId])
+  @@index([contentItemId])
 }
 
 model SpecialEvent {
@@ -283,6 +320,7 @@ model MeetingContentItem {
   content         MeetingContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
   personTalks     PersonTalk[]
   subOrgPersonTalks SubOrgPersonTalk[]
+  meetingAssignments MeetingAssignment[]
 
   @@index([contentId])
 }
@@ -361,6 +399,7 @@ model Person {
   chefeOfFamily          Family?    @relation("FamilyHead")
   personTalks            PersonTalk[]
   cleaningAssignments    CleaningAssignment[]
+  meetingAssignments     MeetingAssignment[]
 
   @@index([organizationId, sex])
   @@index([organizationId, active])
