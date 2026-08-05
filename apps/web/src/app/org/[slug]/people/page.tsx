@@ -38,7 +38,7 @@ export default async function PeoplePage({ params }: PageProps) {
 
   const canManage = member.role === "owner" || member.role === "admin";
 
-  const [people, families, users] = await Promise.all([
+  const [people, families, users, subOrgs] = await Promise.all([
     prisma.person.findMany({
       where: { organizationId: member.organizationId },
       include: {
@@ -58,6 +58,11 @@ export default async function PeoplePage({ params }: PageProps) {
         person: { is: null },
       },
       select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.subOrganization.findMany({
+      where: { organizationId: member.organizationId },
+      select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -84,6 +89,7 @@ export default async function PeoplePage({ params }: PageProps) {
       people={peopleSerialized}
       families={families}
       users={users}
+      subOrgs={subOrgs}
       stats={stats}
     />
   );

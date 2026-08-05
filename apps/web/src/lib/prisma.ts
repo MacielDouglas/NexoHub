@@ -1,5 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient, Sex } from "@/generated/prisma/client";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -25,3 +25,4 @@ function normalizeSslMode(url: string): string {
 }
 
 export const prisma = new PrismaClient({ adapter });
+export { Sex };

@@ -53,8 +53,13 @@ export function getNavItems(slug: string): NavItem[] {
       icon: BrushCleaning,
     },
     {
-      href: `/org/${slug}/outlines`,
+      href: `/org/${slug}/discursos`,
       label: "outlines",
+      icon: ScrollText,
+    },
+    {
+      href: `/org/${slug}/sub-org`,
+      label: "sub-org",
       icon: ScrollText,
     },
     {

@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { type ComponentType, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  FaArrowRightArrowLeft,
   FaLink,
   FaMagnifyingGlass,
   FaMars,
@@ -52,6 +53,7 @@ type Props = {
   families: Family[];
   users: MemberUser[];
   stats: PeopleStats;
+  subOrgs: { id: string; name: string }[];
 };
 
 type StatCell = {
@@ -66,6 +68,7 @@ export function PeopleClient({
   families,
   users,
   stats,
+  subOrgs,
 }: Props) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -75,6 +78,9 @@ export function PeopleClient({
   const [editing, setEditing] = useState<Person | null>(null);
   const [deleting, setDeleting] = useState<Person | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [migrating, setMigrating] = useState<Person | null>(null);
+  const [migrateSubOrgId, setMigrateSubOrgId] = useState("");
+  const [migratingBusy, setMigratingBusy] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -142,6 +148,33 @@ export function PeopleClient({
       router.refresh();
     } finally {
       setRemoving(false);
+    }
+  }
+
+  async function handleMigrate() {
+    if (!migrating || !migrateSubOrgId) return;
+    setMigratingBusy(true);
+    try {
+      const res = await fetch("/api/migrate-person", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          direction: "org-to-sub",
+          personId: migrating.id,
+          subOrgId: migrateSubOrgId,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(data?.error ?? "Erro");
+        return;
+      }
+      toast.success(t("people.migrateSuccess", { name: migrating.name }));
+      setMigrating(null);
+      setMigrateSubOrgId("");
+      router.refresh();
+    } finally {
+      setMigratingBusy(false);
     }
   }
 
@@ -278,6 +311,7 @@ export function PeopleClient({
                         canManage={canManage}
                         onEdit={openEdit}
                         onDelete={setDeleting}
+                        onMigrate={setMigrating}
                       />
                     ))}
                   </div>
@@ -304,6 +338,7 @@ export function PeopleClient({
                       canManage={canManage}
                       onEdit={openEdit}
                       onDelete={setDeleting}
+                      onMigrate={setMigrating}
                     />
                   ))}
                 </div>
@@ -351,6 +386,63 @@ export function PeopleClient({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(migrating)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setMigrating(null);
+            setMigrateSubOrgId("");
+          }
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("people.migrateTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {migrating
+                ? t("people.migrateDescription", { name: migrating.name })
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {subOrgs.length > 0 ? (
+            <div
+              className="space-y-1"
+              role="listbox"
+              aria-label={t("people.migrateSelect")}
+            >
+              {subOrgs.map((org) => (
+                <button
+                  key={org.id}
+                  type="button"
+                  onClick={() => setMigrateSubOrgId(org.id)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                    migrateSubOrgId === org.id
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:bg-white/10 hover:text-foreground",
+                  )}
+                >
+                  {org.name}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {t("people.migrateNoSubOrgs")}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleMigrate}
+              disabled={migratingBusy || !migrateSubOrgId}
+            >
+              {migratingBusy ? t("common.loading") : t("people.migrate")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -360,11 +452,13 @@ function PersonRow({
   canManage,
   onEdit,
   onDelete,
+  onMigrate,
 }: {
   person: Person;
   canManage: boolean;
   onEdit: (person: Person) => void;
   onDelete: (person: Person) => void;
+  onMigrate: (person: Person) => void;
 }) {
   const { t } = useTranslation();
 
@@ -432,6 +526,17 @@ function PersonRow({
 
       {canManage && (
         <div className="flex shrink-0 items-center gap-1">
+          {person.sex === "MALE" && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => onMigrate(person)}
+              aria-label={t("people.migrate")}
+              className="text-muted-foreground hover:bg-white/10 hover:text-foreground"
+            >
+              <FaArrowRightArrowLeft aria-hidden="true" className="size-3.5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon-sm"

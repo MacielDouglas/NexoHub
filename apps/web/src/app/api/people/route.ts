@@ -10,19 +10,29 @@ import {
   showPrivilegiosServico,
   validateFamilyRules,
 } from "@/lib/people";
-import { prisma } from "@/lib/prisma";
+import { prisma, Sex } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
   const member = await getUserOrg(await headers());
   if (!member) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
   const orgId = member.organizationId;
+  const { searchParams } = new URL(request.url);
+  const onlyApproved = searchParams.get("onlyApproved") === "true";
+
+  const where: Record<string, unknown> = { organizationId: orgId };
+  if (onlyApproved) {
+    where.sex = Sex.MALE;
+    where.batizado = true;
+    where.privilegioServico = true;
+    where.discursoPublico = true;
+  }
 
   const [people, families] = await Promise.all([
     prisma.person.findMany({
-      where: { organizationId: orgId },
+      where,
       include: {
         family: { select: { id: true, name: true } },
         user: { select: { id: true, name: true, email: true } },

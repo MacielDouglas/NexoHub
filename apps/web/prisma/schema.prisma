@@ -78,15 +78,16 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members         Member[]
-  invitations     Invitation[]
-  meetingConfigs  MeetingConfig[]
-  specialEvents   SpecialEvent[]
-  inviteTokens    InviteToken[]
-  cleaningConfig  CleaningConfig?
-  meetingContents MeetingContent[]
-  families        Family[]
-  people          Person[]
+  members           Member[]
+  invitations       Invitation[]
+  meetingConfigs    MeetingConfig[]
+  specialEvents     SpecialEvent[]
+  inviteTokens      InviteToken[]
+  cleaningConfig    CleaningConfig?
+  meetingContents   MeetingContent[]
+  families          Family[]
+  people            Person[]
+  subOrganizations  SubOrganization[]
 }
 
 model Member {
@@ -233,14 +234,16 @@ model MeetingContent {
 }
 
 model MeetingContentItem {
-  id        String   @id @default(cuid())
-  contentId String
-  position  Int      @default(0)
-  data      Json
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  contentId       String
+  position        Int      @default(0)
+  data            Json
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  content MeetingContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  content         MeetingContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  personTalks     PersonTalk[]
+  subOrgPersonTalks SubOrgPersonTalk[]
 
   @@index([contentId])
 }
@@ -313,12 +316,88 @@ model Person {
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  family       Family?    @relation(fields: [familyId], references: [id], onDelete: SetNull)
-  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  chefeOfFamily Family?  @relation("FamilyHead")
+  organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  family                 Family?    @relation(fields: [familyId], references: [id], onDelete: SetNull)
+  user                   User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  chefeOfFamily          Family?    @relation("FamilyHead")
+  personTalks            PersonTalk[]
 
   @@index([organizationId, sex])
   @@index([organizationId, active])
   @@index([familyId])
+}
+
+model PersonTalk {
+  id              String   @id @default(cuid())
+  personId        String
+  meetingContentItemId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  person          Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  meetingContentItem MeetingContentItem @relation(fields: [meetingContentItemId], references: [id], onDelete: Cascade)
+  dates           TalkDate[]
+
+  @@unique([personId, meetingContentItemId])
+  @@index([personId])
+  @@index([meetingContentItemId])
+}
+
+model TalkDate {
+  id            String   @id @default(cuid())
+  personTalkId  String
+  date          DateTime
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  personTalk    PersonTalk @relation(fields: [personTalkId], references: [id], onDelete: Cascade)
+
+  @@index([personTalkId])
+  @@index([date])
+}
+
+model SubOrganization {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  people         SubOrgPerson[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model SubOrgPerson {
+  id                  String   @id @default(cuid())
+  subOrganizationId   String
+  name                String
+  batizado            Boolean  @default(false)
+  privilegioServico   Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  subOrganization     SubOrganization @relation(fields: [subOrganizationId], references: [id], onDelete: Cascade)
+  talks               SubOrgPersonTalk[]
+
+  @@index([subOrganizationId])
+}
+
+model SubOrgPersonTalk {
+  id                  String   @id @default(cuid())
+  subOrgPersonId      String
+  meetingContentItemId String
+  date                DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  subOrgPerson        SubOrgPerson @relation(fields: [subOrgPersonId], references: [id], onDelete: Cascade)
+  meetingContentItem  MeetingContentItem @relation(fields: [meetingContentItemId], references: [id], onDelete: Cascade)
+
+  @@unique([subOrgPersonId, meetingContentItemId])
+  @@index([subOrgPersonId])
+  @@index([meetingContentItemId])
 }
