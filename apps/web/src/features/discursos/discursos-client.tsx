@@ -318,7 +318,16 @@ export function DiscursosClient({
 
       <div className="space-y-6">
         {people.map((person) => {
-          const personTalks = discursos.filter((d) => d.personId === person.id);
+          const personTalks = discursos
+            .filter((d) => d.personId === person.id)
+            .sort((a, b) => {
+              const na = a.number;
+              const nb = b.number;
+              if (na == null && nb == null) return 0;
+              if (na == null) return 1;
+              if (nb == null) return -1;
+              return na - nb;
+            });
           const availableTalks = getAvailableTalks(person.id);
 
           return (
