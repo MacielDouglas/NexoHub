@@ -19,9 +19,10 @@ type SpecialEvent = {
 type Props = {
   slug: string;
   event: SpecialEvent | null;
+  eventTypeLabels: Record<string, string>;
 };
 
-export function SpecialEventForm({ event }: Props) {
+export function SpecialEventForm({ event, eventTypeLabels }: Props) {
   const selectedType = (event?.type ?? "memorial") as SpecialEventType;
   const fields = SPECIAL_EVENT_FIELDS[selectedType];
   const isAnnual = (ANNUAL_EVENT_TYPES as readonly string[]).includes(
@@ -48,7 +49,7 @@ export function SpecialEventForm({ event }: Props) {
         >
           {SPECIAL_EVENT_TYPES.map((type) => (
             <option key={type} value={type}>
-              {type}
+              {eventTypeLabels[type] ?? type}
             </option>
           ))}
         </select>

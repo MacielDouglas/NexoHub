@@ -41,6 +41,7 @@ import { getServerT } from "@/i18n/server";
 import { auth } from "@/lib/auth";
 import { getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
+import { SPECIAL_EVENT_TYPES } from "@/lib/special-events";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -137,6 +138,12 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         exitOrg: t("settings.exitOrg"),
         signOut: t("settings.signOut"),
       }}
+      eventTypeLabels={Object.fromEntries(
+        SPECIAL_EVENT_TYPES.map((type) => [
+          type,
+          t(`settings.specialEventTypes.${type}`),
+        ]),
+      )}
     />
   );
 }

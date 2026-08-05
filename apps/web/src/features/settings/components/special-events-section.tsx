@@ -14,6 +14,7 @@ type SpecialEvent = {
 type Props = {
   slug: string;
   events: SpecialEvent[];
+  eventTypeLabels: Record<string, string>;
 };
 
 function formatEventSummary(event: SpecialEvent) {
@@ -24,7 +25,7 @@ function formatEventSummary(event: SpecialEvent) {
   return parts.join(" ");
 }
 
-export function SpecialEventsSection({ slug, events }: Props) {
+export function SpecialEventsSection({ slug, events, eventTypeLabels }: Props) {
   return (
     <div className="space-y-6">
       {events.length === 0 ? (
@@ -40,7 +41,9 @@ export function SpecialEventsSection({ slug, events }: Props) {
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm">
-                  <span className="font-medium">{event.type}</span>
+                  <span className="font-medium">
+                    {eventTypeLabels[event.type] ?? event.type}
+                  </span>
                   <span className="text-muted-foreground">
                     {" "}
                     · {formatEventSummary(event)}
@@ -57,7 +60,11 @@ export function SpecialEventsSection({ slug, events }: Props) {
               </div>
 
               <div className="mt-4">
-                <SpecialEventForm slug={slug} event={event} />
+                <SpecialEventForm
+                  slug={slug}
+                  event={event}
+                  eventTypeLabels={eventTypeLabels}
+                />
               </div>
             </div>
           ))}
@@ -66,7 +73,11 @@ export function SpecialEventsSection({ slug, events }: Props) {
 
       <div className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
         <h3 className="mb-4 text-lg font-semibold">Novo evento especial</h3>
-        <SpecialEventForm slug={slug} event={null} />
+        <SpecialEventForm
+          slug={slug}
+          event={null}
+          eventTypeLabels={eventTypeLabels}
+        />
       </div>
     </div>
   );

@@ -84,6 +84,7 @@ model Organization {
   specialEvents     SpecialEvent[]
   inviteTokens      InviteToken[]
   cleaningConfig    CleaningConfig?
+  cleaningSchedules CleaningSchedule[]
   meetingContents   MeetingContent[]
   families          Family[]
   people            Person[]
@@ -213,7 +214,45 @@ model CleaningSector {
 
   cleaningConfig CleaningConfig @relation(fields: [cleaningConfigId], references: [id], onDelete: Cascade)
 
+  cleaningAssignments CleaningAssignment[]
+
   @@index([cleaningConfigId, type])
+}
+
+model CleaningSchedule {
+  id             String   @id @default(cuid())
+  organizationId String
+  type           String
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignments  CleaningAssignment[]
+
+  @@index([organizationId, type])
+  @@index([organizationId, startDate, endDate])
+}
+
+model CleaningAssignment {
+  id         String   @id @default(cuid())
+  scheduleId String
+  date       DateTime
+  sectorId   String
+  personId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  schedule CleaningSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  sector   CleaningSector   @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+  person   Person           @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([scheduleId])
+  @@index([date])
+  @@index([sectorId])
+  @@index([personId])
+  @@unique([scheduleId, date, sectorId, personId])
 }
 
 model MeetingContent {
@@ -321,6 +360,7 @@ model Person {
   user                   User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
   chefeOfFamily          Family?    @relation("FamilyHead")
   personTalks            PersonTalk[]
+  cleaningAssignments    CleaningAssignment[]
 
   @@index([organizationId, sex])
   @@index([organizationId, active])

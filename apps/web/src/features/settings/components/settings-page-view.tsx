@@ -36,6 +36,7 @@ type Props = {
     exitOrg: string;
     signOut: string;
   };
+  eventTypeLabels: Record<string, string>;
 };
 
 export function SettingsPageView({
@@ -45,6 +46,7 @@ export function SettingsPageView({
   configs,
   events,
   labels,
+  eventTypeLabels,
 }: Props) {
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
@@ -77,7 +79,11 @@ export function SettingsPageView({
             title="Eventos especiais"
             description="Cadastre os eventos especiais opcionais do ano."
           >
-            <SpecialEventsSection slug={slug} events={events} />
+            <SpecialEventsSection
+              slug={slug}
+              events={events}
+              eventTypeLabels={eventTypeLabels}
+            />
           </SettingsSectionShell>
         </>
       ) : null}

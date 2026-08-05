@@ -82,6 +82,31 @@ export const cleaningSectorInputSchema = z
   })
   .strict();
 
+const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida");
+
+export const cleaningAssignmentInputSchema = z
+  .object({
+    date: dateKey,
+    sectorId: z.string().trim().min(1).max(100),
+    personIds: z.array(z.string().trim().min(1).max(100)).min(1).max(200),
+  })
+  .strict();
+
+export const cleaningScheduleCreateSchema = z
+  .object({
+    type: z.enum(["meeting", "weekly", "general"]),
+    dates: z.array(dateKey).min(1).max(500),
+    assignments: z.array(cleaningAssignmentInputSchema).min(1).max(2000),
+  })
+  .strict();
+
+export const cleaningScheduleUpdateSchema = z
+  .object({
+    dates: z.array(dateKey).min(1).max(500),
+    assignments: z.array(cleaningAssignmentInputSchema).min(1).max(2000),
+  })
+  .strict();
+
 export const meetingContentCreateSchema = z
   .object({
     type: z.enum(["apostila", "sentinela", "discursos", "canticos"]),

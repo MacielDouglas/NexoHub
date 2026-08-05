@@ -62,6 +62,10 @@ export function canManageConfig(role: string | null): boolean {
   return role === "owner";
 }
 
+export function canManageSchedules(role: string | null): boolean {
+  return role === "owner" || role === "admin";
+}
+
 export function canManageMeetingContent(role: string | null): boolean {
   return role === "owner" || role === "admin";
 }
