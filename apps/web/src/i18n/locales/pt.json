@@ -689,6 +689,8 @@
     "selectPerson": "Selecionar pessoa",
     "selectSong": "Selecionar cântico",
     "selectDiscurso": "Selecionar discurso",
+    "selectCongregacao": "Selecionar congregação",
+    "todasCongregacoes": "Todas as congregações",
     "addPerson": "Adicionar pessoa",
     "noAssignments": "Nenhuma designação.",
     "horario": "Horário",
@@ -701,7 +703,9 @@
     "naoDesignado": "Não designado",
     "sections": {
       "introducao": "Introdução",
-      "conclusao": "Conclusão"
+      "conclusao": "Conclusão",
+      "discursoPublico": "DISCURSO PÚBLICO",
+      "estudoSentinela": "Estudo da Sentinela"
     },
     "parte": "Parte",
     "parteAjudante": "Ajudante",
@@ -753,6 +757,7 @@
       "songAndPrayer": "Cântico {{n}} e oração",
       "middleSong": "Cântico {{n}}",
       "publicTalk": "Discurso público",
+      "congregation": "Congregação",
       "circuitVisit": "Semana da Visita do Superintendente de Circuito"
     }
   }

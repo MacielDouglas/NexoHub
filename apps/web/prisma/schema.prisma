@@ -190,6 +190,7 @@ model MeetingAssignment {
   role          String
   sortOrder     Int     @default(0)
   personId      String?
+  subOrgPersonId String?
   contentItemId String?
   value         String?
   createdAt     DateTime @default(now())
@@ -197,10 +198,12 @@ model MeetingAssignment {
 
   meeting       Meeting             @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   person        Person?             @relation(fields: [personId], references: [id], onDelete: SetNull)
+  subOrgPerson  SubOrgPerson?       @relation(fields: [subOrgPersonId], references: [id], onDelete: SetNull)
   contentItem   MeetingContentItem? @relation(fields: [contentItemId], references: [id], onDelete: SetNull)
 
   @@index([meetingId])
   @@index([personId])
+  @@index([subOrgPersonId])
   @@index([contentItemId])
 }
 
@@ -461,6 +464,7 @@ model SubOrgPerson {
 
   subOrganization     SubOrganization @relation(fields: [subOrganizationId], references: [id], onDelete: Cascade)
   talks               SubOrgPersonTalk[]
+  meetingAssignments  MeetingAssignment[]
 
   @@index([subOrganizationId])
 }

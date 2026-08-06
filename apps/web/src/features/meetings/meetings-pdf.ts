@@ -10,6 +10,11 @@ export type PdfAssignment = {
   contentItemId: string | null;
   value: string | null;
   person: { id: string; name: string } | null;
+  subOrgPerson: {
+    id: string;
+    name: string;
+    subOrganization: { id: string; name: string };
+  } | null;
   contentItem: { id: string; data: Record<string, unknown> } | null;
 };
 
@@ -276,7 +281,25 @@ export async function generateMeetingsPdf(opts: {
   };
 
   const personName = (a: PdfAssignment | undefined): string | null =>
-    a?.person?.name ?? null;
+    a?.person?.name ?? (a?.subOrgPerson ? `${a.subOrgPerson.name}` : null);
+
+  const personLabel = (a: PdfAssignment | undefined): string | null => {
+    if (!a) return null;
+    if (a.person) return a.person.name;
+    if (a.subOrgPerson) {
+      return `${a.subOrgPerson.name} (${a.subOrgPerson.subOrganization.name})`;
+    }
+    return null;
+  };
+
+  const assignLabel = personLabel;
+
+  const sectionColorForWeekend = (title: string): string | null => {
+    const s = title.trim().toLowerCase();
+    if (s.includes("discu")) return "#3c7f8b";
+    if (s.includes("estudio") || s.includes("estudo")) return "#bf2f13";
+    return sectionColor(title);
+  };
 
   const renderMidweek = (meeting: PdfMeeting) => {
     const assign = (role: string) =>
@@ -384,6 +407,7 @@ export async function generateMeetingsPdf(opts: {
     const assign = (role: string) =>
       meeting.assignments.find((a) => a.role === role);
     const { time } = meetingDateTime(meeting);
+    const sections = meeting.program?.sections ?? [];
     let clock = parseTimeToMinutes(time);
 
     const openingNum = songNumber(assign("canticoInicial"));
@@ -400,24 +424,65 @@ export async function generateMeetingsPdf(opts: {
     });
     clock += 5;
 
-    const tema = (
-      assign("discurso")?.contentItem?.data as
-        | { theme?: string }
-        | null
-        | undefined
-    )?.theme;
-    const orador = personName(assign("orador"));
-    drawRow({
-      time: fmtTime(clock),
-      desc: tema
-        ? `${t("meetings.pdf.publicTalk")}: ${tema}`
-        : t("meetings.pdf.publicTalk"),
-      persons: orador ? [orador] : [],
-    });
-    clock += 30;
+    for (const section of sections) {
+      if (section.key === "introducao" || section.key === "conclusao") {
+        continue;
+      }
+      const header = section.title;
+      drawSectionHeader(header, sectionColorForWeekend(header) ?? undefined);
 
-    const closingNum = songNumber(assign("canticoFinal"));
-    const cpn = personName(assign("canticoFinal"));
+      for (const row of section.rows) {
+        if (row.kind === "song") {
+          const num = songNumber(assign(row.role));
+          drawRow({
+            time: fmtTime(clock),
+            desc:
+              num != null
+                ? t("meetings.pdf.middleSong", { n: num })
+                : t("meetings.roles.canticoMeio"),
+            persons: [],
+          });
+          clock += row.clockAdd ?? row.tempoMin;
+          continue;
+        }
+
+        if (row.kind === "discurso") {
+          const tema = (
+            assign("discurso")?.contentItem?.data as { theme?: string } | null
+          )?.theme;
+          const orador = assignLabel(assign("orador"));
+          drawRow({
+            time: fmtTime(clock),
+            desc: tema
+              ? `${t("meetings.pdf.publicTalk")}: ${tema}`
+              : t("meetings.pdf.publicTalk"),
+            persons: orador ? [orador] : [],
+          });
+          clock += row.clockAdd ?? row.tempoMin;
+          continue;
+        }
+
+        const name = row.title;
+        const desc = row.tempoMin > 0 ? `${name} (${row.tempoMin} min)` : name;
+        const persons: string[] = [];
+        const pn = assignLabel(assign(row.role));
+        if (pn) persons.push(pn);
+        if (row.secondary) {
+          const sn = assignLabel(assign(row.secondary.role));
+          if (sn) persons.push(sn);
+        }
+        drawRow({
+          time: fmtTime(clock),
+          desc,
+          persons,
+        });
+        clock += row.clockAdd ?? row.tempoMin;
+      }
+    }
+
+    const rc = assign("canticoFinal");
+    const closingNum = songNumber(rc);
+    const cpn = assignLabel(rc);
     drawRow({
       time: fmtTime(clock),
       desc:

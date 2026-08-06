@@ -37,6 +37,7 @@ export async function PUT(
         role: string;
         sortOrder?: number;
         personId?: string | null;
+        subOrgPersonId?: string | null;
         contentItemId?: string | null;
         value?: string | null;
       }>;
@@ -55,6 +56,9 @@ export async function PUT(
     const personIds = new Set(
       assignments.map((a) => a.personId).filter((p): p is string => !!p),
     );
+    const subOrgPersonIds = new Set(
+      assignments.map((a) => a.subOrgPersonId).filter((p): p is string => !!p),
+    );
     const contentItemIds = new Set(
       assignments.map((a) => a.contentItemId).filter((c): c is string => !!c),
     );
@@ -70,6 +74,22 @@ export async function PUT(
       if (people.length !== personIds.size) {
         return NextResponse.json(
           { error: "Pessoa inválida na designação" },
+          { status: 400 },
+        );
+      }
+    }
+
+    if (subOrgPersonIds.size > 0) {
+      const subOrgPeople = await prisma.subOrgPerson.findMany({
+        where: {
+          id: { in: [...subOrgPersonIds] },
+          subOrganization: { organizationId: member.organizationId },
+        },
+        select: { id: true },
+      });
+      if (subOrgPeople.length !== subOrgPersonIds.size) {
+        return NextResponse.json(
+          { error: "Pessoa de sub-organização inválida na designação" },
           { status: 400 },
         );
       }
@@ -108,6 +128,7 @@ export async function PUT(
             role: a.role,
             sortOrder: a.sortOrder ?? 0,
             personId: a.personId ?? null,
+            subOrgPersonId: a.subOrgPersonId ?? null,
             contentItemId: a.contentItemId ?? null,
             value: a.value ?? null,
           },
@@ -121,6 +142,13 @@ export async function PUT(
         assignments: {
           include: {
             person: { select: { id: true, name: true } },
+            subOrgPerson: {
+              select: {
+                id: true,
+                name: true,
+                subOrganization: { select: { id: true, name: true } },
+              },
+            },
             contentItem: { select: { id: true, data: true } },
           },
           orderBy: { sortOrder: "asc" },

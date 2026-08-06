@@ -42,6 +42,13 @@ export async function GET(request: Request) {
       assignments: {
         include: {
           person: { select: { id: true, name: true } },
+          subOrgPerson: {
+            select: {
+              id: true,
+              name: true,
+              subOrganization: { select: { id: true, name: true } },
+            },
+          },
           contentItem: { select: { id: true, data: true } },
         },
         orderBy: { sortOrder: "asc" },
@@ -116,6 +123,13 @@ export async function POST(request: Request) {
         assignments: {
           include: {
             person: { select: { id: true, name: true } },
+            subOrgPerson: {
+              select: {
+                id: true,
+                name: true,
+                subOrganization: { select: { id: true, name: true } },
+              },
+            },
             contentItem: { select: { id: true, data: true } },
           },
           orderBy: { sortOrder: "asc" },

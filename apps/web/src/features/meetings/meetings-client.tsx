@@ -1,11 +1,20 @@
 "use client";
 
 import {
+  Building2,
+  Bus,
+  CalendarCheck2,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
+  MapPin,
+  Mic,
+  MicVocal,
   Pencil,
   Plus,
+  Sparkles,
   Trash2,
+  Wine,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -129,6 +138,27 @@ type CatalogItem = {
   theme: string;
 };
 
+type SentinelaSongRef = { number: number | null; title: string };
+
+type SentinelaWeek = {
+  id: string;
+  week: string;
+  theme: string;
+  songs: { opening: SentinelaSongRef; closing: SentinelaSongRef };
+};
+
+type SubOrgPersonItem = {
+  id: string;
+  name: string;
+  talks: string[];
+};
+
+type SubOrg = {
+  id: string;
+  name: string;
+  people: SubOrgPersonItem[];
+};
+
 type PersonTalk = {
   personId: string;
   meetingContentItemId: string;
@@ -139,9 +169,15 @@ type Assignment = {
   role: string;
   sortOrder: number;
   personId: string | null;
+  subOrgPersonId: string | null;
   contentItemId: string | null;
   value: string | null;
   person: { id: string; name: string } | null;
+  subOrgPerson: {
+    id: string;
+    name: string;
+    subOrganization: { id: string; name: string };
+  } | null;
   contentItem: { id: string; data: Record<string, unknown> } | null;
 };
 
@@ -164,6 +200,44 @@ const WEEKDAY_LABELS = [
   "Sábado",
   "Domingo",
 ];
+
+const EVENT_ICONS: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
+  memorial: Wine,
+  specialTalk: MicVocal,
+  circuitVisit: MapPin,
+  convention: Building2,
+  assemblyTraveling: Bus,
+  assemblyRepresentative: Mic,
+  specialMeeting: Sparkles,
+};
+
+const EVENT_COLORS: Record<string, string> = {
+  memorial: "text-amber-600",
+  specialTalk: "text-blue-600",
+  circuitVisit: "text-emerald-600",
+  convention: "text-purple-600",
+  assemblyTraveling: "text-orange-600",
+  assemblyRepresentative: "text-indigo-600",
+  specialMeeting: "text-rose-600",
+};
+
+const MEETING_ICONS: Record<
+  MeetingType,
+  React.ComponentType<{ className?: string }>
+> = {
+  midweek: CalendarDays,
+  weekend: CalendarCheck2,
+  memorial: Wine,
+};
+
+const MEETING_COLORS: Record<MeetingType, string> = {
+  midweek: "text-blue-600",
+  weekend: "text-emerald-600",
+  memorial: "text-amber-600",
+};
 
 type DerivedMeeting = {
   type: MeetingType;
@@ -250,10 +324,6 @@ function deriveWeek(
   };
 }
 
-function eventDayLabel(event: SpecialEvent): string {
-  return parseDateKey(event.date).getDate().toString();
-}
-
 function formatWeekRange(weekStart: Date): string {
   const end = addDays(weekStart, 6);
   const fmt = (d: Date) =>
@@ -283,6 +353,8 @@ export function MeetingsClient({
   const [events, setEvents] = useState<SpecialEvent[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
   const [apostilaWeeks, setApostilaWeeks] = useState<ApostilaSemana[]>([]);
+  const [sentinelas, setSentinelas] = useState<SentinelaWeek[]>([]);
+  const [subOrgs, setSubOrgs] = useState<SubOrg[]>([]);
   const [songs, setSongs] = useState<CatalogItem[]>([]);
   const [discursos, setDiscursos] = useState<CatalogItem[]>([]);
   const [personTalks, setPersonTalks] = useState<PersonTalk[]>([]);
@@ -295,6 +367,8 @@ export function MeetingsClient({
       eventsRes,
       peopleRes,
       apostilaRes,
+      sentinelaRes,
+      subOrgsRes,
       songsRes,
       discursosRes,
       talksRes,
@@ -304,6 +378,8 @@ export function MeetingsClient({
       fetch("/api/special-events"),
       fetch("/api/people"),
       fetch("/api/meeting-content?type=apostila&includeItems=1"),
+      fetch("/api/meeting-content?type=sentinela&includeItems=1"),
+      fetch("/api/sub-orgs?includePeople=1"),
       fetch("/api/meeting-content?type=canticos&includeItems=1"),
       fetch("/api/meeting-content?type=discursos&includeItems=1"),
       fetch("/api/person-talks"),
@@ -314,6 +390,8 @@ export function MeetingsClient({
       eventsData,
       peopleData,
       apostilaData,
+      sentinelaData,
+      subOrgsData,
       songsData,
       discursosData,
       talksData,
@@ -323,6 +401,8 @@ export function MeetingsClient({
       eventsRes.json(),
       peopleRes.json(),
       apostilaRes.json(),
+      sentinelaRes.json(),
+      subOrgsRes.json(),
       songsRes.json(),
       discursosRes.json(),
       talksRes.json(),
@@ -345,6 +425,61 @@ export function MeetingsClient({
       }
     }
     setApostilaWeeks(weeks);
+
+    const sw: SentinelaWeek[] = [];
+    for (const c of (sentinelaData.contents as Array<{
+      items?: Array<{ id: string; data: Record<string, unknown> }>;
+    }>) ?? []) {
+      for (const it of c.items ?? []) {
+        const d = it.data as {
+          week?: string;
+          theme?: string;
+          songs?: {
+            opening?: { number?: number | null; title?: string };
+            closing?: { number?: number | null; title?: string };
+          };
+        };
+        if (!d.week || !d.theme) continue;
+        sw.push({
+          id: it.id,
+          week: d.week,
+          theme: d.theme,
+          songs: {
+            opening: {
+              number: d.songs?.opening?.number ?? null,
+              title: d.songs?.opening?.title ?? "",
+            },
+            closing: {
+              number: d.songs?.closing?.number ?? null,
+              title: d.songs?.closing?.title ?? "",
+            },
+          },
+        });
+      }
+    }
+    setSentinelas(sw);
+
+    setSubOrgs(
+      (
+        (subOrgsData.subOrgs ?? []) as Array<{
+          id: string;
+          name: string;
+          people?: Array<{
+            id: string;
+            name: string;
+            talks?: Array<{ meetingContentItemId: string }>;
+          }>;
+        }>
+      ).map((s) => ({
+        id: s.id,
+        name: s.name,
+        people: (s.people ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          talks: (p.talks ?? []).map((tk) => tk.meetingContentItemId),
+        })),
+      })),
+    );
 
     const toCatalog = (
       contents: Array<{
@@ -398,6 +533,11 @@ export function MeetingsClient({
       }) ?? null
     );
   }, [apostilaWeeks, weekStart]);
+
+  const sentinela = useMemo(
+    () => findSentinelaForWeek(sentinelas, weekStart),
+    [sentinelas, weekStart],
+  );
 
   const meetingsByType = useMemo(() => {
     const map = new Map<MeetingType, MeetingRecord>();
@@ -461,6 +601,7 @@ export function MeetingsClient({
         orgName={orgName}
         configs={configs}
         apostilaWeeks={apostilaWeeks}
+        sentinelas={sentinelas}
         events={events}
         t={t as unknown as TFunc}
       />
@@ -494,6 +635,9 @@ export function MeetingsClient({
               discursos={discursos}
               personTalks={personTalks}
               apostilaWeek={apostilaWeek}
+              sentinela={sentinela}
+              subOrgs={subOrgs}
+              orgName={orgName}
               onCreated={(record) =>
                 setMeetings((prev) => [
                   ...prev.filter((m) => m.type !== record.type),
@@ -539,6 +683,17 @@ function WeekDaysGrid({
     }
   }
 
+  // Collect distinct event/meeting types used this week for legend
+  const usedEventTypes = new Set<string>();
+  const usedMeetingTypes = new Set<MeetingType>();
+  for (const day of days) {
+    const key = toDateKey(day);
+    const dayEvents = eventsByDay.get(key) ?? [];
+    for (const ev of dayEvents) usedEventTypes.add(ev.type);
+    const meeting = derivedMeetings.find((dm) => isSameDay(dm.date, day));
+    if (meeting) usedMeetingTypes.add(meeting.type);
+  }
+
   return (
     <div className="rounded-2xl bg-card p-3 shadow-sm ring-1 ring-border sm:p-4">
       <div className="grid grid-cols-7 gap-1.5">
@@ -565,7 +720,7 @@ function WeekDaysGrid({
                 {meeting && (
                   <span
                     className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                      "flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
                       meeting.type === "midweek" &&
                         "bg-blue-500/15 text-blue-600",
                       meeting.type === "weekend" &&
@@ -574,17 +729,24 @@ function WeekDaysGrid({
                         "bg-amber-500/15 text-amber-600",
                     )}
                   >
-                    {t(`meetings.types.${meeting.type}`)}
+                    {(() => {
+                      const Icon = MEETING_ICONS[meeting.type];
+                      return <Icon className="h-3 w-3" />;
+                    })()}
                   </span>
                 )}
                 {dayEvents.map((ev) => (
                   <span
                     key={ev.id}
-                    className="max-w-full truncate rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                    className="flex items-center gap-1 max-w-full truncate rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
                     title={t(`settings.specialEventTypes.${ev.type}`)}
                   >
-                    {eventDayLabel(ev)} ·{" "}
-                    {t(`settings.specialEventTypes.${ev.type}`)}
+                    {(() => {
+                      const Icon = EVENT_ICONS[ev.type];
+                      return (
+                        <Icon className={`h-3 w-3 ${EVENT_COLORS[ev.type]}`} />
+                      );
+                    })()}
                   </span>
                 ))}
               </div>
@@ -592,6 +754,31 @@ function WeekDaysGrid({
           );
         })}
       </div>
+      {/* Legenda dos ícones usados */}
+      {(usedEventTypes.size > 0 || usedMeetingTypes.size > 0) && (
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          {Array.from(usedMeetingTypes).map((type) => (
+            <span key={`meeting-${type}`} className="flex items-center gap-1">
+              {(() => {
+                const Icon = MEETING_ICONS[type];
+                return <Icon className={`h-3 w-3 ${MEETING_COLORS[type]}`} />;
+              })()}
+              {t(`meetings.types.${type}`)}
+            </span>
+          ))}
+          {Array.from(usedEventTypes)
+            .sort()
+            .map((type) => (
+              <span key={`event-${type}`} className="flex items-center gap-1">
+                {(() => {
+                  const Icon = EVENT_ICONS[type];
+                  return <Icon className={`h-3 w-3 ${EVENT_COLORS[type]}`} />;
+                })()}
+                {t(`settings.specialEventTypes.${type}`)}
+              </span>
+            ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -646,6 +833,7 @@ type Draft = {
   role: string;
   sortOrder: number;
   personId: string | null;
+  subOrgPersonId: string | null;
   contentItemId: string | null;
   value: string | null;
 };
@@ -743,10 +931,31 @@ function buildSlots(
         eligibility: "discursoPublico",
       },
       {
+        role: "canticoMeio",
+        labelKey: "meetings.roles.canticoMeio",
+        kind: "song",
+        sortOrder: 5,
+      },
+      {
+        role: "condutorSentinela",
+        labelKey: "meetings.roles.condutor",
+        kind: "person",
+        sortOrder: 6,
+        eligibility: "condutorEstudoBiblico",
+      },
+      {
+        role: "leitorSentinela",
+        labelKey: "meetings.roles.leitor",
+        kind: "person",
+        sortOrder: 7,
+        dualOf: "condutorSentinela",
+        eligibility: "leitorEstudoBiblico",
+      },
+      {
         role: "canticoFinal",
         labelKey: "meetings.roles.canticoFinal",
         kind: "song",
-        sortOrder: 5,
+        sortOrder: 8,
       },
     ];
   }
@@ -1159,7 +1368,8 @@ type MidweekRowKind =
   | "song"
   | "static"
   | "person"
-  | "personDual";
+  | "personDual"
+  | "discurso";
 
 type MidweekSecondary = {
   role: string;
@@ -1401,6 +1611,174 @@ function serializeProgram(sections: MidweekSection[]): MidweekProgram {
   };
 }
 
+const SENTINELA_MONTHS: Record<string, number> = {
+  enero: 1,
+  febrero: 2,
+  marzo: 3,
+  abril: 4,
+  mayo: 5,
+  junio: 6,
+  julio: 7,
+  agosto: 8,
+  septiembre: 9,
+  octubre: 10,
+  noviembre: 11,
+  diciembre: 12,
+  janeiro: 1,
+  fevereiro: 2,
+  março: 3,
+  maio: 5,
+  junho: 6,
+  julho: 7,
+  setembro: 9,
+  outubro: 10,
+  novembro: 11,
+  dezembro: 12,
+};
+
+function parseSentinelaWeek(week: string): { start: Date; end: Date } | null {
+  const sameMonth = week.match(
+    /^(\d{1,2})\s*[-–]\s*(\d{1,2})\s+DE\s+([A-ZÁÉÍÓÚÑ]+)\s+DE\s+(\d{4})$/i,
+  );
+  if (sameMonth) {
+    const month = SENTINELA_MONTHS[sameMonth[3].toLowerCase()];
+    if (!month) return null;
+    return {
+      start: new Date(Number(sameMonth[4]), month - 1, Number(sameMonth[1])),
+      end: new Date(Number(sameMonth[4]), month - 1, Number(sameMonth[2])),
+    };
+  }
+  const crossMonth = week.match(
+    /^(\d{1,2})\s+DE\s+([A-ZÁÉÍÓÚÑ]+)\s*[-–]\s*(\d{1,2})\s+DE\s+([A-ZÁÉÍÓÚÑ]+)\s+DE\s+(\d{4})$/i,
+  );
+  if (crossMonth) {
+    const m1 = SENTINELA_MONTHS[crossMonth[2].toLowerCase()];
+    const m2 = SENTINELA_MONTHS[crossMonth[4].toLowerCase()];
+    if (!m1 || !m2) return null;
+    return {
+      start: new Date(Number(crossMonth[5]), m1 - 1, Number(crossMonth[1])),
+      end: new Date(Number(crossMonth[5]), m2 - 1, Number(crossMonth[3])),
+    };
+  }
+  return null;
+}
+
+function findSentinelaForWeek(
+  sentinelas: SentinelaWeek[],
+  weekStart: Date,
+): SentinelaWeek | null {
+  return (
+    sentinelas.find((s) => {
+      const range = parseSentinelaWeek(s.week);
+      if (!range) return false;
+      const weekEnd = addDays(weekStart, 6);
+      return range.start <= weekEnd && range.end >= weekStart;
+    }) ?? null
+  );
+}
+
+function buildWeekendProgram(
+  sentinela: SentinelaWeek | null,
+  slots: Slot[],
+  t: (key: string) => string,
+): MidweekSection[] {
+  const slotByRole = new Map(slots.map((s) => [s.role, s]));
+  const sections: MidweekSection[] = [];
+
+  const introRows: MidweekRow[] = [
+    {
+      key: "presidente",
+      kind: "presidente",
+      title: t("meetings.roles.presidente"),
+      tempoMin: 0,
+      role: "presidente",
+      fixed: true,
+    },
+  ];
+  if (slotByRole.has("canticoInicial")) {
+    introRows.push({
+      key: "canticoInicial",
+      kind: "song",
+      title: t("meetings.roles.canticoInicial"),
+      tempoMin: 5,
+      role: "canticoInicial",
+      fixed: true,
+    });
+  }
+  sections.push({
+    key: "introducao",
+    title: t("meetings.sections.introducao"),
+    rows: introRows,
+  });
+
+  sections.push({
+    key: "discursoPublico",
+    title: t("meetings.sections.discursoPublico"),
+    rows: [
+      {
+        key: "discurso",
+        kind: "discurso",
+        title: "",
+        tempoMin: 30,
+        clockAdd: 30,
+        role: "discurso",
+        secondary: {
+          role: "orador",
+          label: t("meetings.roles.orador"),
+        },
+      },
+    ],
+  });
+
+  const estudoRows: MidweekRow[] = [];
+  estudoRows.push({
+    key: "canticoMeio",
+    kind: "song",
+    title: t("meetings.roles.canticoMeio"),
+    tempoMin: 5,
+    role: "canticoMeio",
+    fixed: true,
+  });
+  estudoRows.push({
+    key: "estudoSentinela",
+    kind: "personDual",
+    title: sentinela?.theme ?? t("meetings.sections.estudoSentinela"),
+    tempoMin: 60,
+    clockAdd: 60,
+    role: "condutorSentinela",
+    eligibility: "condutorEstudoBiblico",
+    secondary: {
+      role: "leitorSentinela",
+      label: t("meetings.roles.leitor"),
+      eligibility: "leitorEstudoBiblico",
+    },
+  });
+  sections.push({
+    key: "estudoSentinela",
+    title: t("meetings.sections.estudoSentinela"),
+    rows: estudoRows,
+  });
+
+  const conclusaoRows: MidweekRow[] = [];
+  if (slotByRole.has("canticoFinal")) {
+    conclusaoRows.push({
+      key: "canticoFinal",
+      kind: "song",
+      title: t("meetings.roles.canticoFinalOracao"),
+      tempoMin: 5,
+      role: "canticoFinal",
+      fixed: true,
+    });
+  }
+  sections.push({
+    key: "conclusao",
+    title: t("meetings.sections.conclusao"),
+    rows: conclusaoRows,
+  });
+
+  return sections;
+}
+
 function MeetingCard({
   type,
   date,
@@ -1412,6 +1790,9 @@ function MeetingCard({
   discursos,
   personTalks,
   apostilaWeek,
+  sentinela,
+  subOrgs,
+  orgName,
   onCreated,
   onUpdated,
   onDeleted,
@@ -1426,6 +1807,9 @@ function MeetingCard({
   discursos: CatalogItem[];
   personTalks: PersonTalk[];
   apostilaWeek: ApostilaSemana | null;
+  sentinela: SentinelaWeek | null;
+  subOrgs: SubOrg[];
+  orgName?: string;
   onCreated: (record: MeetingRecord) => void;
   onUpdated: (record: MeetingRecord) => void;
   onDeleted: (id: string) => void;
@@ -1443,12 +1827,16 @@ function MeetingCard({
 
   const defaultProgram = useMemo(
     () =>
-      type === "midweek" ? buildMidweekProgram(apostilaWeek, slots, t) : null,
-    [type, apostilaWeek, slots, t],
+      type === "midweek"
+        ? buildMidweekProgram(apostilaWeek, slots, t)
+        : type === "weekend"
+          ? buildWeekendProgram(sentinela, slots, t)
+          : null,
+    [type, apostilaWeek, sentinela, slots, t],
   );
 
   const [program, setProgram] = useState<MidweekSection[] | null>(() => {
-    if (type !== "midweek") return null;
+    if (type !== "midweek" && type !== "weekend") return null;
     const saved = record?.program ?? null;
     if (saved && Array.isArray(saved.sections) && saved.sections.length > 0) {
       return saved.sections;
@@ -1457,7 +1845,7 @@ function MeetingCard({
   });
 
   useEffect(() => {
-    if (type !== "midweek") return;
+    if (type !== "midweek" && type !== "weekend") return;
     const saved = record?.program ?? null;
     if (saved && Array.isArray(saved.sections) && saved.sections.length > 0) {
       setProgram(saved.sections);
@@ -1478,6 +1866,7 @@ function MeetingCard({
           role: slot.role,
           sortOrder: slot.sortOrder,
           personId: a.personId,
+          subOrgPersonId: a.subOrgPersonId,
           contentItemId: a.contentItemId,
           value: a.value ?? null,
         }));
@@ -1492,7 +1881,13 @@ function MeetingCard({
                 ? (apostilaWeek?.secoes.find((s) => s.cancionMedia != null)
                     ?.cancionMedia ?? null)
                 : null
-          : null;
+          : slot.kind === "song" && type === "weekend"
+            ? slot.role === "canticoMeio"
+              ? (sentinela?.songs.opening?.number ?? null)
+              : slot.role === "canticoFinal"
+                ? (sentinela?.songs.closing?.number ?? null)
+                : null
+            : null;
       const autoItem = autoSong
         ? (songs.find((s) => s.number === autoSong)?.id ?? null)
         : null;
@@ -1501,12 +1896,13 @@ function MeetingCard({
           role: slot.role,
           sortOrder: slot.sortOrder,
           personId: null,
+          subOrgPersonId: null,
           contentItemId: autoItem,
           value: null,
         },
       ];
     },
-    [record, type, apostilaWeek, songs],
+    [record, type, apostilaWeek, songs, sentinela],
   );
 
   const [drafts, setDrafts] = useState<Draft[]>(() =>
@@ -1525,7 +1921,7 @@ function MeetingCard({
   }, [slots, buildDraftForSlot]);
 
   useEffect(() => {
-    if (type !== "midweek") return;
+    if (type !== "midweek" && type !== "weekend") return;
     setDrafts((prev) => {
       const existingRoles = new Set(prev.map((d) => d.role));
       const toAdd: Draft[] = [];
@@ -1537,6 +1933,7 @@ function MeetingCard({
               role: row.role,
               sortOrder: 100,
               personId: saved?.personId ?? null,
+              subOrgPersonId: saved?.subOrgPersonId ?? null,
               contentItemId: saved?.contentItemId ?? null,
               value: saved?.value ?? null,
             });
@@ -1550,6 +1947,7 @@ function MeetingCard({
               role: row.secondary.role,
               sortOrder: 100,
               personId: saved?.personId ?? null,
+              subOrgPersonId: saved?.subOrgPersonId ?? null,
               contentItemId: saved?.contentItemId ?? null,
               value: saved?.value ?? null,
             });
@@ -1585,6 +1983,18 @@ function MeetingCard({
     [people],
   );
 
+  const getSubOrgPerson = useCallback(
+    (subOrgPersonId: string | null) => {
+      if (!subOrgPersonId) return null;
+      for (const so of subOrgs) {
+        const found = so.people.find((p) => p.id === subOrgPersonId);
+        if (found) return { ...found, subOrgName: so.name };
+      }
+      return null;
+    },
+    [subOrgs],
+  );
+
   const getItem = useCallback(
     (itemId: string | null, kind: "song" | "discurso") => {
       if (!itemId) return null;
@@ -1610,6 +2020,23 @@ function MeetingCard({
     );
   }, []);
 
+  const setSubOrgPerson = useCallback(
+    (role: string, subOrgPersonId: string | null) => {
+      setDrafts((prev) =>
+        prev.map((d) =>
+          d.role === role
+            ? {
+                ...d,
+                subOrgPersonId,
+                personId: subOrgPersonId ? null : d.personId,
+              }
+            : d,
+        ),
+      );
+    },
+    [],
+  );
+
   const setItem = useCallback((role: string, contentItemId: string | null) => {
     setDrafts((prev) =>
       prev.map((d) => (d.role === role ? { ...d, contentItemId } : d)),
@@ -1634,6 +2061,7 @@ function MeetingCard({
           role,
           sortOrder: 0,
           personId,
+          subOrgPersonId: null,
           contentItemId: null,
           value: null,
         },
@@ -1719,6 +2147,7 @@ function MeetingCard({
           role,
           sortOrder: 100,
           personId: null,
+          subOrgPersonId: null,
           contentItemId: null,
           value: null,
         },
@@ -1773,6 +2202,7 @@ function MeetingCard({
             .filter(
               (d) =>
                 d.personId ||
+                d.subOrgPersonId ||
                 d.contentItemId ||
                 (d.value !== null && d.value !== ""),
             )
@@ -1780,12 +2210,11 @@ function MeetingCard({
               role: d.role,
               sortOrder: d.sortOrder,
               personId: d.personId,
+              subOrgPersonId: d.subOrgPersonId,
               contentItemId: d.contentItemId,
               value: d.value,
             })),
-          ...(type === "midweek" && program
-            ? { program: serializeProgram(program) }
-            : {}),
+          ...(program?.length ? { program: serializeProgram(program) } : {}),
         }),
       });
       if (!res.ok) {
@@ -1899,17 +2328,23 @@ function MeetingCard({
         )
       ) : (
         <div className="space-y-4">
-          {type === "midweek" ? (
+          {type === "midweek" || type === "weekend" ? (
             <MidweekProgramView
               sections={program}
               drafts={drafts}
               editable={editable}
               time={time}
               songs={songs}
+              discursos={discursos}
+              subOrgs={subOrgs}
+              orgName={orgName}
+              personTalks={personTalks}
               getPerson={getPerson}
+              getSubOrgPerson={getSubOrgPerson}
               getItem={getItem}
               getEligible={getEligible}
               onPersonChange={setPerson}
+              onSubOrgPersonChange={setSubOrgPerson}
               onItemChange={setItem}
               onTempoChange={setRowTempo}
               onTitleChange={setRowTitle}
@@ -2204,10 +2639,16 @@ function MidweekProgramView({
   editable,
   time,
   songs,
+  discursos,
+  subOrgs,
+  orgName,
+  personTalks,
   getPerson,
+  getSubOrgPerson,
   getItem,
   getEligible,
   onPersonChange,
+  onSubOrgPersonChange,
   onItemChange,
   onTempoChange,
   onTitleChange,
@@ -2219,10 +2660,20 @@ function MidweekProgramView({
   editable: boolean;
   time: string;
   songs: CatalogItem[];
+  discursos: CatalogItem[];
+  subOrgs: SubOrg[];
+  orgName?: string;
+  personTalks: PersonTalk[];
   getPerson: (id: string | null) => Person | null;
+  getSubOrgPerson: (id: string | null) =>
+    | (SubOrgPersonItem & {
+        subOrgName: string;
+      })
+    | null;
   getItem: (id: string | null, kind: "song" | "discurso") => CatalogItem | null;
   getEligible: (role: string) => Person[];
   onPersonChange: (role: string, personId: string | null) => void;
+  onSubOrgPersonChange: (role: string, subOrgPersonId: string | null) => void;
   onItemChange: (role: string, contentItemId: string | null) => void;
   onTempoChange: (sectionKey: string, rowKey: string, tempoMin: number) => void;
   onTitleChange: (sectionKey: string, rowKey: string, title: string) => void;
@@ -2230,6 +2681,7 @@ function MidweekProgramView({
   onRemovePart: (sectionKey: string, rowKey: string) => void;
 }) {
   const { t } = useTranslation();
+  const [discursoCongregId, setDiscursoCongregId] = useState("");
   const cols = editable
     ? "grid-cols-[40px_minmax(0,1fr)_48px_minmax(96px,118px)_24px] gap-x-1.5 px-2 sm:grid-cols-[56px_1fr_56px_minmax(150px,210px)_32px] sm:gap-x-2 sm:px-3"
     : "grid-cols-[42px_minmax(0,1fr)_minmax(92px,136px)] gap-x-2 px-2 sm:grid-cols-[56px_1fr_minmax(170px,230px)] sm:gap-x-3 sm:px-3";
@@ -2282,7 +2734,15 @@ function MidweekProgramView({
                     />
                   ) : (
                     <span className="flex items-center gap-1.5">
-                      <span className="truncate">{row.title}</span>
+                      <span className="truncate">
+                        {row.kind === "discurso"
+                          ? (getItem(
+                              drafts.find((d) => d.role === row.role)
+                                ?.contentItemId ?? null,
+                              "discurso",
+                            )?.theme ?? t("meetings.pdf.publicTalk"))
+                          : row.title}
+                      </span>
                       {!editable && row.tempoMin > 0 && (
                         <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
                           · {row.tempoMin} min
@@ -2323,10 +2783,18 @@ function MidweekProgramView({
                         drafts={drafts}
                         editable={editable}
                         songs={songs}
+                        discursos={discursos}
+                        subOrgs={subOrgs}
+                        orgName={orgName}
+                        personTalks={personTalks}
+                        discursoCongregId={discursoCongregId}
+                        onDiscursoCongregChange={setDiscursoCongregId}
                         getPerson={getPerson}
+                        getSubOrgPerson={getSubOrgPerson}
                         getItem={getItem}
                         getEligible={getEligible}
                         onPersonChange={onPersonChange}
+                        onSubOrgPersonChange={onSubOrgPersonChange}
                         onItemChange={onItemChange}
                       />
 
@@ -2337,10 +2805,18 @@ function MidweekProgramView({
                           drafts={drafts}
                           editable={editable}
                           songs={songs}
+                          discursos={discursos}
+                          subOrgs={subOrgs}
+                          orgName={orgName}
+                          personTalks={personTalks}
+                          discursoCongregId={discursoCongregId}
+                          onDiscursoCongregChange={setDiscursoCongregId}
                           getPerson={getPerson}
+                          getSubOrgPerson={getSubOrgPerson}
                           getItem={getItem}
                           getEligible={getEligible}
                           onPersonChange={onPersonChange}
+                          onSubOrgPersonChange={onSubOrgPersonChange}
                           onItemChange={onItemChange}
                         />
                       )}
@@ -2388,10 +2864,18 @@ function CellControl({
   drafts,
   editable,
   songs,
+  discursos,
+  subOrgs,
+  orgName,
+  personTalks,
+  discursoCongregId,
+  onDiscursoCongregChange,
   getPerson,
+  getSubOrgPerson,
   getItem,
   getEligible,
   onPersonChange,
+  onSubOrgPersonChange,
   onItemChange,
 }: {
   row: MidweekRow;
@@ -2399,16 +2883,41 @@ function CellControl({
   drafts: Draft[];
   editable: boolean;
   songs: CatalogItem[];
+  discursos: CatalogItem[];
+  subOrgs: SubOrg[];
+  orgName?: string;
+  personTalks: PersonTalk[];
+  discursoCongregId: string;
+  onDiscursoCongregChange: (id: string) => void;
   getPerson: (id: string | null) => Person | null;
+  getSubOrgPerson: (id: string | null) =>
+    | (SubOrgPersonItem & {
+        subOrgName: string;
+      })
+    | null;
   getItem: (id: string | null, kind: "song" | "discurso") => CatalogItem | null;
   getEligible: (role: string) => Person[];
   onPersonChange: (role: string, personId: string | null) => void;
+  onSubOrgPersonChange: (role: string, subOrgPersonId: string | null) => void;
   onItemChange: (role: string, contentItemId: string | null) => void;
 }) {
   const { t } = useTranslation();
   const isSecondary = which === "secondary";
   const role = isSecondary ? (row.secondary?.role ?? "") : row.role;
   const draft = drafts.find((d) => d.role === role);
+
+  const personTalkById = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    for (const pt of personTalks) {
+      let s = m.get(pt.personId);
+      if (!s) {
+        s = new Set();
+        m.set(pt.personId, s);
+      }
+      s.add(pt.meetingContentItemId);
+    }
+    return m;
+  }, [personTalks]);
 
   if (row.kind === "song") {
     const item = getItem(draft?.contentItemId ?? null, "song");
@@ -2438,8 +2947,211 @@ function CellControl({
     );
   }
 
+  if (row.kind === "discurso") {
+    const discursoRole = row.role;
+    const oradorRole = row.secondary?.role ?? "";
+    const discursoDraft = drafts.find((d) => d.role === discursoRole);
+    const oradorDraft = drafts.find((d) => d.role === oradorRole);
+    const selectedDiscursoId = discursoDraft?.contentItemId ?? null;
+    const selPersonId = oradorDraft?.personId ?? null;
+    const selSubOrgPersonId = oradorDraft?.subOrgPersonId ?? null;
+
+    const isMainCongreg = discursoCongregId === "main";
+    const isSubCongreg =
+      discursoCongregId !== "" && discursoCongregId !== "main";
+
+    const mainPool = getEligible(oradorRole);
+    const filteredMain = mainPool.filter(
+      (p) =>
+        !isSubCongreg &&
+        (!selectedDiscursoId ||
+          (personTalkById.get(p.id)?.has(selectedDiscursoId) ?? false)),
+    );
+    const filteredSubs = subOrgs
+      .filter(
+        (so) =>
+          !isMainCongreg && (!isSubCongreg || so.id === discursoCongregId),
+      )
+      .map((so) => ({
+        ...so,
+        people: selectedDiscursoId
+          ? so.people.filter((p) => p.talks.includes(selectedDiscursoId))
+          : so.people,
+      }))
+      .filter((so) => so.people.length > 0);
+
+    const hasNoneWithDiscurso =
+      selectedDiscursoId != null &&
+      filteredMain.length === 0 &&
+      filteredSubs.length === 0;
+    const mainEligible = hasNoneWithDiscurso
+      ? isSubCongreg
+        ? []
+        : mainPool
+      : filteredMain;
+    const subOrgsEligible = hasNoneWithDiscurso
+      ? subOrgs
+          .filter(
+            (so) =>
+              !isMainCongreg && (!isSubCongreg || so.id === discursoCongregId),
+          )
+          .filter((so) => so.people.length > 0)
+      : filteredSubs;
+
+    let discursoOptions = discursos;
+    if (selPersonId) {
+      const ids = personTalkById.get(selPersonId);
+      if (ids && ids.size > 0) {
+        discursoOptions = discursos.filter((d) => ids.has(d.id));
+      }
+    } else if (selSubOrgPersonId) {
+      let talks: string[] = [];
+      for (const so of subOrgs) {
+        const p = so.people.find((x) => x.id === selSubOrgPersonId);
+        if (p) {
+          talks = p.talks;
+          break;
+        }
+      }
+      if (talks.length > 0) {
+        discursoOptions = discursos.filter((d) => talks.includes(d.id));
+      }
+    } else if (isMainCongreg) {
+      const ids = new Set<string>();
+      for (const p of mainPool) {
+        for (const id of personTalkById.get(p.id) ?? []) ids.add(id);
+      }
+      if (ids.size > 0) {
+        discursoOptions = discursos.filter((d) => ids.has(d.id));
+      }
+    } else if (isSubCongreg) {
+      const so = subOrgs.find((s) => s.id === discursoCongregId);
+      const talks = new Set(so?.people.flatMap((p) => p.talks) ?? []);
+      if (talks.size > 0) {
+        discursoOptions = discursos.filter((d) => talks.has(d.id));
+      }
+    }
+
+    if (isSecondary) {
+      const handleOradorPerson = (r: string, personId: string | null) => {
+        onPersonChange(r, personId);
+        if (
+          personId &&
+          selectedDiscursoId &&
+          !(personTalkById.get(personId)?.has(selectedDiscursoId) ?? false)
+        ) {
+          onItemChange(discursoRole, null);
+        }
+      };
+      const handleOradorSub = (r: string, subOrgPersonId: string | null) => {
+        onSubOrgPersonChange(r, subOrgPersonId);
+        if (subOrgPersonId && selectedDiscursoId) {
+          let has = false;
+          for (const so of subOrgs) {
+            const p = so.people.find((x) => x.id === subOrgPersonId);
+            if (p) {
+              has = p.talks.includes(selectedDiscursoId);
+              break;
+            }
+          }
+          if (!has) onItemChange(discursoRole, null);
+        }
+      };
+      return (
+        <OradorSelect
+          role={role}
+          draft={draft}
+          editable={editable}
+          mainOptions={mainEligible}
+          subOrgs={subOrgsEligible}
+          orgName={orgName}
+          getPerson={getPerson}
+          getSubOrgPerson={getSubOrgPerson}
+          onPersonChange={handleOradorPerson}
+          onSubOrgPersonChange={handleOradorSub}
+        />
+      );
+    }
+    if (editable) {
+      return (
+        <div className="flex w-full flex-col gap-1">
+          <select
+            value={discursoCongregId}
+            onChange={(e) => onDiscursoCongregChange(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-2 py-1 text-xs text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+          >
+            <option value="">{t("meetings.todasCongregacoes")}</option>
+            {orgName && <option value="main">{orgName}</option>}
+            {subOrgs
+              .filter((so) => so.people.length > 0)
+              .map((so) => (
+                <option key={so.id} value={so.id}>
+                  {so.name}
+                </option>
+              ))}
+          </select>
+          <select
+            value={discursoDraft?.contentItemId ?? ""}
+            onChange={(e) => {
+              const newId = e.target.value || null;
+              onItemChange(discursoRole, newId);
+              if (oradorDraft) {
+                if (
+                  oradorDraft.personId &&
+                  newId &&
+                  !(
+                    personTalkById.get(oradorDraft.personId)?.has(newId) ??
+                    false
+                  )
+                ) {
+                  onPersonChange(oradorRole, null);
+                }
+                if (oradorDraft.subOrgPersonId && newId) {
+                  let has = false;
+                  for (const so of subOrgs) {
+                    const p = so.people.find(
+                      (x) => x.id === oradorDraft?.subOrgPersonId,
+                    );
+                    if (p) {
+                      has = p.talks.includes(newId);
+                      break;
+                    }
+                  }
+                  if (!has) onSubOrgPersonChange(oradorRole, null);
+                }
+              }
+            }}
+            className="w-full rounded-lg border border-border bg-background px-2 py-1 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+          >
+            <option value="">{t("meetings.selectDiscurso")}</option>
+            {discursoOptions.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.number != null ? `${d.number}. ` : ""}
+                {d.theme}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+    return <span className="block w-full" />;
+  }
+
   const person = getPerson(draft?.personId ?? null);
+  const subOrgPerson = getSubOrgPerson(draft?.subOrgPersonId ?? null);
   if (!editable) {
+    if (isSecondary && row.secondary?.role === "orador") {
+      const display = subOrgPerson
+        ? `${subOrgPerson.name} (${subOrgPerson.subOrgName})`
+        : person
+          ? `${person.name}${orgName ? ` (${orgName})` : ""}`
+          : "—";
+      return (
+        <span className="block max-w-full truncate text-right text-xs text-muted-foreground">
+          {display}
+        </span>
+      );
+    }
     return (
       <span
         className={cn(
@@ -2447,7 +3159,9 @@ function CellControl({
           isSecondary && "text-xs text-muted-foreground",
         )}
       >
-        {person?.name ?? (isSecondary ? "—" : t("meetings.naoDesignado"))}
+        {subOrgPerson
+          ? `${subOrgPerson.name} (${subOrgPerson.subOrgName})`
+          : (person?.name ?? (isSecondary ? "—" : t("meetings.naoDesignado")))}
       </span>
     );
   }
@@ -2482,6 +3196,101 @@ function CellControl({
   );
 }
 
+function OradorSelect({
+  role,
+  draft,
+  editable,
+  subOrgs,
+  orgName,
+  mainOptions,
+  getPerson,
+  getSubOrgPerson,
+  onPersonChange,
+  onSubOrgPersonChange,
+}: {
+  role: string;
+  draft: Draft | undefined;
+  editable: boolean;
+  subOrgs: SubOrg[];
+  orgName?: string;
+  mainOptions: Person[];
+  getPerson: (id: string | null) => Person | null;
+  getSubOrgPerson: (id: string | null) =>
+    | (SubOrgPersonItem & {
+        subOrgName: string;
+      })
+    | null;
+  onPersonChange: (role: string, personId: string | null) => void;
+  onSubOrgPersonChange: (role: string, subOrgPersonId: string | null) => void;
+}) {
+  const { t } = useTranslation();
+  const person = getPerson(draft?.personId ?? null);
+  const subOrgPerson = getSubOrgPerson(draft?.subOrgPersonId ?? null);
+
+  if (!editable) {
+    const display = subOrgPerson
+      ? `${subOrgPerson.name} (${subOrgPerson.subOrgName})`
+      : person
+        ? `${person.name}${orgName ? ` (${orgName})` : ""}`
+        : "—";
+    return (
+      <span className="block max-w-full truncate text-right text-sm">
+        {display}
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex w-full flex-col">
+      {draft?.personId == null && draft?.subOrgPersonId == null && (
+        <span className="text-muted-foreground">
+          {t("meetings.naoDesignado")}
+        </span>
+      )}
+      <select
+        value={
+          draft?.subOrgPersonId
+            ? `sub:${draft.subOrgPersonId}`
+            : draft?.personId
+              ? `person:${draft.personId}`
+              : ""
+        }
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v.startsWith("sub:")) {
+            onSubOrgPersonChange(role, v.slice(4));
+          } else if (v.startsWith("person:")) {
+            onPersonChange(role, v.slice(7));
+          } else {
+            onPersonChange(role, null);
+          }
+        }}
+        className="w-full rounded-lg border border-border bg-background px-2 py-1 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+      >
+        <option value="">{t("meetings.selectPerson")}</option>
+        <optgroup label={orgName ? t("meetings.pdf.congregation") : undefined}>
+          {mainOptions.map((p) => (
+            <option key={`person:${p.id}`} value={`person:${p.id}`}>
+              {p.name}
+            </option>
+          ))}
+        </optgroup>
+        {subOrgs
+          .filter((so) => so.people.length > 0)
+          .map((so) => (
+            <optgroup key={so.id} label={so.name}>
+              {so.people.map((p) => (
+                <option key={`sub:${p.id}`} value={`sub:${p.id}`}>
+                  {p.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+      </select>
+    </div>
+  );
+}
+
 type TFunc = (key: string, options?: Record<string, unknown>) => string;
 
 function findApostilaWeek(
@@ -2503,6 +3312,7 @@ function MeetingPdfDialog({
   orgName,
   configs,
   apostilaWeeks,
+  sentinelas,
   events,
   t,
 }: {
@@ -2511,6 +3321,7 @@ function MeetingPdfDialog({
   orgName?: string;
   configs: MeetingConfig[];
   apostilaWeeks: ApostilaSemana[];
+  sentinelas: SentinelaWeek[];
   events: SpecialEvent[];
   t: TFunc;
 }) {
@@ -2546,6 +3357,10 @@ function MeetingPdfDialog({
             m.type === "midweek"
               ? findApostilaWeek(apostilaWeeks, m.weekStart.replace(/-/g, ""))
               : null;
+          const sent = findSentinelaForWeek(
+            sentinelas,
+            parseDateKey(m.weekStart),
+          );
           const program: PdfProgram | null =
             m.type === "midweek"
               ? {
@@ -2556,7 +3371,18 @@ function MeetingPdfDialog({
                         ? buildMidweekProgram(aw, buildSlots("midweek", aw), t)
                         : [],
                 }
-              : null;
+              : m.type === "weekend"
+                ? {
+                    sections:
+                      m.program && m.program.sections.length > 0
+                        ? m.program.sections
+                        : buildWeekendProgram(
+                            sent,
+                            buildSlots("weekend", null),
+                            t,
+                          ),
+                  }
+                : null;
           return {
             id: m.id,
             type: m.type,

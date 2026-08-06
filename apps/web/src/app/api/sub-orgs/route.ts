@@ -12,6 +12,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const subOrgId = searchParams.get("subOrgId");
+  const includePeople = searchParams.get("includePeople") === "1";
 
   if (subOrgId) {
     const subOrg = await prisma.subOrganization.findFirst({
@@ -41,7 +42,24 @@ export async function GET(request: Request) {
 
   const subOrgs = await prisma.subOrganization.findMany({
     where: { organizationId: member.organizationId },
-    include: { _count: { select: { people: true } } },
+    include: {
+      _count: { select: { people: true } },
+      ...(includePeople
+        ? {
+            people: {
+              select: {
+                id: true,
+                name: true,
+                talks: {
+                  select: { meetingContentItemId: true },
+                  orderBy: { createdAt: "asc" },
+                },
+              },
+              orderBy: { name: "asc" },
+            },
+          }
+        : {}),
+    },
     orderBy: { name: "asc" },
   });
 
