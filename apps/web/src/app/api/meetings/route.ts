@@ -12,25 +12,31 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
+  const from = parseEventDate(searchParams.get("from") ?? "");
+  const to = parseEventDate(searchParams.get("to") ?? "");
   const weekStart = parseEventDate(searchParams.get("weekStart") ?? "");
 
-  if (!weekStart) {
+  let whereWeekStart:
+    | { gte: Date; lte: Date }
+    | { gte: Date; lte: Date }
+    | null = null;
+  if (from && to) {
+    whereWeekStart = { gte: from, lte: to };
+  } else if (weekStart) {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    whereWeekStart = { gte: weekStart, lte: weekEnd };
+  } else {
     return NextResponse.json(
-      { error: "weekStart é obrigatório (AAAA-MM-DD)" },
+      { error: "from/to ou weekStart é obrigatório (AAAA-MM-DD)" },
       { status: 400 },
     );
   }
 
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 6);
-
   const meetings = await prisma.meeting.findMany({
     where: {
       organizationId: member.organizationId,
-      weekStart: {
-        gte: weekStart,
-        lte: weekEnd,
-      },
+      weekStart: whereWeekStart,
     },
     include: {
       assignments: {

@@ -22,6 +22,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   addDays,
   eachDayInRange,
@@ -33,6 +43,12 @@ import {
   WEEKLY_BLOCKING_EVENT_TYPES,
 } from "@/lib/cleaning-assignment";
 import { cn } from "@/lib/utils";
+import {
+  generateMeetingsPdf,
+  type PdfAssignment,
+  type PdfMeeting,
+  type PdfProgram,
+} from "./meetings-pdf";
 
 type Person = {
   id: string;
@@ -249,9 +265,16 @@ function formatFullDate(date: Date): string {
   return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
 }
 
-export function MeetingsClient({ role }: { role?: string }) {
+export function MeetingsClient({
+  role,
+  orgName,
+}: {
+  role?: string;
+  orgName?: string;
+}) {
   const { t } = useTranslation();
   const canManage = role === "owner" || role === "admin";
+  const [pdfOpen, setPdfOpen] = useState(false);
 
   const [weekStart, setWeekStart] = useState<Date>(() =>
     startOfWeek(new Date()),
@@ -387,7 +410,7 @@ export function MeetingsClient({ role }: { role?: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
+    <div className="mx-auto max-w-5xl px-0 py-4 sm:px-6 sm:py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">{t("meetings.title")}</h1>
         <p className="mt-1 text-muted-foreground">{t("meetings.subtitle")}</p>
@@ -422,7 +445,25 @@ export function MeetingsClient({ role }: { role?: string }) {
         <p className="text-base font-semibold">
           {t("meetings.weekOf")} {formatWeekRange(weekStart)}
         </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setPdfOpen(true)}
+          disabled={loading}
+        >
+          {t("meetings.pdf.button")}
+        </Button>
       </div>
+
+      <MeetingPdfDialog
+        open={pdfOpen}
+        onOpenChange={setPdfOpen}
+        orgName={orgName}
+        configs={configs}
+        apostilaWeeks={apostilaWeeks}
+        events={events}
+        t={t as unknown as TFunc}
+      />
 
       <WeekDaysGrid
         weekStart={weekStart}
@@ -499,7 +540,7 @@ function WeekDaysGrid({
   }
 
   return (
-    <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+    <div className="rounded-2xl bg-card p-3 shadow-sm ring-1 ring-border sm:p-4">
       <div className="grid grid-cols-7 gap-1.5">
         {days.map((day, i) => {
           const key = toDateKey(day);
@@ -1022,10 +1063,8 @@ function slotLabel(
     const parte = sec?.partes.find((p) => p.order === pi);
     if (sec && parte) {
       const base = `${sec.secao} — ${parte.parte}`;
-      const meta = [parte.tema, parte.tempo]
-        .filter((v) => v && v !== "—")
-        .join(" · ");
-      const title = meta ? `${base} (${meta})` : base;
+      const meta = partMeta(parte);
+      const title = meta.length ? `${base} (${meta.join(" · ")})` : base;
       if (suffix === "ajudante")
         return `${title} · ${t("meetings.parteAjudante")}`;
       if (suffix === "leitor")
@@ -1134,6 +1173,7 @@ type MidweekRow = {
   kind: MidweekRowKind;
   title: string;
   tempoMin: number;
+  clockAdd?: number;
   role: string;
   eligibility?: string;
   dualOf?: string;
@@ -1167,6 +1207,12 @@ function parseTempoToMinutes(tempo: string): number {
   return m ? Number(m[1]) : 5;
 }
 
+function partMeta(parte: ApostilaParte): string[] {
+  return ([parte.tema, parte.modalidade] as (string | null)[])
+    .filter((v): v is string => v !== null && v !== "—")
+    .filter((v) => v.trim().toLowerCase() !== parte.parte.trim().toLowerCase());
+}
+
 function midweekSectionKind(
   secao: string,
 ): "tesouros" | "ministerio" | "vidaCrista" | "other" {
@@ -1194,12 +1240,12 @@ function parseSectionRole(
 function partDuration(
   sec: ApostilaSecao,
   parte: ApostilaParte,
-): { tempoMin: number; tempoLabel: string } {
+): { tempoMin: number; clockAdd: number } {
   const base = parseTempoToMinutes(parte.tempo);
   if (midweekSectionKind(sec.secao) === "ministerio") {
-    return { tempoMin: base + 1, tempoLabel: `${base + 1} min` };
+    return { tempoMin: base, clockAdd: base + 1 };
   }
-  return { tempoMin: base, tempoLabel: parte.tempo };
+  return { tempoMin: base, clockAdd: base };
 }
 
 function buildMidweekProgram(
@@ -1282,17 +1328,16 @@ function buildMidweekProgram(
           return suf === "ajudante" || suf === "leitor";
         });
 
-        const { tempoMin } = partDuration(sec, parte);
-        const meta = [parte.tema, parte.modalidade]
-          .filter((v) => v && v !== "—")
-          .join(" · ");
-        const title = `${parte.parte}${meta ? ` (${meta})` : ""}`;
+        const { tempoMin, clockAdd } = partDuration(sec, parte);
+        const meta = partMeta(parte);
+        const title = `${parte.parte}${meta.length ? ` (${meta.join(" · ")})` : ""}`;
 
         const row: MidweekRow = {
           key: `secao:${si}:${parte.order}`,
           kind: secondary ? "personDual" : "person",
           title,
           tempoMin,
+          clockAdd,
           role: primary?.role ?? "",
           eligibility: primary?.eligibility,
           dualOf: primary?.dualOf,
@@ -1606,21 +1651,24 @@ function MeetingCard({
     (sectionKey: string, rowKey: string, tempoMin: number) => {
       setProgram(
         (prev) =>
-          prev?.map((sec) =>
-            sec.key === sectionKey
-              ? {
-                  ...sec,
-                  rows: sec.rows.map((r) =>
-                    r.key === rowKey
-                      ? { ...r, tempoMin: Math.max(0, tempoMin) }
-                      : r,
-                  ),
-                }
-              : sec,
-          ) ?? prev,
+          prev?.map((sec) => {
+            if (sec.key !== sectionKey) return sec;
+            const si = Number(sec.key.replace("secao-", ""));
+            const kind = Number.isFinite(si)
+              ? midweekSectionKind(apostilaWeek?.secoes[si]?.secao ?? "")
+              : "other";
+            const add = Math.max(0, tempoMin);
+            const clockAdd = kind === "ministerio" ? add + 1 : add;
+            return {
+              ...sec,
+              rows: sec.rows.map((r) =>
+                r.key === rowKey ? { ...r, tempoMin: add, clockAdd } : r,
+              ),
+            };
+          }) ?? prev,
       );
     },
-    [],
+    [apostilaWeek],
   );
 
   const setRowTitle = useCallback(
@@ -1642,33 +1690,42 @@ function MeetingCard({
     [],
   );
 
-  const addRow = useCallback((sectionKey: string) => {
-    const role = `custom:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 7)}`;
-    const row: MidweekRow = {
-      key: role,
-      kind: "person",
-      title: "",
-      tempoMin: 5,
-      role,
-      eligibility: "any",
-    };
-    setProgram(
-      (prev) =>
-        prev?.map((sec) =>
-          sec.key === sectionKey ? { ...sec, rows: [...sec.rows, row] } : sec,
-        ) ?? prev,
-    );
-    setDrafts((prev) => [
-      ...prev,
-      {
+  const addRow = useCallback(
+    (sectionKey: string) => {
+      const role = `custom:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 7)}`;
+      const si = Number(sectionKey.replace("secao-", ""));
+      const kind = Number.isFinite(si)
+        ? midweekSectionKind(apostilaWeek?.secoes[si]?.secao ?? "")
+        : "other";
+      const clockAdd = kind === "ministerio" ? 6 : 5;
+      const row: MidweekRow = {
+        key: role,
+        kind: "person",
+        title: "",
+        tempoMin: 5,
+        clockAdd,
         role,
-        sortOrder: 100,
-        personId: null,
-        contentItemId: null,
-        value: null,
-      },
-    ]);
-  }, []);
+        eligibility: "any",
+      };
+      setProgram(
+        (prev) =>
+          prev?.map((sec) =>
+            sec.key === sectionKey ? { ...sec, rows: [...sec.rows, row] } : sec,
+          ) ?? prev,
+      );
+      setDrafts((prev) => [
+        ...prev,
+        {
+          role,
+          sortOrder: 100,
+          personId: null,
+          contentItemId: null,
+          value: null,
+        },
+      ]);
+    },
+    [apostilaWeek],
+  );
 
   const removeRow = useCallback(
     (sectionKey: string, rowKey: string) => {
@@ -1789,7 +1846,7 @@ function MeetingCard({
   const editable = canManage && editing;
 
   return (
-    <div className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
+    <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border sm:p-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold">
@@ -2174,8 +2231,8 @@ function MidweekProgramView({
 }) {
   const { t } = useTranslation();
   const cols = editable
-    ? "grid-cols-[56px_1fr_56px_minmax(150px,210px)_32px] gap-x-2 px-3"
-    : "grid-cols-[56px_1fr_minmax(170px,230px)] gap-x-3 px-3";
+    ? "grid-cols-[40px_minmax(0,1fr)_48px_minmax(96px,118px)_24px] gap-x-1.5 px-2 sm:grid-cols-[56px_1fr_56px_minmax(150px,210px)_32px] sm:gap-x-2 sm:px-3"
+    : "grid-cols-[42px_minmax(0,1fr)_minmax(92px,136px)] gap-x-2 px-2 sm:grid-cols-[56px_1fr_minmax(170px,230px)] sm:gap-x-3 sm:px-3";
   let clock = parseTimeToMinutes(time || "19:00");
 
   return (
@@ -2199,7 +2256,7 @@ function MidweekProgramView({
           </div>
           {section.rows.map((row) => {
             const timeLabel = formatMinutes(clock);
-            clock += row.tempoMin;
+            clock += row.clockAdd ?? row.tempoMin;
             return (
               <div
                 key={row.key}
@@ -2208,7 +2265,7 @@ function MidweekProgramView({
                   cols,
                 )}
               >
-                <span className="text-muted-foreground tabular-nums">
+                <span className="text-xs text-muted-foreground tabular-nums sm:text-sm">
                   {timeLabel}
                 </span>
                 <div className="min-w-0">
@@ -2224,11 +2281,13 @@ function MidweekProgramView({
                       className="w-full rounded-lg border border-border bg-background px-2 py-1 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
                     />
                   ) : (
-                    <span className="block">
-                      {row.title}
-                      {!editable && row.tempoMin > 0
-                        ? ` · ${row.tempoMin} min`
-                        : ""}
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate">{row.title}</span>
+                      {!editable && row.tempoMin > 0 && (
+                        <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
+                          · {row.tempoMin} min
+                        </span>
+                      )}
                     </span>
                   )}
                 </div>
@@ -2270,6 +2329,7 @@ function MidweekProgramView({
                         onPersonChange={onPersonChange}
                         onItemChange={onItemChange}
                       />
+
                       {row.secondary && (
                         <CellControl
                           row={row}
@@ -2365,7 +2425,7 @@ function CellControl({
       <select
         value={draft?.contentItemId ?? ""}
         onChange={(e) => onItemChange(role, e.target.value || null)}
-        className="w-full max-w-[210px] rounded-lg border border-border bg-background px-2 py-1 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+        className="w-full rounded-lg border border-border bg-background px-2 py-1 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
       >
         <option value="">{t("meetings.selectSong")}</option>
         {songs.map((s) => (
@@ -2383,7 +2443,7 @@ function CellControl({
     return (
       <span
         className={cn(
-          "text-right",
+          "block max-w-full truncate text-right",
           isSecondary && "text-xs text-muted-foreground",
         )}
       >
@@ -2394,7 +2454,7 @@ function CellControl({
   return (
     <div
       className={cn(
-        "flex w-full max-w-[210px] flex-col",
+        "flex w-full flex-col sm:max-w-52.5",
         isSecondary && "items-start",
       )}
     >
@@ -2419,5 +2479,161 @@ function CellControl({
         ))}
       </select>
     </div>
+  );
+}
+
+type TFunc = (key: string, options?: Record<string, unknown>) => string;
+
+function findApostilaWeek(
+  apostilaWeeks: ApostilaSemana[],
+  weekStartKey: string,
+): ApostilaSemana | null {
+  return (
+    apostilaWeeks.find((w) => {
+      const start = w.dateRange.slice(0, 8);
+      const end = w.dateRange.slice(9);
+      return weekStartKey >= start && weekStartKey <= end;
+    }) ?? null
+  );
+}
+
+function MeetingPdfDialog({
+  open,
+  onOpenChange,
+  orgName,
+  configs,
+  apostilaWeeks,
+  events,
+  t,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  orgName?: string;
+  configs: MeetingConfig[];
+  apostilaWeeks: ApostilaSemana[];
+  events: SpecialEvent[];
+  t: TFunc;
+}) {
+  const [from, setFrom] = useState<Date | null>(null);
+  const [to, setTo] = useState<Date | null>(null);
+  const [type, setType] = useState<"both" | "midweek" | "weekend">("both");
+  const [generating, setGenerating] = useState(false);
+
+  const canGenerate = Boolean(from && to) && !generating;
+
+  const handleGenerate = async () => {
+    if (!from || !to) return;
+    setGenerating(true);
+    try {
+      const res = await fetch(
+        `/api/meetings?from=${toDateKey(from)}&to=${toDateKey(to)}`,
+      );
+      if (!res.ok) throw new Error("fetch");
+      const data = (await res.json()) as {
+        meetings?: Array<{
+          id: string;
+          type: "midweek" | "weekend" | "memorial";
+          weekStart: string;
+          program: MidweekProgram | null;
+          assignments: PdfAssignment[];
+        }>;
+      };
+      const wanted = new Set(type === "both" ? ["midweek", "weekend"] : [type]);
+      const pdfMeetings: PdfMeeting[] = (data.meetings ?? [])
+        .filter((m) => wanted.has(m.type))
+        .map((m) => {
+          const aw =
+            m.type === "midweek"
+              ? findApostilaWeek(apostilaWeeks, m.weekStart.replace(/-/g, ""))
+              : null;
+          const program: PdfProgram | null =
+            m.type === "midweek"
+              ? {
+                  sections:
+                    m.program && m.program.sections.length > 0
+                      ? m.program.sections
+                      : aw
+                        ? buildMidweekProgram(aw, buildSlots("midweek", aw), t)
+                        : [],
+                }
+              : null;
+          return {
+            id: m.id,
+            type: m.type,
+            weekStart: m.weekStart,
+            program,
+            assignments: m.assignments,
+          };
+        });
+
+      if (pdfMeetings.length === 0) {
+        toast.error(t("meetings.pdf.noMeetings"));
+        return;
+      }
+
+      await generateMeetingsPdf({
+        orgName: orgName ?? "",
+        meetings: pdfMeetings,
+        configs,
+        apostilaWeeks,
+        events,
+        t,
+      });
+    } catch {
+      toast.error(t("meetings.pdf.noMeetings"));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{t("meetings.pdf.title")}</DialogTitle>
+          <DialogDescription>{t("meetings.pdf.subtitle")}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label>{t("meetings.pdf.rangeLabel")}</Label>
+            <div className="mt-2 flex justify-center">
+              <Calendar
+                mode="range"
+                selected={{ from: from ?? undefined, to: to ?? undefined }}
+                onSelect={(r) => {
+                  setFrom(r?.from ?? null);
+                  setTo(r?.to ?? null);
+                }}
+              />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="meeting-pdf-type">
+              {t("meetings.pdf.typeLabel")}
+            </Label>
+            <select
+              id="meeting-pdf-type"
+              value={type}
+              onChange={(e) =>
+                setType(e.target.value as "both" | "midweek" | "weekend")
+              }
+              className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+            >
+              <option value="both">{t("meetings.pdf.typeBoth")}</option>
+              <option value="midweek">{t("meetings.pdf.typeMidweek")}</option>
+              <option value="weekend">{t("meetings.pdf.typeWeekend")}</option>
+            </select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t("meetings.pdf.cancel")}
+          </Button>
+          <Button onClick={handleGenerate} disabled={!canGenerate}>
+            {generating ? "…" : t("meetings.pdf.generate")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

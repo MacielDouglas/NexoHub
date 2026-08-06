@@ -732,6 +732,28 @@
       "nossaVidaCrista": "Ancião ou servo ministerial qualificado",
       "ajudanteMesmoSexo": "Mesmo sexo do estudante",
       "ajudanteMesmoSexoOuFamilia": "Mesmo sexo do estudante ou membro da família"
+    },
+    "pdf": {
+      "create": "Criar PDF",
+      "button": "Criar PDF",
+      "cancel": "Cancelar",
+      "title": "Criar PDF de reuniões",
+      "subtitle": "Selecione o intervalo de datas e o tipo de reunião para gerar o PDF.",
+      "rangeLabel": "Intervalo de datas",
+      "startDate": "Data inicial",
+      "endDate": "Data final",
+      "typeLabel": "Tipo de reunião",
+      "typeMidweek": "Meio de Semana",
+      "typeWeekend": "Fim de Semana",
+      "typeBoth": "Ambas",
+      "generate": "Gerar PDF",
+      "noMeetings": "Não há reuniões programadas no intervalo selecionado.",
+      "midweekTitle": "REUNIÃO DE MEIO DE SEMANA",
+      "weekendTitle": "REUNIÃO DE FIM DE SEMANA",
+      "songAndPrayer": "Cântico {{n}} e oração",
+      "middleSong": "Cântico {{n}}",
+      "publicTalk": "Discurso público",
+      "circuitVisit": "Semana da Visita do Superintendente de Circuito"
     }
   }
 }

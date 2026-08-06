@@ -27,5 +27,7 @@ export default async function MeetingsPage({ params: _params }: PageProps) {
     redirect("/welcome");
   }
 
-  return <MeetingsClient role={member.role} />;
+  return (
+    <MeetingsClient role={member.role} orgName={member.organization.name} />
+  );
 }
