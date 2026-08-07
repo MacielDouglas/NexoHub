@@ -858,6 +858,9 @@
     "noPast": "Nenhuma designação passada neste mês.",
     "noPerson": "Sua conta ainda não está vinculada a nenhuma pessoa cadastrada.",
     "today": "Hoje",
+    "tomorrow": "Amanhã",
+    "inDays": "Em {{count}} dias",
+    "weekCountLabel": "Designações nesta semana",
     "kinds": {
       "meeting": "Reunião",
       "designation": "Designação",

@@ -84,8 +84,6 @@ export function OverviewClient({
       year: "numeric",
     });
 
-  const isToday = nextMeeting?.date === today;
-
   return (
     <div className="space-y-6 pt-4">
       <header>
@@ -108,22 +106,33 @@ export function OverviewClient({
         </div>
 
         <div className="space-y-3 p-5 pt-3 sm:p-6 sm:pt-3">
-          <p className="text-sm text-muted-foreground">
-            {t("overview.weekRange")}{" "}
-            <span className="font-medium text-foreground tabular-nums">
-              {formatDate(weekStart)} – {formatDate(weekEnd)}
-            </span>
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <p className="text-sm text-muted-foreground">
+              {t("overview.weekRange")}{" "}
+              <span className="font-medium text-foreground tabular-nums">
+                {formatDate(weekStart)} – {formatDate(weekEnd)}
+              </span>
+            </p>
+
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums sm:text-4xl">
+                {weekAssignments.length}
+              </p>
+              <p className="max-w-[10rem] text-xs font-medium uppercase tracking-wider leading-tight text-muted-foreground">
+                {t("overview.weekCountLabel")}
+              </p>
+            </div>
+          </div>
 
           <div className="rounded-xl bg-muted/40 p-3 ring-1 ring-white/5">
-            <p className="flex items-center gap-2 text-sm font-medium">
+            <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
               <CalendarClock
-                className="size-4 text-primary"
+                className="size-4 shrink-0 text-primary"
                 aria-hidden="true"
               />
               {t("overview.nextMeeting")}
-              {isToday ? (
-                <Badge className="ml-1">{t("overview.today")}</Badge>
+              {nextMeeting ? (
+                <RelativeBadge today={today} date={nextMeeting.date} />
               ) : null}
             </p>
             {nextMeeting ? (
@@ -269,4 +278,26 @@ function ItemRow({
       </div>
     </li>
   );
+}
+
+function RelativeBadge({ today, date }: { today: string; date: string }) {
+  const { t } = useTranslation();
+  const diff = Math.round(
+    (new Date(`${date}T00:00:00`).getTime() -
+      new Date(`${today}T00:00:00`).getTime()) /
+      86_400_000,
+  );
+
+  if (diff === 0) {
+    return <Badge>{t("overview.today")}</Badge>;
+  }
+  if (diff === 1) {
+    return <Badge variant="outline">{t("overview.tomorrow")}</Badge>;
+  }
+  if (diff > 1) {
+    return (
+      <Badge variant="outline">{t("overview.inDays", { count: diff })}</Badge>
+    );
+  }
+  return null;
 }
