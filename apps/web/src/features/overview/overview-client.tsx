@@ -61,7 +61,7 @@ const KIND_ICON: Record<OverviewItem["kind"], LucideIcon> = {
 const KIND_ICON_CLASS: Record<OverviewItem["kind"], string> = {
   meeting: "bg-primary/15 text-primary",
   designation: "bg-white/10 text-foreground",
-  cleaning: "bg-muted text-muted-foreground",
+  cleaning: "bg-green-500/15 text-green-400",
 };
 
 export function OverviewClient({
