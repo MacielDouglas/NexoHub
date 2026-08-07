@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BrushCleaning,
   CalendarDays,
+  ClipboardCheck,
   FolderKanban,
   Home,
   NotebookPen,
@@ -51,6 +52,11 @@ export function getNavItems(slug: string): NavItem[] {
       href: `/org/${slug}/cleaning`,
       label: "cleaning",
       icon: BrushCleaning,
+    },
+    {
+      href: `/org/${slug}/designacoes`,
+      label: "designacoes",
+      icon: ClipboardCheck,
     },
     {
       href: `/org/${slug}/discursos`,

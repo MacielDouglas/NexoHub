@@ -8,21 +8,21 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   image         String?
   displayName   String?
-  globalRole    String    @default("member")
+  globalRole    String   @default("member")
   language      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  sessions           Session[]
-  accounts           Account[]
-  members            Member[]
-  invitations        Invitation[]
+  sessions            Session[]
+  accounts            Account[]
+  members             Member[]
+  invitations         Invitation[]
   createdInviteTokens InviteToken[] @relation("CreatedInviteTokens")
   usedInviteTokens    InviteToken[] @relation("UsedInviteTokens")
 
@@ -78,18 +78,20 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members           Member[]
-  invitations       Invitation[]
-  meetingConfigs    MeetingConfig[]
-  specialEvents     SpecialEvent[]
-  inviteTokens      InviteToken[]
-  cleaningConfig    CleaningConfig?
-  cleaningSchedules CleaningSchedule[]
-  meetingContents   MeetingContent[]
-  meetings          Meeting[]
-  families          Family[]
-  people            Person[]
-  subOrganizations  SubOrganization[]
+  members             Member[]
+  invitations         Invitation[]
+  meetingConfigs      MeetingConfig[]
+  specialEvents       SpecialEvent[]
+  inviteTokens        InviteToken[]
+  cleaningConfig      CleaningConfig?
+  cleaningSchedules   CleaningSchedule[]
+  meetingContents     MeetingContent[]
+  meetings            Meeting[]
+  families            Family[]
+  people              Person[]
+  subOrganizations    SubOrganization[]
+  designationConfig   DesignationConfig?
+  designationPrograms DesignationProgram[]
 }
 
 model Member {
@@ -107,36 +109,36 @@ model Member {
 }
 
 model Invitation {
-  id             String    @id @default(cuid())
+  id             String   @id @default(cuid())
   organizationId String
   email          String
   role           String
-  status         String    @default("pending")
+  status         String   @default("pending")
   expiresAt      DateTime
   inviterId      String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   inviter      User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 }
 
 model InviteToken {
-  id             String   @id @default(cuid())
-  code           String   @unique
-  purpose        String   @default("owner")
+  id             String    @id @default(cuid())
+  code           String    @unique
+  purpose        String    @default("owner")
   organizationId String?
   createdById    String
   usedById       String?
   usedAt         DateTime?
   expiresAt      DateTime
-  status         String   @default("active")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  status         String    @default("active")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   organization Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  createdBy     User         @relation("CreatedInviteTokens", fields: [createdById], references: [id], onDelete: Cascade)
-  usedBy        User?        @relation("UsedInviteTokens", fields: [usedById], references: [id])
+  createdBy    User          @relation("CreatedInviteTokens", fields: [createdById], references: [id], onDelete: Cascade)
+  usedBy       User?         @relation("UsedInviteTokens", fields: [usedById], references: [id])
 }
 
 model MeetingConfig {
@@ -150,9 +152,9 @@ model MeetingConfig {
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
 
-  organization               Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parts                      MeetingPart[]
-  defaultSentinelaConductor  Person?     @relation("DefaultSentinelaConductor", fields: [defaultSentinelaConductorId], references: [id], onDelete: SetNull)
+  organization              Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parts                     MeetingPart[]
+  defaultSentinelaConductor Person?       @relation("DefaultSentinelaConductor", fields: [defaultSentinelaConductorId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, type])
 }
@@ -173,9 +175,9 @@ model MeetingPart {
 model Meeting {
   id             String   @id @default(cuid())
   organizationId String
-  type           String   // "midweek" | "weekend" | "memorial"
+  type           String // "midweek" | "weekend" | "memorial"
   weekStart      DateTime
-  program        Json?    // programa personalizado (seções/partes/tempos)
+  program        Json? // programa personalizado (seções/partes/tempos)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -187,21 +189,21 @@ model Meeting {
 }
 
 model MeetingAssignment {
-  id            String  @id @default(cuid())
-  meetingId     String
-  role          String
-  sortOrder     Int     @default(0)
-  personId      String?
+  id             String   @id @default(cuid())
+  meetingId      String
+  role           String
+  sortOrder      Int      @default(0)
+  personId       String?
   subOrgPersonId String?
-  contentItemId String?
-  value         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  contentItemId  String?
+  value          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  meeting       Meeting             @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  person        Person?             @relation(fields: [personId], references: [id], onDelete: SetNull)
-  subOrgPerson  SubOrgPerson?       @relation(fields: [subOrgPersonId], references: [id], onDelete: SetNull)
-  contentItem   MeetingContentItem? @relation(fields: [contentItemId], references: [id], onDelete: SetNull)
+  meeting      Meeting             @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  person       Person?             @relation(fields: [personId], references: [id], onDelete: SetNull)
+  subOrgPerson SubOrgPerson?       @relation(fields: [subOrgPersonId], references: [id], onDelete: SetNull)
+  contentItem  MeetingContentItem? @relation(fields: [contentItemId], references: [id], onDelete: SetNull)
 
   @@index([meetingId])
   @@index([personId])
@@ -210,15 +212,15 @@ model MeetingAssignment {
 }
 
 model SpecialEvent {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   organizationId String
   type           String
   date           DateTime
   endDate        DateTime?
   time           String?
   location       String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -235,24 +237,24 @@ model CleaningConfig {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   sectors      CleaningSector[]
 }
 
 model CleaningSector {
-  id              String   @id @default(cuid())
+  id               String   @id @default(cuid())
   cleaningConfigId String
-  type            String
-  defaultKey      String?
-  name            String?
-  task            String?
-  unit            String
-  peopleCount     Int?
-  allowYoung      Boolean  @default(false)
-  gender          String   @default("any")
-  sortOrder       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  type             String
+  defaultKey       String?
+  name             String?
+  task             String?
+  unit             String
+  peopleCount      Int?
+  allowYoung       Boolean  @default(false)
+  gender           String   @default("any")
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   cleaningConfig CleaningConfig @relation(fields: [cleaningConfigId], references: [id], onDelete: Cascade)
 
@@ -270,7 +272,7 @@ model CleaningSchedule {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   assignments  CleaningAssignment[]
 
   @@index([organizationId, type])
@@ -290,11 +292,57 @@ model CleaningAssignment {
   sector   CleaningSector   @relation(fields: [sectorId], references: [id], onDelete: Cascade)
   person   Person           @relation(fields: [personId], references: [id], onDelete: Cascade)
 
+  @@unique([scheduleId, date, sectorId, personId])
   @@index([scheduleId])
   @@index([date])
   @@index([sectorId])
   @@index([personId])
-  @@unique([scheduleId, date, sectorId, personId])
+}
+
+model DesignationConfig {
+  id               String   @id @default(cuid())
+  organizationId   String   @unique
+  micCount         Int      @default(1)
+  indicadorCount   Int      @default(1)
+  indicadorSectors Json? // lista de setores, um por indicador
+  enabledSectors   Json? // lista de setores ativos: som, video, palco, mic, indicador
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model DesignationProgram {
+  id             String   @id @default(cuid())
+  organizationId String
+  startDate      DateTime
+  endDate        DateTime
+  enabledSectors Json? // lista de setores ativos na geração do programa
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assignments  DesignationAssignment[]
+
+  @@index([organizationId, startDate, endDate])
+}
+
+model DesignationAssignment {
+  id        String   @id @default(cuid())
+  programId String
+  date      DateTime
+  role      String // "som" | "video" | "palco" | "mic" | "indicador"
+  sector    String?
+  personId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  program DesignationProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  person  Person             @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([programId])
+  @@index([date])
+  @@index([personId])
 }
 
 model MeetingContent {
@@ -308,23 +356,23 @@ model MeetingContent {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   items        MeetingContentItem[]
 
   @@index([organizationId, type])
 }
 
 model MeetingContentItem {
-  id              String   @id @default(cuid())
-  contentId       String
-  position        Int      @default(0)
-  data            Json
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String   @id @default(cuid())
+  contentId String
+  position  Int      @default(0)
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  content         MeetingContent @relation(fields: [contentId], references: [id], onDelete: Cascade)
-  personTalks     PersonTalk[]
-  subOrgPersonTalks SubOrgPersonTalk[]
+  content            MeetingContent      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  personTalks        PersonTalk[]
+  subOrgPersonTalks  SubOrgPersonTalk[]
   meetingAssignments MeetingAssignment[]
 
   @@index([contentId])
@@ -344,7 +392,7 @@ model Family {
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  chefe        Person?    @relation("FamilyHead", fields: [chefeId], references: [id], onDelete: SetNull)
+  chefe        Person?      @relation("FamilyHead", fields: [chefeId], references: [id], onDelete: SetNull)
   people       Person[]
 
   @@unique([organizationId, name])
@@ -352,60 +400,61 @@ model Family {
 }
 
 model Person {
-  id                     String   @id @default(cuid())
-  organizationId         String
-  name                   String
-  sex                    Sex
-  active                 Boolean  @default(true)
-  young                  Boolean  @default(false)
-  batizado               Boolean  @default(false)
-  limpeza                Boolean  @default(true)
-  estudante              Boolean  @default(true)
-  privilegioServico      Boolean  @default(false)
+  id                String  @id @default(cuid())
+  organizationId    String
+  name              String
+  sex               Sex
+  active            Boolean @default(true)
+  young             Boolean @default(false)
+  batizado          Boolean @default(false)
+  limpeza           Boolean @default(true)
+  estudante         Boolean @default(true)
+  privilegioServico Boolean @default(false)
 
-  chefeFamilia           Boolean  @default(false)
-  casada                 Boolean  @default(false)
-  familyId               String?
+  chefeFamilia Boolean @default(false)
+  casada       Boolean @default(false)
+  familyId     String?
 
-  iniciarConversas       Boolean  @default(false)
-  cultivarInteresse      Boolean  @default(false)
-  fazerDiscipulos        Boolean  @default(false)
-  explicarCrencas        Boolean  @default(false)
+  iniciarConversas  Boolean @default(false)
+  cultivarInteresse Boolean @default(false)
+  fazerDiscipulos   Boolean @default(false)
+  explicarCrencas   Boolean @default(false)
 
-  leituraBiblia          Boolean  @default(false)
-  microfoneVolante       Boolean  @default(false)
-  som                    Boolean  @default(false)
-  video                  Boolean  @default(false)
-  palco                  Boolean  @default(false)
+  leituraBiblia    Boolean @default(false)
+  microfoneVolante Boolean @default(false)
+  som              Boolean @default(false)
+  video            Boolean @default(false)
+  palco            Boolean @default(false)
 
-  leitorEstudoBiblico    Boolean  @default(false)
-  leitorSentinela        Boolean  @default(false)
-  indicador              Boolean  @default(false)
-  oracao                 Boolean  @default(false)
+  leitorEstudoBiblico Boolean @default(false)
+  leitorSentinela     Boolean @default(false)
+  indicador           Boolean @default(false)
+  oracao              Boolean @default(false)
 
-  anciao                 Boolean  @default(false)
-  presidenteVidaMinisterio Boolean  @default(false)
-  discursoTesouros       Boolean  @default(false)
-  joiasEspirituais       Boolean  @default(false)
-  nossaVidaCrista        Boolean  @default(false)
-  necessidadesLocais     Boolean  @default(false)
-  condutorEstudoBiblico  Boolean  @default(false)
-  presidenteFimSemana    Boolean  @default(false)
-  discursoPublico        Boolean  @default(false)
-  condutorSentinela      Boolean  @default(false)
+  anciao                   Boolean @default(false)
+  presidenteVidaMinisterio Boolean @default(false)
+  discursoTesouros         Boolean @default(false)
+  joiasEspirituais         Boolean @default(false)
+  nossaVidaCrista          Boolean @default(false)
+  necessidadesLocais       Boolean @default(false)
+  condutorEstudoBiblico    Boolean @default(false)
+  presidenteFimSemana      Boolean @default(false)
+  discursoPublico          Boolean @default(false)
+  condutorSentinela        Boolean @default(false)
 
-  userId                 String?  @unique
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  userId    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  family                 Family?    @relation(fields: [familyId], references: [id], onDelete: SetNull)
-  user                   User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  chefeOfFamily          Family?    @relation("FamilyHead")
-  personTalks            PersonTalk[]
-  cleaningAssignments    CleaningAssignment[]
-  meetingAssignments     MeetingAssignment[]
-  sentinelaConductorDefaults MeetingConfig[] @relation("DefaultSentinelaConductor")
+  organization               Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  family                     Family?                 @relation(fields: [familyId], references: [id], onDelete: SetNull)
+  user                       User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  chefeOfFamily              Family?                 @relation("FamilyHead")
+  personTalks                PersonTalk[]
+  cleaningAssignments        CleaningAssignment[]
+  meetingAssignments         MeetingAssignment[]
+  designationAssignments     DesignationAssignment[]
+  sentinelaConductorDefaults MeetingConfig[]         @relation("DefaultSentinelaConductor")
 
   @@index([organizationId, sex])
   @@index([organizationId, active])
@@ -413,15 +462,15 @@ model Person {
 }
 
 model PersonTalk {
-  id              String   @id @default(cuid())
-  personId        String
+  id                   String   @id @default(cuid())
+  personId             String
   meetingContentItemId String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
-  person          Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  person             Person             @relation(fields: [personId], references: [id], onDelete: Cascade)
   meetingContentItem MeetingContentItem @relation(fields: [meetingContentItemId], references: [id], onDelete: Cascade)
-  dates           TalkDate[]
+  dates              TalkDate[]
 
   @@unique([personId, meetingContentItemId])
   @@index([personId])
@@ -429,13 +478,13 @@ model PersonTalk {
 }
 
 model TalkDate {
-  id            String   @id @default(cuid())
-  personTalkId  String
-  date          DateTime
-  notes         String?
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  personTalkId String
+  date         DateTime
+  notes        String?
+  createdAt    DateTime @default(now())
 
-  personTalk    PersonTalk @relation(fields: [personTalkId], references: [id], onDelete: Cascade)
+  personTalk PersonTalk @relation(fields: [personTalkId], references: [id], onDelete: Cascade)
 
   @@index([personTalkId])
   @@index([date])
@@ -449,39 +498,39 @@ model SubOrganization {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  people         SubOrgPerson[]
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  people       SubOrgPerson[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
 }
 
 model SubOrgPerson {
-  id                  String   @id @default(cuid())
-  subOrganizationId   String
-  name                String
-  batizado            Boolean  @default(false)
-  privilegioServico   Boolean  @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                String   @id @default(cuid())
+  subOrganizationId String
+  name              String
+  batizado          Boolean  @default(false)
+  privilegioServico Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  subOrganization     SubOrganization @relation(fields: [subOrganizationId], references: [id], onDelete: Cascade)
-  talks               SubOrgPersonTalk[]
-  meetingAssignments  MeetingAssignment[]
+  subOrganization    SubOrganization     @relation(fields: [subOrganizationId], references: [id], onDelete: Cascade)
+  talks              SubOrgPersonTalk[]
+  meetingAssignments MeetingAssignment[]
 
   @@index([subOrganizationId])
 }
 
 model SubOrgPersonTalk {
-  id                  String   @id @default(cuid())
-  subOrgPersonId      String
+  id                   String    @id @default(cuid())
+  subOrgPersonId       String
   meetingContentItemId String
-  date                DateTime?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  date                 DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
-  subOrgPerson        SubOrgPerson @relation(fields: [subOrgPersonId], references: [id], onDelete: Cascade)
-  meetingContentItem  MeetingContentItem @relation(fields: [meetingContentItemId], references: [id], onDelete: Cascade)
+  subOrgPerson       SubOrgPerson       @relation(fields: [subOrgPersonId], references: [id], onDelete: Cascade)
+  meetingContentItem MeetingContentItem @relation(fields: [meetingContentItemId], references: [id], onDelete: Cascade)
 
   @@unique([subOrgPersonId, meetingContentItemId])
   @@index([subOrgPersonId])

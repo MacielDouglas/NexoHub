@@ -124,3 +124,39 @@ export const meetingContentUpdateSchema = z
     coverTitle: z.string().max(500).nullable().optional(),
   })
   .strict();
+
+const designationRole = z.enum(["som", "video", "palco", "mic", "indicador"]);
+
+export const designationConfigUpdateSchema = z
+  .object({
+    micCount: z.number().int().min(1).max(50),
+    indicadorCount: z.number().int().min(1).max(50),
+    indicadorSectors: z.array(z.string().trim().max(200)).max(50),
+    enabledSectors: z.array(designationRole).min(1).max(5),
+  })
+  .strict();
+
+export const designationAssignmentInputSchema = z
+  .object({
+    date: dateKey,
+    role: designationRole,
+    sector: z.string().trim().max(200).nullish(),
+    personId: z.string().trim().min(1).max(100),
+  })
+  .strict();
+
+export const designationProgramCreateSchema = z
+  .object({
+    enabledSectors: z.array(designationRole).min(1).max(5),
+    dates: z.array(dateKey).min(1).max(500),
+    assignments: z.array(designationAssignmentInputSchema).min(1).max(5000),
+  })
+  .strict();
+
+export const designationProgramUpdateSchema = z
+  .object({
+    enabledSectors: z.array(designationRole).min(1).max(5),
+    dates: z.array(dateKey).min(1).max(500),
+    assignments: z.array(designationAssignmentInputSchema).min(1).max(5000),
+  })
+  .strict();

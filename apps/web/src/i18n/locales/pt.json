@@ -54,6 +54,7 @@
     "meetingContent": "Conteúdo das reuniões",
     "families": "Famílias",
     "cleaning": "Designação de limpeza",
+    "designacoes": "Designações",
     "outlines": "Discursos",
     "sub-org": "Sub-organizações",
     "settings": "Configurações"
@@ -773,6 +774,70 @@
       "publicTalk": "Discurso público",
       "congregation": "Congregação",
       "circuitVisit": "Semana da Visita do Superintendente de Circuito"
+    }
+  },
+  "designations": {
+    "title": "Designações",
+    "subtitle": "Gere e gerencie as designações de som, vídeo, palco, microfone volante e indicadores das reuniões.",
+    "createProgram": "Criar programa",
+    "createHint": "Escolha o período, ajuste as quantidades e gere automaticamente as designações com rotação entre os irmãos.",
+    "modalHint": "Escolha o período, defina as quantidades e gere as designações automaticamente.",
+    "period": "Período",
+    "startDate": "Data inicial",
+    "endDate": "Data final",
+    "micCount": "Microfone volante (quantidade de pessoas)",
+    "indicadorCount": "Indicador (quantidade de pessoas)",
+    "indicadorSector": "Setor do indicador",
+    "indicadorSectorPlaceholder": "Setor {{n}}",
+    "indicadorSectorShort": "Setor",
+    "sectors": "Setores",
+    "sectorEnabled": "Ativado",
+    "sectorDisabled": "Desativado",
+    "saveAsDefault": "Salvar esta configuração como padrão",
+    "saveDefaultNo": "Não salvar como padrão",
+    "saveDefaultYes": "Salvar como padrão",
+    "selectRange": "Selecione o período (data inicial e final).",
+    "noDates": "Nenhuma reunião disponível no período selecionado.",
+    "generate": "Gerar designações",
+    "generating": "Gerando...",
+    "includedCount": "Serão criadas designações para {{count}} reuniões:",
+    "skippedTitle": "Períodos ignorados:",
+    "skipReason": {
+      "convention": "Semana de Congresso",
+      "assemblyTraveling": "Semana de Assembleia com superintendente viajante",
+      "assemblyRepresentative": "Semana de Assembleia com representante",
+      "memorial": "Comemoração neste dia",
+      "already_has_program": "Dia já possui programa de designações"
+    },
+    "roles": {
+      "som": "Som",
+      "video": "Vídeo",
+      "palco": "Palco",
+      "mic": "Microfone volante",
+      "indicador": "Indicador"
+    },
+    "assignPerson": "Selecionar pessoa",
+    "addAssignment": "Adicionar",
+    "noAssignments": "Adicione ao menos uma designação.",
+    "reviewTitle": "Revisar designações",
+    "reviewDescription": "Ajuste as designações como desejar antes de salvar o programa.",
+    "save": "Salvar programa",
+    "saving": "Salvando...",
+    "savedSuccess": "Programa de designações salvo.",
+    "savedError": "Erro ao salvar o programa.",
+    "savedPrograms": "Programas criados",
+    "noPrograms": "Nenhum programa criado ainda.",
+    "programAssignments": "{{count}} designações",
+    "deleteConfirmTitle": "Excluir programa?",
+    "deleteConfirmDescription": "Esta ação não pode ser desfeita. Todas as designações deste programa serão removidas.",
+    "deletedSuccess": "Programa excluído.",
+    "deletedError": "Erro ao excluir o programa.",
+    "pdfButton": "Criar PDF",
+    "pdfError": "Erro ao gerar o PDF.",
+    "pdf": {
+      "title": "DESIGNAÇÕES",
+      "period": "Período",
+      "date": "Data"
     }
   }
 }
