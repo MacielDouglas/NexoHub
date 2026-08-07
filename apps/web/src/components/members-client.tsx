@@ -246,7 +246,7 @@ export function MembersClient({
                     className="flex items-center justify-between rounded-xl bg-background px-4 py-3 ring-1 ring-border"
                   >
                     <div className="flex items-center gap-3">
-                      {member.user.image ? (
+                      {member.user.image?.startsWith("https://") ? (
                         // biome-ignore lint/performance/noImgElement: remote OAuth avatar, next/image requires image domains config
                         <img
                           src={member.user.image}

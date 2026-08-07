@@ -31,9 +31,7 @@ export async function DELETE(
     if (!member || !canManageMembers(member.role)) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     }
-    const isOwnerOfToken = token.createdById === session.user.id;
-    const belongsToOrg = token.organizationId === member.organizationId;
-    if (!isOwnerOfToken && !belongsToOrg) {
+    if (token.organizationId !== member.organizationId) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     }
   }

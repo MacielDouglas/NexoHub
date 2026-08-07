@@ -193,6 +193,13 @@ export async function POST(request: Request) {
     marriedFemaleId: f.people.find((p) => p.sex === "FEMALE")?.id ?? null,
   }));
 
+  if (input.familyId && !families.some((f) => f.id === input.familyId)) {
+    return NextResponse.json(
+      { error: "A família selecionada não pertence a esta congregação" },
+      { status: 400 },
+    );
+  }
+
   const validationError = validateFamilyRules(
     input,
     familiesWithMarried,

@@ -3,12 +3,25 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { handleApiError, readJsonRequest } from "@/lib/http";
 import { prisma } from "@/lib/prisma";
+import { rateLimited } from "@/lib/rate-limit";
 import { redeemCodeSchema } from "@/lib/schemas";
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  }
+
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    "unknown";
+
+  if (rateLimited(`redeem:${session.user.id}:${ip}`, 10, 60_000)) {
+    return NextResponse.json(
+      { error: "Muitas tentativas. Aguarde um momento e tente novamente." },
+      { status: 429 },
+    );
   }
 
   try {

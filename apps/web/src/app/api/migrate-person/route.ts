@@ -197,6 +197,20 @@ export async function POST(request: Request) {
         );
       }
 
+      const familyId = body.familyId ?? null;
+      if (familyId) {
+        const family = await prisma.family.findFirst({
+          where: { id: familyId, organizationId: member.organizationId },
+          select: { id: true },
+        });
+        if (!family) {
+          return NextResponse.json(
+            { error: "A família selecionada não pertence a esta congregação" },
+            { status: 400 },
+          );
+        }
+      }
+
       // Create Person with provided fields (defaults for missing)
       await prisma.person.create({
         data: {
@@ -212,7 +226,7 @@ export async function POST(request: Request) {
             body.privilegioServico ?? subPerson.privilegioServico,
           chefeFamilia: body.chefeFamilia ?? false,
           casada: body.casada ?? false,
-          familyId: body.familyId ?? null,
+          familyId,
           iniciarConversas: body.iniciarConversas ?? false,
           cultivarInteresse: body.cultivarInteresse ?? false,
           fazerDiscipulos: body.fazerDiscipulos ?? false,

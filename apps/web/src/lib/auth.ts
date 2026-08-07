@@ -42,7 +42,9 @@ export const auth = betterAuth({
     },
   },
 
-  trustedOrigins: [process.env.BETTER_AUTH_URL || "http://localhost:3000"],
+  trustedOrigins: [process.env.BETTER_AUTH_URL].filter((v): v is string =>
+    Boolean(v),
+  ),
 
   plugins: [nextCookies(), organization()],
 });

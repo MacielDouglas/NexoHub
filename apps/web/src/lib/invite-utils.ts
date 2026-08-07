@@ -25,7 +25,7 @@ export async function generateUniqueSlug(
 }
 
 export function generateTokenCode(): string {
-  return randomInt(0, 1_000_000).toString().padStart(6, "0");
+  return randomInt(0, 10_000_000_000).toString().padStart(10, "0");
 }
 
 export async function generateUniqueTokenCode(

@@ -10,6 +10,10 @@ export async function POST() {
     return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   }
 
+  if (session.user.globalRole !== "super_user") {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  }
+
   const cookieStore = await cookies();
   cookieStore.delete(ACTIVE_ORG_COOKIE);
 

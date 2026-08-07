@@ -102,7 +102,11 @@ export async function PATCH(
 
   if (input.userId !== undefined && input.userId) {
     const existingPerson = await prisma.person.findFirst({
-      where: { userId: input.userId, id: { not: id } },
+      where: {
+        userId: input.userId,
+        id: { not: id },
+        organizationId: member.organizationId,
+      },
     });
     if (existingPerson) {
       return NextResponse.json(
@@ -177,6 +181,13 @@ export async function PATCH(
     marriedMaleId: f.people.find((p) => p.sex === "MALE")?.id ?? null,
     marriedFemaleId: f.people.find((p) => p.sex === "FEMALE")?.id ?? null,
   }));
+
+  if (familyId && !families.some((f) => f.id === familyId)) {
+    return NextResponse.json(
+      { error: "A família selecionada não pertence a esta congregação" },
+      { status: 400 },
+    );
+  }
 
   const formData = {
     ...merged,

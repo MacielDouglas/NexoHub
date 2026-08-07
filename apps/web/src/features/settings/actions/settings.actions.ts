@@ -138,6 +138,11 @@ export async function saveSpecialEventAction(formData: FormData) {
     redirect(settingsPath(member.organization.slug, redirectTab));
   }
 
+  const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+  if (!DATE_KEY_RE.test(date) || (endDate && !DATE_KEY_RE.test(endDate))) {
+    redirect(settingsPath(member.organization.slug, redirectTab));
+  }
+
   if ((ANNUAL_EVENT_TYPES as readonly string[]).includes(type)) {
     const existing = await prisma.specialEvent.findFirst({
       where: {

@@ -37,6 +37,8 @@ export async function POST(
     path: "/",
     maxAge: 60 * 60 * 8,
     sameSite: "lax",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
   });
 
   return NextResponse.json({ organizationId: id });
