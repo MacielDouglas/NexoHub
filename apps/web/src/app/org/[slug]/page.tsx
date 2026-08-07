@@ -1,4 +1,19 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import {
+  OverviewClient,
+  type OverviewItem,
+} from "@/features/overview/overview-client";
+import { auth } from "@/lib/auth";
+import {
+  addDays,
+  parseDateKey,
+  startOfDay,
+  startOfWeek,
+  toDateKey,
+} from "@/lib/cleaning-assignment";
+import { getUserOrg } from "@/lib/org-utils";
+import { prisma } from "@/lib/prisma";
 
 type OrganizationPageProps = {
   params: Promise<{
@@ -6,109 +21,267 @@ type OrganizationPageProps = {
   }>;
 };
 
-type StatCard = {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
+const MEETING_ROLE_KEYS: Record<string, string> = {
+  presidente: "meetings.roles.presidente",
+  canticoInicial: "meetings.roles.canticoInicial",
+  cancionMedia: "meetings.roles.canticoMeio",
+  canticoMeio: "meetings.roles.canticoMeio",
+  canticoFinal: "meetings.roles.canticoFinal",
+  canticoFinalOracao: "meetings.roles.canticoFinalOracao",
+  palavrasIntroducao: "meetings.roles.palavrasIntroducao",
+  palavrasConclusao: "meetings.roles.palavrasConclusao",
+  discurso: "meetings.roles.discurso",
+  orador: "meetings.roles.orador",
+  passarPao: "meetings.roles.passarPao",
+  passarVinho: "meetings.roles.passarVinho",
+  indicador: "meetings.roles.indicador",
+  condutor: "meetings.roles.condutor",
+  condutorSentinela: "meetings.roles.condutor",
+  leitor: "meetings.roles.leitor",
+  leitorSentinela: "meetings.roles.leitor",
+  oracao: "meetings.roles.oracao",
 };
 
-const statCards: StatCard[] = [
-  {
-    label: "Tarefas em aberto",
-    value: "18",
-    icon: (
-      <>
-        <rect x="3" y="3" width="18" height="20" rx="2" />
-        <line x1="9" y1="15" x2="15" y2="15" />
-        <line x1="12" y1="12" x2="12" y2="18" />
-      </>
-    ),
-  },
-  {
-    label: "Reuniões agendadas",
-    value: "6",
-    icon: (
-      <>
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-      </>
-    ),
-  },
-  {
-    label: "Designações ativas",
-    value: "24",
-    icon: <path d="M20 6L9 17l-5-5" />,
-  },
-  {
-    label: "Pessoas cadastradas",
-    value: "42",
-    icon: (
-      <>
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </>
-    ),
-  },
-];
+type CleaningRow = {
+  id: string;
+  date: Date;
+  sector: {
+    type: string;
+    name: string | null;
+    defaultKey: string | null;
+  };
+};
+
+function buildCleaningItem(a: CleaningRow): OverviewItem {
+  return {
+    id: a.id,
+    kind: "cleaning",
+    date: toDateKey(a.date),
+    titleKey: a.sector.defaultKey
+      ? `cleaning.defaults.${a.sector.type}.${a.sector.defaultKey}.name`
+      : null,
+    title: a.sector.defaultKey ? null : a.sector.name,
+    subtitleKey: `cleaning.types.${a.sector.type}`,
+    subtitle: null,
+  };
+}
 
 export default async function OrganizationPage({
   params,
 }: OrganizationPageProps) {
-  const { slug } = await params;
+  const { slug: _slug } = await params;
+
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  const member = await getUserOrg(await headers());
+
+  if (!member) {
+    if (session.user.globalRole === "super_user") {
+      redirect("/admin");
+    }
+    if (session.user.globalRole === "owner") {
+      redirect("/create-org");
+    }
+    redirect("/welcome");
+  }
+
+  const today = startOfDay(new Date());
+  const weekStart = startOfWeek(today);
+  const weekEnd = addDays(weekStart, 6);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const [person, configs, events] = await Promise.all([
+    prisma.person.findFirst({
+      where: {
+        organizationId: member.organizationId,
+        userId: session.user.id,
+      },
+      select: { id: true, name: true },
+    }),
+    prisma.meetingConfig.findMany({
+      where: { organizationId: member.organizationId, isActive: true },
+      select: { type: true, dayOfWeek: true, startTime: true },
+    }),
+    prisma.specialEvent.findMany({
+      where: { organizationId: member.organizationId },
+      select: { type: true, date: true, endDate: true, time: true },
+    }),
+  ]);
+
+  const meetingByType = new Map(configs.map((c) => [c.type, c]));
+
+  function derivedMeetingDate(type: string, weekStartDate: Date): Date {
+    const config = meetingByType.get(type);
+    if (!config) return weekStartDate;
+    return addDays(weekStartDate, (config.dayOfWeek + 6) % 7);
+  }
+
+  const upcoming: OverviewItem[] = [];
+  const pastMonth: OverviewItem[] = [];
+
+  let weekAssignments: OverviewItem[] = [];
+
+  if (person) {
+    const [weekMeetings, designationAssignments, cleaningAssignments] =
+      await Promise.all([
+        prisma.meeting.findMany({
+          where: {
+            organizationId: member.organizationId,
+            weekStart: { gte: weekStart, lte: weekEnd },
+          },
+          select: {
+            id: true,
+            type: true,
+            weekStart: true,
+            assignments: {
+              where: { personId: person.id },
+              select: { id: true, role: true },
+            },
+          },
+        }),
+        prisma.designationAssignment.findMany({
+          where: {
+            personId: person.id,
+            date: { gte: monthStart },
+          },
+          select: { id: true, date: true, role: true, sector: true },
+          orderBy: { date: "asc" },
+        }),
+        prisma.cleaningAssignment.findMany({
+          where: {
+            personId: person.id,
+            date: { gte: monthStart },
+          },
+          select: {
+            id: true,
+            date: true,
+            sector: {
+              select: { type: true, name: true, defaultKey: true },
+            },
+          },
+          orderBy: { date: "asc" },
+        }),
+      ]);
+
+    const meetingItems: OverviewItem[] = weekMeetings.flatMap((meeting) => {
+      const meetingDate = toDateKey(
+        derivedMeetingDate(meeting.type, meeting.weekStart),
+      );
+      return meeting.assignments.map((a) => ({
+        id: a.id,
+        kind: "meeting" as const,
+        date: meetingDate,
+        titleKey: MEETING_ROLE_KEYS[a.role] ?? null,
+        title: MEETING_ROLE_KEYS[a.role] ? null : a.role,
+        subtitleKey: `meetings.types.${meeting.type}`,
+        subtitle: null,
+      }));
+    });
+
+    const cleaningItems = cleaningAssignments.map(buildCleaningItem);
+
+    const weekCleaningItems = cleaningItems.filter(
+      (item) =>
+        item.date >= toDateKey(weekStart) && item.date <= toDateKey(weekEnd),
+    );
+    weekAssignments = [...meetingItems, ...weekCleaningItems].sort((a, b) =>
+      a.date.localeCompare(b.date),
+    );
+
+    for (const a of designationAssignments) {
+      const item: OverviewItem = {
+        id: a.id,
+        kind: "designation",
+        date: toDateKey(a.date),
+        titleKey: `designations.roles.${a.role}`,
+        title: null,
+        subtitleKey: null,
+        subtitle: a.sector ?? null,
+      };
+      if (startOfDay(a.date) >= today) {
+        upcoming.push(item);
+      } else {
+        pastMonth.push(item);
+      }
+    }
+
+    for (const item of cleaningItems) {
+      if (startOfDay(parseDateKey(item.date)) >= today) {
+        upcoming.push(item);
+      } else {
+        pastMonth.push(item);
+      }
+    }
+
+    upcoming.sort((a, b) => a.date.localeCompare(b.date));
+    pastMonth.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  const memorialEvent = events.find((e) => e.type === "memorial");
+  const midweekConfig = meetingByType.get("midweek");
+  const weekendConfig = meetingByType.get("weekend");
+
+  const derivedMeetings: { type: string; date: Date }[] = [];
+  if (memorialEvent) {
+    const memorialDay = startOfDay(memorialEvent.date);
+    const isWeekend = memorialDay.getDay() === 0 || memorialDay.getDay() === 6;
+    if (midweekConfig && isWeekend) {
+      derivedMeetings.push({
+        type: "midweek",
+        date: derivedMeetingDate("midweek", weekStart),
+      });
+    }
+    if (weekendConfig && !isWeekend) {
+      derivedMeetings.push({
+        type: "weekend",
+        date: derivedMeetingDate("weekend", weekStart),
+      });
+    }
+    derivedMeetings.push({ type: "memorial", date: memorialDay });
+  } else {
+    if (midweekConfig) {
+      derivedMeetings.push({
+        type: "midweek",
+        date: derivedMeetingDate("midweek", weekStart),
+      });
+    }
+    if (weekendConfig) {
+      derivedMeetings.push({
+        type: "weekend",
+        date: derivedMeetingDate("weekend", weekStart),
+      });
+    }
+  }
+
+  const next =
+    derivedMeetings
+      .filter((m) => m.date >= today)
+      .sort((a, b) => a.date.getTime() - b.date.getTime())[0] ?? null;
+
+  const nextMeeting = next
+    ? {
+        type: next.type,
+        date: toDateKey(next.date),
+        time:
+          (next.type === "memorial"
+            ? events.find((e) => e.type === "memorial")?.time
+            : meetingByType.get(next.type)?.startTime) ?? "",
+      }
+    : null;
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {statCards.map((card) => (
-          <Card key={card.label}>
-            <CardContent className="flex flex-col gap-4 p-6">
-              <div className="flex h-11 w-11 items-center justify-center rounded-3xl bg-muted text-muted-foreground">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="h-5 w-5"
-                  stroke="currentColor"
-                  strokeWidth={1.8}
-                  aria-hidden="true"
-                >
-                  {card.icon}
-                </svg>
-              </div>
-              <div className="space-y-1">
-                <p className="text-body text-muted-foreground">{card.label}</p>
-                <p className="text-display text-foreground">{card.value}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </section>
-      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card>
-          <CardContent className="space-y-2 p-6">
-            <p className="text-title text-foreground">Resumo operacional</p>
-            <p className="text-body leading-relaxed text-muted-foreground">
-              Você está no ambiente da organização{" "}
-              <span className="font-medium text-foreground">{slug}</span>. Aqui
-              entrarão os dados reais de tarefas prioritárias, reuniões do dia e
-              alertas de designação.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="space-y-2 p-6">
-            <p className="text-title text-foreground">Indicadores</p>
-            <p className="text-body leading-relaxed text-muted-foreground">
-              Mantenha os dados da organização atualizados para acompanhar o
-              progresso das atividades.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-    </div>
+    <OverviewClient
+      personName={person?.name ?? null}
+      weekStart={toDateKey(weekStart)}
+      weekEnd={toDateKey(weekEnd)}
+      nextMeeting={nextMeeting}
+      weekAssignments={weekAssignments}
+      upcoming={upcoming}
+      pastMonth={pastMonth}
+    />
   );
 }

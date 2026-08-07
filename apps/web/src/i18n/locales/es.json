@@ -599,6 +599,9 @@
     "subtitle": "Programe las limpiezas de la congregación y asigne las personas por sector y fecha.",
     "program": "Programar limpieza",
     "programming": "Programando...",
+    "createHint": "Elige el tipo de limpieza y selecciona las fechas en el calendario. Las asignaciones se generan automáticamente con rotación.",
+    "modalHint": "Selecciona las fechas en el calendario. Las limpiezas de las reuniones se calculan automáticamente a partir de las reuniones y eventos especiales.",
+    "period": "Período",
     "saving": "Guardando...",
     "save": "Guardar",
     "cancel": "Cancelar",
@@ -838,6 +841,27 @@
       "title": "ASIGNACIONES",
       "period": "Período",
       "date": "Fecha"
+    }
+  },
+  "overview": {
+    "title": "Resumen",
+    "subtitle": "Sigue la semana actual y las asignaciones de la persona vinculada a ti.",
+    "currentWeek": "Semana actual",
+    "weekRange": "Semana del",
+    "nextMeeting": "Próxima reunión",
+    "noNextMeeting": "No queda ninguna reunión esta semana.",
+    "yourAssignments": "Tus asignaciones",
+    "noAssignments": "No tienes asignaciones esta semana.",
+    "upcoming": "Próximas asignaciones",
+    "noUpcoming": "No hay asignaciones futuras.",
+    "pastMonth": "Asignaciones pasadas del mes",
+    "noPast": "No hay asignaciones pasadas este mes.",
+    "noPerson": "Tu cuenta aún no está vinculada a ninguna persona registrada.",
+    "today": "Hoy",
+    "kinds": {
+      "meeting": "Reunión",
+      "designation": "Asignación",
+      "cleaning": "Limpieza"
     }
   }
 }

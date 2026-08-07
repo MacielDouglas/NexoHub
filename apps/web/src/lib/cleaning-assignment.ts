@@ -266,18 +266,17 @@ export function buildHistoryIndex(history: HistoryEntry[]): {
   return { lastCleaned, lastSectorCleaned };
 }
 
-function rotationSortKey(
-  person: PersonLike,
-  sectorId: string,
-  index: {
-    lastCleaned: Map<string, number>;
-    lastSectorCleaned: Map<string, Map<string, number>>;
-  },
-): number {
-  const last = index.lastSectorCleaned.get(person.id)?.get(sectorId);
-  if (last !== undefined) return last;
-  const global = index.lastCleaned.get(person.id);
-  return global ?? -Infinity;
+function sectorNeeded(sector: SectorLike): number {
+  if (sector.peopleCount != null && sector.peopleCount > 0) {
+    return sector.peopleCount;
+  }
+  if (sector.unit === "person") return 1;
+  if (sector.unit === "group") return 3;
+  return 2;
+}
+
+function familyKey(person: PersonLike): string {
+  return person.familyId ?? `single:${person.id}`;
 }
 
 function matchesGender(person: PersonLike, gender: string): boolean {
@@ -295,191 +294,6 @@ function eligibleForSector(person: PersonLike, sector: SectorLike): boolean {
   return true;
 }
 
-function pickForSector(args: {
-  sector: SectorLike;
-  needed: number;
-  candidates: PersonLike[];
-  index: {
-    lastCleaned: Map<string, number>;
-    lastSectorCleaned: Map<string, Map<string, number>>;
-  };
-}): PersonLike[] {
-  const { sector, needed, candidates, index } = args;
-
-  const eligible = candidates.filter((p) => eligibleForSector(p, sector));
-  const used = new Set<string>();
-  const selection: PersonLike[] = [];
-
-  const fillWith = (pool: PersonLike[]) => {
-    const sortedPool = [...pool].sort(
-      (a, b) =>
-        rotationSortKey(a, sector.id, index) -
-          rotationSortKey(b, sector.id, index) || a.name.localeCompare(b.name),
-    );
-    for (const p of sortedPool) {
-      if (selection.length >= needed) break;
-      if (used.has(p.id)) continue;
-      selection.push(p);
-      used.add(p.id);
-    }
-  };
-
-  const familyGroups = new Map<string, PersonLike[]>();
-  for (const p of eligible) {
-    const key = p.familyId ?? `single:${p.id}`;
-    const list = familyGroups.get(key) ?? [];
-    list.push(p);
-    familyGroups.set(key, list);
-  }
-
-  const sortedFamilies = [...familyGroups.entries()].sort((a, b) => {
-    const scoreA = Math.min(
-      ...a[1].map((p) => rotationSortKey(p, sector.id, index)),
-    );
-    const scoreB = Math.min(
-      ...b[1].map((p) => rotationSortKey(p, sector.id, index)),
-    );
-    return scoreA - scoreB;
-  });
-
-  for (const [, members] of sortedFamilies) {
-    if (selection.length >= needed) break;
-    if (members.some((m) => used.has(m.id))) continue;
-    const available = members.filter((m) => !used.has(m.id));
-    const couples = available.filter(
-      (p) => p.casada && p.familyId && matchesGender(p, sector.gender),
-    );
-    if (available.length >= needed) {
-      const picked = [
-        ...couples,
-        ...available.filter((p) => !couples.includes(p)),
-      ].slice(0, needed);
-      selection.push(...picked);
-      for (const p of picked) used.add(p.id);
-    } else {
-      selection.push(...available);
-      for (const p of available) used.add(p.id);
-    }
-  }
-
-  if (selection.length < needed) {
-    const pool = eligible.filter((p) => !used.has(p.id));
-    fillWith(pool);
-  }
-
-  return selection.slice(0, needed);
-}
-
-export function generateMeetingAssignments(args: {
-  dates: Date[];
-  sectors: SectorLike[];
-  people: PersonLike[];
-  history: HistoryEntry[];
-}): AssignmentDraft[] {
-  const { dates, sectors, people, history } = args;
-  const index = buildHistoryIndex(history);
-  const sortedSectors = sectors
-    .filter((s) => s.type === "meeting")
-    .sort((a, b) => a.sortOrder - b.sortOrder);
-  const drafts: AssignmentDraft[] = [];
-
-  for (const date of dates) {
-    const usedPeople = new Set<string>();
-    for (const sector of sortedSectors) {
-      const needed = sector.peopleCount ?? 1;
-      const candidates = people.filter((p) => !usedPeople.has(p.id));
-      const picked = pickForSector({ sector, needed, candidates, index });
-      for (const p of picked) usedPeople.add(p.id);
-      if (picked.length > 0) {
-        drafts.push({
-          date: toDateKey(date),
-          sectorId: sector.id,
-          personIds: picked.map((p) => p.id),
-        });
-      }
-    }
-  }
-
-  return drafts;
-}
-
-export function generateFamilyGroupAssignments(args: {
-  dates: Date[];
-  sectors: SectorLike[];
-  people: PersonLike[];
-  history: HistoryEntry[];
-}): AssignmentDraft[] {
-  const { dates, sectors, people, history } = args;
-  const index = buildHistoryIndex(history);
-  const active = people.filter((p) => p.active && p.limpeza);
-  const sortedSectors = sectors.sort((a, b) => a.sortOrder - b.sortOrder);
-  const drafts: AssignmentDraft[] = [];
-
-  for (const date of dates) {
-    const usedPeople = new Set<string>();
-    for (const sector of sortedSectors) {
-      const candidates = active.filter((p) => !usedPeople.has(p.id));
-      const eligible = candidates.filter((p) => eligibleForSector(p, sector));
-      const familyGroups = new Map<string, PersonLike[]>();
-      for (const p of eligible) {
-        const key = p.familyId ?? `single:${p.id}`;
-        const list = familyGroups.get(key) ?? [];
-        list.push(p);
-        familyGroups.set(key, list);
-      }
-      const sortedFamilies = [...familyGroups.entries()].sort((a, b) => {
-        const scoreA = Math.min(
-          ...a[1].map((p) => rotationSortKey(p, sector.id, index)),
-        );
-        const scoreB = Math.min(
-          ...b[1].map((p) => rotationSortKey(p, sector.id, index)),
-        );
-        return scoreA - scoreB;
-      });
-
-      let picked: PersonLike[] = [];
-      if (sector.unit === "person") {
-        const pool = eligible.sort(
-          (a, b) =>
-            rotationSortKey(a, sector.id, index) -
-            rotationSortKey(b, sector.id, index),
-        );
-        picked = pool.slice(0, 1);
-      } else if (sector.unit === "family") {
-        const fam = sortedFamilies.find(([, members]) => members.length >= 1);
-        if (fam) {
-          const available = fam[1].filter((p) => !usedPeople.has(p.id));
-          picked = available.slice(0, Math.max(2, available.length));
-        }
-      } else {
-        const fam = sortedFamilies.find(([, members]) => members.length >= 2);
-        if (fam) {
-          const available = fam[1].filter((p) => !usedPeople.has(p.id));
-          picked = available.slice(0, Math.max(3, available.length));
-        } else {
-          const pool = eligible.sort(
-            (a, b) =>
-              rotationSortKey(a, sector.id, index) -
-              rotationSortKey(b, sector.id, index),
-          );
-          picked = pool.slice(0, 3);
-        }
-      }
-
-      for (const p of picked) usedPeople.add(p.id);
-      if (picked.length > 0) {
-        drafts.push({
-          date: toDateKey(date),
-          sectorId: sector.id,
-          personIds: picked.map((p) => p.id),
-        });
-      }
-    }
-  }
-
-  return drafts;
-}
-
 export function generateDraft(args: {
   type: CleaningType;
   dates: Date[];
@@ -488,8 +302,94 @@ export function generateDraft(args: {
   history: HistoryEntry[];
 }): AssignmentDraft[] {
   const { type, dates, sectors, people, history } = args;
-  if (type === "meeting") {
-    return generateMeetingAssignments({ dates, sectors, people, history });
+
+  const index = buildHistoryIndex(history);
+  const sortedSectors = sectors
+    .filter((s) => s.type === type)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  const sortedDates = dates.slice().sort((a, b) => a.getTime() - b.getTime());
+
+  const programSectorUsed = new Map<string, Set<string>>();
+  const programTurns = new Map<string, number>();
+
+  const rotationSort = (person: PersonLike, sectorId: string): number => {
+    const last = index.lastSectorCleaned.get(person.id)?.get(sectorId);
+    if (last !== undefined) return last;
+    return index.lastCleaned.get(person.id) ?? -Infinity;
+  };
+
+  const sortCandidates = (
+    list: PersonLike[],
+    sectorId: string,
+    dateFamilies: Set<string>,
+  ): PersonLike[] =>
+    [...list].sort((a, b) => {
+      const aOnDate = dateFamilies.has(familyKey(a)) ? 0 : 1;
+      const bOnDate = dateFamilies.has(familyKey(b)) ? 0 : 1;
+      if (aOnDate !== bOnDate) return aOnDate - bOnDate;
+      const ra = rotationSort(a, sectorId);
+      const rb = rotationSort(b, sectorId);
+      if (ra !== rb) return ra - rb;
+      return a.name.localeCompare(b.name);
+    });
+
+  const markAssigned = (person: PersonLike, sectorId: string, ts: number) => {
+    index.lastCleaned.set(person.id, ts);
+    let sectorMap = index.lastSectorCleaned.get(person.id);
+    if (!sectorMap) {
+      sectorMap = new Map();
+      index.lastSectorCleaned.set(person.id, sectorMap);
+    }
+    sectorMap.set(sectorId, ts);
+    programTurns.set(person.id, (programTurns.get(person.id) ?? 0) + 1);
+    let usedSectors = programSectorUsed.get(person.id);
+    if (!usedSectors) {
+      usedSectors = new Set();
+      programSectorUsed.set(person.id, usedSectors);
+    }
+    usedSectors.add(sectorId);
+  };
+
+  const drafts: AssignmentDraft[] = [];
+
+  for (const date of sortedDates) {
+    const ts = date.getTime();
+    const dateUsed = new Set<string>();
+    const dateFamilies = new Set<string>();
+
+    for (const sector of sortedSectors) {
+      const needed = sectorNeeded(sector);
+      const pool = people.filter(
+        (p) =>
+          eligibleForSector(p, sector) &&
+          !dateUsed.has(p.id) &&
+          !programSectorUsed.get(p.id)?.has(sector.id),
+      );
+      if (pool.length === 0) continue;
+
+      const fresh = pool.filter((p) => !programTurns.has(p.id));
+      const repeat = pool.filter((p) => programTurns.has(p.id));
+      const ordered = [
+        ...sortCandidates(fresh, sector.id, dateFamilies),
+        ...sortCandidates(repeat, sector.id, dateFamilies),
+      ];
+      const picked = ordered.slice(0, needed);
+
+      for (const p of picked) {
+        dateUsed.add(p.id);
+        dateFamilies.add(familyKey(p));
+        markAssigned(p, sector.id, ts);
+      }
+
+      if (picked.length > 0) {
+        drafts.push({
+          date: toDateKey(date),
+          sectorId: sector.id,
+          personIds: picked.map((p) => p.id),
+        });
+      }
+    }
   }
-  return generateFamilyGroupAssignments({ dates, sectors, people, history });
+
+  return drafts;
 }

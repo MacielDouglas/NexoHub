@@ -1,6 +1,6 @@
 "use client";
 
-import { Printer } from "lucide-react";
+import { Plus, Printer } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Locale } from "react-day-picker";
 import { es, ptBR } from "react-day-picker/locale";
@@ -145,6 +145,7 @@ export function CleaningAssignmentsClient({ role }: Props) {
   const [loading, setLoading] = useState(true);
 
   const [activeType, setActiveType] = useState<CleaningType>("meeting");
+  const [modalOpen, setModalOpen] = useState(false);
   const [meetingRange, setMeetingRange] = useState<{
     from: Date;
     to: Date;
@@ -270,20 +271,6 @@ export function CleaningAssignmentsClient({ role }: Props) {
     [weeklyWeeks],
   );
 
-  const selectedDatesFor = (type: CleaningType): Date[] => {
-    if (type === "meeting") {
-      if (!meetingRange) return [];
-      return getMeetingDates(
-        meetingRange.from,
-        meetingRange.to,
-        configs,
-        events,
-      );
-    }
-    const selected = type === "weekly" ? weeklySelected : generalSelected;
-    return selected.slice().sort((a, b) => a.getTime() - b.getTime());
-  };
-
   function handleCalendarSelect(
     type: CleaningType,
     value: { from: Date; to: Date } | Date[] | undefined,
@@ -297,6 +284,13 @@ export function CleaningAssignmentsClient({ role }: Props) {
       return;
     }
     setGeneralSelected((value as Date[]) ?? []);
+  }
+
+  function openCreateModal() {
+    setMeetingRange(null);
+    setWeeklySelected([]);
+    setGeneralSelected([]);
+    setModalOpen(true);
   }
 
   function buildEditorFromDraft(type: CleaningType, dates: Date[]) {
@@ -348,7 +342,7 @@ export function CleaningAssignmentsClient({ role }: Props) {
     };
   }
 
-  function handleProgram() {
+  function handleGenerate() {
     if (!canManage) return;
 
     let dates: Date[] = [];
@@ -393,6 +387,7 @@ export function CleaningAssignmentsClient({ role }: Props) {
     }
 
     setEditor(buildEditorFromDraft(activeType, dates));
+    setModalOpen(false);
   }
 
   function openEditor(schedule: Schedule) {
@@ -614,7 +609,7 @@ export function CleaningAssignmentsClient({ role }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
+    <div className="mx-auto max-w-4xl px-6 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">
           {t("cleaningAssignment.title")}
@@ -626,75 +621,53 @@ export function CleaningAssignmentsClient({ role }: Props) {
 
       <TypePicker value={activeType} onChange={setActiveType} />
 
-      <section className="mt-6 mb-12">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold">
-            {t(`cleaningAssignment.${activeType}Title`)}
-          </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {t(`cleaningAssignment.${activeType}Description`)}
+      {canManage && (
+        <div className="mt-6 mb-8 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
+          <Button
+            onClick={openCreateModal}
+            disabled={typeSectors.length === 0 || people.length === 0}
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            {t("cleaningAssignment.program")}
+          </Button>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {t("cleaningAssignment.createHint")}
           </p>
         </div>
+      )}
 
-        <div className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
-          {typeSectors.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("cleaningAssignment.noSectors")}
-            </p>
-          ) : (
-            <div className="space-y-4">
-              <CleaningCalendar
-                mode={activeType === "meeting" ? "range" : "multiple"}
-                locale={locale}
-                selected={
-                  activeType === "meeting"
-                    ? meetingRange
-                      ? { from: meetingRange.from, to: meetingRange.to }
-                      : undefined
-                    : activeType === "weekly"
-                      ? weeklySelected
-                      : generalSelected
-                }
-                onSelect={(value) => handleCalendarSelect(activeType, value)}
-                disabled={
-                  activeType === "meeting"
-                    ? meetingDisabled
-                    : activeType === "weekly"
-                      ? isWeeklyDisabled
-                      : isGeneralDisabled
-                }
-                specialEventDates={specialEventDates}
-              />
-
-              {activeType === "meeting" &&
-                meetingRange?.from &&
-                meetingRange?.to && (
-                  <MeetingAutoDatesSummary
-                    dates={selectedDatesFor("meeting")}
-                    formatDate={formatDateKey}
-                    dateLocale={dateLocale}
-                    t={t}
-                  />
-                )}
-
-              <div className="flex flex-wrap gap-4">
-                <CalendarLegend t={t} />
-              </div>
-
-              {canManage && (
-                <div>
-                  <Button
-                    onClick={handleProgram}
-                    disabled={typeSectors.length === 0 || people.length === 0}
-                  >
-                    {t("cleaningAssignment.program")}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
+      {modalOpen && (
+        <CreateScheduleModal
+          open={modalOpen}
+          type={activeType}
+          locale={locale}
+          dateLocale={dateLocale}
+          range={meetingRange}
+          weeklySelected={weeklySelected}
+          generalSelected={generalSelected}
+          configs={configs}
+          events={events}
+          specialEventDates={specialEventDates}
+          disabled={
+            activeType === "meeting"
+              ? meetingDisabled
+              : activeType === "weekly"
+                ? isWeeklyDisabled
+                : isGeneralDisabled
+          }
+          onSelect={(value) => handleCalendarSelect(activeType, value)}
+          canGenerate={
+            activeType === "meeting"
+              ? Boolean(meetingRange?.from && meetingRange?.to)
+              : (activeType === "weekly" ? weeklySelected : generalSelected)
+                  .length > 0
+          }
+          onGenerate={handleGenerate}
+          onCancel={() => setModalOpen(false)}
+          t={t}
+          formatDate={formatDateKey}
+        />
+      )}
 
       <SchedulesSection
         schedules={schedules}
@@ -785,6 +758,112 @@ function TypePicker({
         );
       })}
     </div>
+  );
+}
+
+function CreateScheduleModal({
+  open,
+  type,
+  locale,
+  dateLocale,
+  range,
+  weeklySelected,
+  generalSelected,
+  configs,
+  events,
+  specialEventDates,
+  disabled,
+  onSelect,
+  canGenerate,
+  onGenerate,
+  onCancel,
+  t,
+  formatDate,
+}: {
+  open: boolean;
+  type: CleaningType;
+  locale: Locale;
+  dateLocale: string;
+  range: { from: Date; to: Date } | null;
+  weeklySelected: Date[];
+  generalSelected: Date[];
+  configs: MeetingConfigLike[];
+  events: SpecialEventLike[];
+  specialEventDates: Date[];
+  disabled: Date[] | ((date: Date) => boolean);
+  onSelect: (value: { from: Date; to: Date } | Date[] | undefined) => void;
+  canGenerate: boolean;
+  onGenerate: () => void;
+  onCancel: () => void;
+  t: TFunction;
+  formatDate: (key: string, locale: string) => string;
+}) {
+  const isMeeting = type === "meeting";
+  const selected = isMeeting
+    ? range?.from && range?.to
+      ? { from: range.from, to: range.to }
+      : undefined
+    : type === "weekly"
+      ? weeklySelected
+      : generalSelected;
+
+  const autoDates = isMeeting
+    ? range?.from && range?.to
+      ? getMeetingDates(range.from, range.to, configs, events)
+      : []
+    : [];
+
+  return (
+    <Dialog open={open} onOpenChange={onCancel}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{t(`cleaningAssignment.${type}Title`)}</DialogTitle>
+          <DialogDescription>
+            {t(`cleaningAssignment.${type}Description`)}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          <div>
+            <p className="mb-2 text-sm font-medium">
+              {t("cleaningAssignment.period")}
+            </p>
+            <div className="flex justify-center rounded-2xl bg-muted/50 p-3">
+              <CleaningCalendar
+                mode={isMeeting ? "range" : "multiple"}
+                locale={locale}
+                selected={selected}
+                onSelect={onSelect}
+                disabled={disabled}
+                specialEventDates={specialEventDates}
+              />
+            </div>
+          </div>
+
+          {isMeeting && range?.from && range?.to && (
+            <MeetingAutoDatesSummary
+              dates={autoDates}
+              formatDate={formatDate}
+              dateLocale={dateLocale}
+              t={t}
+            />
+          )}
+
+          <div className="flex flex-wrap gap-4">
+            <CalendarLegend t={t} />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel}>
+            {t("cleaningAssignment.cancel")}
+          </Button>
+          <Button onClick={onGenerate} disabled={!canGenerate}>
+            {t("cleaningAssignment.program")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -1083,7 +1162,7 @@ function AssignmentEditor({
 
   return (
     <Dialog open={Boolean(editor)} onOpenChange={onCancel}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t("cleaningAssignment.reviewTitle")}</DialogTitle>
           <DialogDescription>

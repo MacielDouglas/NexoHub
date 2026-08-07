@@ -599,6 +599,9 @@
     "subtitle": "Programe as limpezas da congregação e designe as pessoas por setor e data.",
     "program": "Programar limpeza",
     "programming": "Programando...",
+    "createHint": "Escolha o tipo de limpeza e selecione as datas no calendário. As designações são geradas automaticamente com rotação.",
+    "modalHint": "Selecione as datas no calendário. As limpezas das reuniões são calculadas automaticamente a partir das reuniões e eventos especiais.",
+    "period": "Período",
     "saving": "Salvando...",
     "save": "Salvar",
     "cancel": "Cancelar",
@@ -838,6 +841,27 @@
       "title": "DESIGNAÇÕES",
       "period": "Período",
       "date": "Data"
+    }
+  },
+  "overview": {
+    "title": "Visão geral",
+    "subtitle": "Acompanhe a semana atual e as designações da pessoa vinculada a você.",
+    "currentWeek": "Semana atual",
+    "weekRange": "Semana de",
+    "nextMeeting": "Próxima reunião",
+    "noNextMeeting": "Nenhuma reunião restante nesta semana.",
+    "yourAssignments": "Suas designações",
+    "noAssignments": "Você não tem designações esta semana.",
+    "upcoming": "Próximas designações",
+    "noUpcoming": "Nenhuma designação futura.",
+    "pastMonth": "Designações passadas do mês",
+    "noPast": "Nenhuma designação passada neste mês.",
+    "noPerson": "Sua conta ainda não está vinculada a nenhuma pessoa cadastrada.",
+    "today": "Hoje",
+    "kinds": {
+      "meeting": "Reunião",
+      "designation": "Designação",
+      "cleaning": "Limpeza"
     }
   }
 }
