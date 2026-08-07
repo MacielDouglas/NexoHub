@@ -11,6 +11,7 @@
     "remove": "Quitar",
     "delete": "Eliminar",
     "search": "Buscar",
+    "close": "Cerrar",
     "people": "personas",
     "week": "semana",
     "weeks": "semanas"
@@ -725,7 +726,7 @@
       "orador": "Orador",
       "passarPao": "Pasar el pan",
       "passarVinho": "Pasar el vino",
-      "indicador": "Indicadores",
+      "indicador": "Acomodadores",
       "condutor": "Conductor",
       "leitor": "Lector",
       "oracao": "Oración"
@@ -781,7 +782,7 @@
   },
   "designations": {
     "title": "Asignaciones",
-    "subtitle": "Genere y gestione las asignaciones de sonido, video, plataforma, micrófono volante e indicadores de las reuniones.",
+    "subtitle": "Genere y gestione las asignaciones de sonido, video, plataforma, micrófono volante y acomodadores de las reuniones.",
     "createProgram": "Crear programa",
     "createHint": "Elija el período, ajuste las cantidades y genere automáticamente las asignaciones con rotación entre los hermanos.",
     "modalHint": "Elija el período, defina las cantidades y genere las asignaciones automáticamente.",
@@ -789,8 +790,8 @@
     "startDate": "Fecha inicial",
     "endDate": "Fecha final",
     "micCount": "Micrófono volante (cantidad de personas)",
-    "indicadorCount": "Indicador (cantidad de personas)",
-    "indicadorSector": "Sector del indicador",
+    "indicadorCount": "Acomodador (cantidad de personas)",
+    "indicadorSector": "Sector del acomodador",
     "indicadorSectorPlaceholder": "Sector {{n}}",
     "indicadorSectorShort": "Sector",
     "sectors": "Sectores",
@@ -817,7 +818,7 @@
       "video": "Video",
       "palco": "Plataforma",
       "mic": "Micrófono volante",
-      "indicador": "Indicador"
+      "indicador": "Acomodador"
     },
     "assignPerson": "Seleccionar persona",
     "addAssignment": "Agregar",
@@ -837,6 +838,9 @@
     "deletedError": "Error al eliminar el programa.",
     "pdfButton": "Crear PDF",
     "pdfError": "Error al generar el PDF.",
+    "viewButton": "Ver",
+    "viewTitle": "Ver programa",
+    "viewDescription": "Programa de asignaciones en el período seleccionado.",
     "pdf": {
       "title": "ASIGNACIONES",
       "period": "Período",

@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Printer, Trash2 } from "lucide-react";
+import { Eye, Plus, Printer, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Locale } from "react-day-picker";
 import { es, ptBR } from "react-day-picker/locale";
@@ -191,6 +191,7 @@ export function DesignationsClient({ role, orgName }: Props) {
 
   const [editor, setEditor] = useState<Editor | null>(null);
   const [deleting, setDeleting] = useState<Program | null>(null);
+  const [viewing, setViewing] = useState<Program | null>(null);
   const [saving, setSaving] = useState(false);
   const [pdfBusyId, setPdfBusyId] = useState<string | null>(null);
 
@@ -447,16 +448,18 @@ export function DesignationsClient({ role, orgName }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">{t("designations.title")}</h1>
+    <div className="space-y-6 pt-4">
+      <header>
+        <h1 className="text-2xl font-semibold text-foreground">
+          {t("designations.title")}
+        </h1>
         <p className="mt-1 text-muted-foreground">
           {t("designations.subtitle")}
         </p>
-      </div>
+      </header>
 
       {canManage && (
-        <div className="mb-8 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
+        <section className="rounded-2xl bg-card p-5 ring-1 ring-white/10 sm:p-6">
           <Button onClick={openCreateModal}>
             <Plus className="mr-1.5 h-4 w-4" />
             {t("designations.createProgram")}
@@ -464,7 +467,7 @@ export function DesignationsClient({ role, orgName }: Props) {
           <p className="mt-3 text-sm text-muted-foreground">
             {t("designations.createHint")}
           </p>
-        </div>
+        </section>
       )}
 
       <ProgramsSection
@@ -472,6 +475,7 @@ export function DesignationsClient({ role, orgName }: Props) {
         canManage={canManage}
         pdfBusyId={pdfBusyId}
         onPdf={handlePdf}
+        onView={setViewing}
         onEdit={openEditor}
         onDelete={setDeleting}
         t={t}
@@ -516,6 +520,16 @@ export function DesignationsClient({ role, orgName }: Props) {
           onCancel={() => setEditor(null)}
           onChange={setEditor}
           t={t}
+          formatDate={formatDateKey}
+        />
+      )}
+
+      {viewing && (
+        <ViewProgramDialog
+          program={viewing}
+          onClose={() => setViewing(null)}
+          t={t}
+          dateLocale={dateLocale}
           formatDate={formatDateKey}
         />
       )}
@@ -801,6 +815,7 @@ function ProgramsSection({
   canManage,
   pdfBusyId,
   onPdf,
+  onView,
   onEdit,
   onDelete,
   t,
@@ -811,6 +826,7 @@ function ProgramsSection({
   canManage: boolean;
   pdfBusyId: string | null;
   onPdf: (program: Program) => void;
+  onView: (program: Program) => void;
   onEdit: (program: Program) => void;
   onDelete: (program: Program) => void;
   t: TFunction;
@@ -819,11 +835,14 @@ function ProgramsSection({
 }) {
   if (programs.length === 0) {
     return (
-      <section className="mb-12">
-        <h2 className="mb-4 text-lg font-semibold">
-          {t("designations.savedPrograms")}
-        </h2>
-        <p className="text-sm text-muted-foreground">
+      <section aria-label={t("designations.savedPrograms")}>
+        <div className="flex items-center gap-2 px-1">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t("designations.savedPrograms")}
+          </h2>
+          <span className="h-px flex-1 bg-white/10" aria-hidden="true" />
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
           {t("designations.noPrograms")}
         </p>
       </section>
@@ -831,15 +850,18 @@ function ProgramsSection({
   }
 
   return (
-    <section className="mb-12">
-      <h2 className="mb-4 text-lg font-semibold">
-        {t("designations.savedPrograms")}
-      </h2>
-      <div className="space-y-2">
+    <section aria-label={t("designations.savedPrograms")}>
+      <div className="flex items-center gap-2 px-1">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {t("designations.savedPrograms")}
+        </h2>
+        <span className="h-px flex-1 bg-white/10" aria-hidden="true" />
+      </div>
+      <ul className="mt-2 space-y-2">
         {programs.map((program) => (
-          <div
+          <li
             key={program.id}
-            className="flex flex-col gap-3 rounded-2xl bg-card px-5 py-4 ring-1 ring-border sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 rounded-2xl bg-card p-3 ring-1 ring-white/10 sm:flex-row sm:items-center sm:justify-between sm:p-4"
           >
             <div className="min-w-0">
               <p className="font-medium">
@@ -853,6 +875,14 @@ function ProgramsSection({
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onView(program)}
+              >
+                <Eye aria-hidden="true" />
+                {t("designations.viewButton")}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -889,10 +919,94 @@ function ProgramsSection({
                 </>
               )}
             </div>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
+  );
+}
+
+function ViewProgramDialog({
+  program,
+  onClose,
+  t,
+  formatDate,
+  dateLocale,
+}: {
+  program: Program;
+  onClose: () => void;
+  t: TFunction;
+  formatDate: (key: string, locale: string) => string;
+  dateLocale: string;
+}) {
+  const dates = [...new Set(program.assignments.map((a) => a.date))].sort();
+  const enabledSectors = program.enabledSectors?.length
+    ? program.enabledSectors
+    : DESIGNATION_ROLES.slice();
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>{t("designations.viewTitle")}</DialogTitle>
+          <DialogDescription>
+            {t("designations.viewDescription")}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {dates.map((dateKey) => {
+            const dateEntries = program.assignments.filter(
+              (a) => a.date === dateKey,
+            );
+            return (
+              <div
+                key={dateKey}
+                className="rounded-2xl bg-muted/40 p-4 ring-1 ring-white/5"
+              >
+                <h4 className="mb-3 text-sm font-semibold">
+                  {formatDate(dateKey, dateLocale)}
+                </h4>
+                <ul className="space-y-2">
+                  {enabledSectors
+                    .filter((role) => dateEntries.some((e) => e.role === role))
+                    .map((role) =>
+                      dateEntries
+                        .filter((e) => e.role === role)
+                        .map((entry) => (
+                          <li
+                            key={entry.id}
+                            className="flex items-center justify-between gap-3"
+                          >
+                            <span className="text-sm text-muted-foreground">
+                              {roleLabel(role, t)}
+                            </span>
+                            <span className="flex items-center gap-2 text-right">
+                              <span className="text-sm font-medium">
+                                {entry.personName}
+                              </span>
+                              {entry.sector ? (
+                                <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-muted-foreground">
+                                  {entry.sector}
+                                </span>
+                              ) : null}
+                            </span>
+                          </li>
+                        )),
+                    )}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

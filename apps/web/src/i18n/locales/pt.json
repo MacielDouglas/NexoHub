@@ -11,6 +11,7 @@
     "remove": "Remover",
     "delete": "Excluir",
     "search": "Buscar",
+    "close": "Fechar",
     "people": "pessoas",
     "week": "semana",
     "weeks": "semanas"
@@ -837,6 +838,9 @@
     "deletedError": "Erro ao excluir o programa.",
     "pdfButton": "Criar PDF",
     "pdfError": "Erro ao gerar o PDF.",
+    "viewButton": "Ver",
+    "viewTitle": "Ver programa",
+    "viewDescription": "Programa de designações no período selecionado.",
     "pdf": {
       "title": "DESIGNAÇÕES",
       "period": "Período",
