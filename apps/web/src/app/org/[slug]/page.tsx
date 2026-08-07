@@ -54,6 +54,11 @@ type CleaningRow = {
 };
 
 function buildCleaningItem(a: CleaningRow): OverviewItem {
+  const task =
+    a.sector.task ??
+    (a.sector.defaultKey
+      ? `cleaning.defaults.${a.sector.type}.${a.sector.defaultKey}.task`
+      : null);
   return {
     id: a.id,
     kind: "cleaning",
@@ -64,7 +69,7 @@ function buildCleaningItem(a: CleaningRow): OverviewItem {
     title: a.sector.defaultKey ? null : a.sector.name,
     subtitleKey: `cleaning.types.${a.sector.type}`,
     subtitle: null,
-    task: a.sector.task,
+    task,
   };
 }
 
