@@ -830,7 +830,8 @@
     "today": "Hoy",
     "tomorrow": "Mañana",
     "inDays": "En {{count}} días",
-    "weekCountLabel": "Designaciones esta semana",
+    "weekCountLabel": "Asignaciones esta semana",
+    "noCleaningTask": "Ninguna tarefa definida para este sector.",
     "kinds": {
       "meeting": "Reunión",
       "designation": "Asignación",

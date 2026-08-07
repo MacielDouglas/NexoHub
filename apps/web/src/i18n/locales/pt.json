@@ -831,6 +831,7 @@
     "tomorrow": "Amanhã",
     "inDays": "Em {{count}} dias",
     "weekCountLabel": "Designações nesta semana",
+    "noCleaningTask": "Nenhuma tarefa definida para este setor.",
     "kinds": {
       "meeting": "Reunião",
       "designation": "Designação",

@@ -120,7 +120,7 @@ export function OverviewClient({
               <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums sm:text-4xl">
                 {weekAssignments.length}
               </p>
-              <p className="max-w-[10rem] text-xs font-medium uppercase tracking-wider leading-tight text-muted-foreground">
+              <p className="max-w-40 text-xs font-medium uppercase tracking-wider leading-tight text-muted-foreground">
                 {t("overview.weekCountLabel")}
               </p>
             </div>
@@ -249,11 +249,12 @@ function ItemRow({
   const subtitle = item.subtitleKey ? t(item.subtitleKey) : item.subtitle;
   const Icon = KIND_ICON[item.kind];
 
-  const isCleaningWithTask = item.kind === "cleaning" && item.task;
+  const isCleaning = item.kind === "cleaning";
+  const task = isCleaning ? (item.task ?? t("overview.noCleaningTask")) : null;
 
   return (
     <li className="rounded-2xl bg-card ring-1 ring-white/10">
-      {isCleaningWithTask ? (
+      {isCleaning ? (
         <details className="group p-3 sm:p-4">
           <summary className="flex items-center gap-3 list-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
             <span
@@ -290,7 +291,7 @@ function ItemRow({
           </summary>
 
           <div className="mt-3 pt-3 border-t border-white/10">
-            <p className="text-sm text-foreground">{item.task}</p>
+            <p className="text-sm text-foreground">{task}</p>
           </div>
         </details>
       ) : (
