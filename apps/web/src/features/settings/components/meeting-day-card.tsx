@@ -16,15 +16,27 @@ type MeetingConfig = {
   dayOfWeek: number;
   startTime: string;
   isActive: boolean;
+  defaultSentinelaConductorId: string | null;
+};
+
+type Person = {
+  id: string;
+  name: string;
 };
 
 type Props = {
   slug: string;
   type: "midweek" | "weekend";
   config?: MeetingConfig;
+  conductorCandidates?: Person[];
 };
 
-export function MeetingDayCard({ slug, type, config }: Props) {
+export function MeetingDayCard({
+  slug,
+  type,
+  config,
+  conductorCandidates = [],
+}: Props) {
   const title =
     type === "midweek"
       ? "Reunião de Meio de Semana"
@@ -38,7 +50,12 @@ export function MeetingDayCard({ slug, type, config }: Props) {
     <div className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
       <h3 className="text-lg font-semibold">{title}</h3>
       <p className="mt-0.5 text-sm text-muted-foreground">{summary}</p>
-      <MeetingDayForm slug={slug} type={type} config={config} />
+      <MeetingDayForm
+        slug={slug}
+        type={type}
+        config={config}
+        conductorCandidates={conductorCandidates}
+      />
     </div>
   );
 }

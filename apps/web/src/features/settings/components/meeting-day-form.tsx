@@ -17,15 +17,26 @@ type MeetingConfig = {
   dayOfWeek: number;
   startTime: string;
   isActive: boolean;
+  defaultSentinelaConductorId: string | null;
+};
+
+type Person = {
+  id: string;
+  name: string;
 };
 
 type Props = {
   slug: string;
   type: "midweek" | "weekend";
   config?: MeetingConfig;
+  conductorCandidates?: Person[];
 };
 
-export function MeetingDayForm({ type, config }: Props) {
+export function MeetingDayForm({
+  type,
+  config,
+  conductorCandidates = [],
+}: Props) {
   return (
     <form action={saveMeetingConfigAction} className="mt-4 space-y-4">
       <input type="hidden" name="id" defaultValue={config?.id ?? ""} />
@@ -68,6 +79,35 @@ export function MeetingDayForm({ type, config }: Props) {
           className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none"
         />
       </div>
+
+      {type === "weekend" && (
+        <div>
+          <label
+            htmlFor={`${type}-default-conductor`}
+            className="mb-2 block text-sm font-medium"
+          >
+            Dirigente da Sentinela padrão
+          </label>
+          <select
+            id={`${type}-default-conductor`}
+            name="defaultSentinelaConductorId"
+            defaultValue={config?.defaultSentinelaConductorId ?? ""}
+            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none"
+          >
+            <option value="">Nenhum (escolher em cada reunião)</option>
+            {conductorCandidates.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Essa pessoa ficará pré-selecionada como dirigente em todas as
+            reuniões de Fim de Semana. Você poderá trocá-la em uma reunião
+            específica quando quiser.
+          </p>
+        </div>
+      )}
 
       <SubmitButton className="w-full rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90">
         Salvar

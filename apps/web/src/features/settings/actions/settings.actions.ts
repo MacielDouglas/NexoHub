@@ -54,6 +54,9 @@ export async function saveMeetingConfigAction(formData: FormData) {
   const redirectTab = String(formData.get("redirectTab") ?? "meetings");
   const dayOfWeek = Number(formData.get("dayOfWeek"));
   const startTime = String(formData.get("startTime") ?? "");
+  const defaultSentinelaConductorId = String(
+    formData.get("defaultSentinelaConductorId") ?? "",
+  );
 
   if (!["midweek", "weekend"].includes(type)) {
     redirect(settingsPath(member.organization.slug, redirectTab));
@@ -67,6 +70,27 @@ export async function saveMeetingConfigAction(formData: FormData) {
     redirect(settingsPath(member.organization.slug, redirectTab));
   }
 
+  let defaultConductorData:
+    | { defaultSentinelaConductorId: string }
+    | { defaultSentinelaConductorId: null } = {
+    defaultSentinelaConductorId: null,
+  };
+
+  if (defaultSentinelaConductorId) {
+    const conductor = await prisma.person.findFirst({
+      where: {
+        id: defaultSentinelaConductorId,
+        organizationId: member.organization.id,
+      },
+      select: { id: true },
+    });
+    if (conductor) {
+      defaultConductorData = {
+        defaultSentinelaConductorId: conductor.id,
+      };
+    }
+  }
+
   if (id) {
     await prisma.meetingConfig.update({
       where: {
@@ -77,6 +101,7 @@ export async function saveMeetingConfigAction(formData: FormData) {
         dayOfWeek,
         startTime,
         isActive: true,
+        ...defaultConductorData,
       },
     });
   } else {
@@ -87,6 +112,7 @@ export async function saveMeetingConfigAction(formData: FormData) {
         dayOfWeek,
         startTime,
         isActive: true,
+        ...defaultConductorData,
       },
     });
   }

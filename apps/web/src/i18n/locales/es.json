@@ -723,7 +723,8 @@
       "passarVinho": "Pasar el vino",
       "indicador": "Indicadores",
       "condutor": "Conductor",
-      "leitor": "Lector"
+      "leitor": "Lector",
+      "oracao": "Oración"
     },
     "eligibility": {
       "discursoTesouros": "Habilitado para discurso de Tesoros",
@@ -737,6 +738,17 @@
       "ajudanteMesmoSexo": "Mismo sexo que el estudiante",
       "ajudanteMesmoSexoOuFamilia": "Mismo sexo que el estudiante o miembro de la familia"
     },
+    "defaultConductor": "Dirigente de la Atalaya predeterminado",
+    "noDefault": "Ninguno",
+    "setAsDefault": "Establecer seleccionado como predeterminado",
+    "removeDefault": "Quitar predeterminado",
+    "defaultSaved": "Dirigente predeterminado actualizado.",
+    "defaultRemoved": "Predeterminado eliminado.",
+    "defaultError": "Error al actualizar el dirigente predeterminado.",
+    "manualOr": "o",
+    "manualDiscursoPlaceholder": "Título del discurso (manual)",
+    "manualOradorOption": "Escribir nombre manualmente",
+    "manualOradorPlaceholder": "Nombre del orador",
     "pdf": {
       "create": "Crear PDF",
       "button": "Crear PDF",
@@ -749,11 +761,13 @@
       "typeLabel": "Tipo de reunión",
       "typeMidweek": "Entre semana",
       "typeWeekend": "Fin de semana",
-      "typeBoth": "Ambas",
+      "typeBoth": "Todas",
+      "typeMemorial": "Conmemoración",
       "generate": "Generar PDF",
       "noMeetings": "No hay reuniones programadas en el rango seleccionado.",
       "midweekTitle": "REUNIÓN DE ENTRE SEMANA",
       "weekendTitle": "REUNIÓN DE FIN DE SEMANA",
+      "memorialTitle": "CONMEMORACIÓN DE LA MUERTE DE CRISTO",
       "songAndPrayer": "Canción {{n}} & Oración",
       "middleSong": "Canción {{n}}",
       "publicTalk": "Discurso de público",

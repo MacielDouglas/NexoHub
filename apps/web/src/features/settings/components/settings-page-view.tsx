@@ -11,6 +11,7 @@ type MeetingConfig = {
   dayOfWeek: number;
   startTime: string;
   isActive: boolean;
+  defaultSentinelaConductorId: string | null;
 };
 
 type SpecialEvent = {
@@ -22,11 +23,17 @@ type SpecialEvent = {
   location: string | null;
 };
 
+type Person = {
+  id: string;
+  name: string;
+};
+
 type Props = {
   slug: string;
   isSuperUser: boolean;
   tab: SettingsSectionId;
   configs: MeetingConfig[];
+  conductorCandidates: Person[];
   events: SpecialEvent[];
   labels: {
     title: string;
@@ -44,6 +51,7 @@ export function SettingsPageView({
   isSuperUser,
   tab,
   configs,
+  conductorCandidates,
   events,
   labels,
   eventTypeLabels,
@@ -71,6 +79,7 @@ export function SettingsPageView({
                 slug={slug}
                 type="weekend"
                 config={configs.find((c) => c.type === "weekend")}
+                conductorCandidates={conductorCandidates}
               />
             </div>
           </SettingsSectionShell>

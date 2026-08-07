@@ -62,6 +62,22 @@ export async function PUT(
       await readJsonRequest(request),
     );
 
+    if (body.defaultSentinelaConductorId) {
+      const person = await prisma.person.findFirst({
+        where: {
+          id: body.defaultSentinelaConductorId,
+          organizationId: member.organizationId,
+        },
+        select: { id: true },
+      });
+      if (!person) {
+        return NextResponse.json(
+          { error: "Pessoa inválida para dirigente padrão" },
+          { status: 400 },
+        );
+      }
+    }
+
     const config = await prisma.meetingConfig.update({
       where: { id },
       data: {
@@ -69,6 +85,9 @@ export async function PUT(
         ...(body.dayOfWeek !== undefined && { dayOfWeek: body.dayOfWeek }),
         ...(body.startTime !== undefined && { startTime: body.startTime }),
         ...(body.isActive !== undefined && { isActive: body.isActive }),
+        ...(body.defaultSentinelaConductorId !== undefined && {
+          defaultSentinelaConductorId: body.defaultSentinelaConductorId,
+        }),
       },
       include: { parts: { orderBy: { sortOrder: "asc" } } },
     });

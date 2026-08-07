@@ -723,7 +723,8 @@
       "passarVinho": "Passar o vinho",
       "indicador": "Indicadores",
       "condutor": "Condutor",
-      "leitor": "Leitor"
+      "leitor": "Leitor",
+      "oracao": "Oração"
     },
     "eligibility": {
       "discursoTesouros": "Habilitado para discurso de Tesouros",
@@ -737,6 +738,17 @@
       "ajudanteMesmoSexo": "Mesmo sexo do estudante",
       "ajudanteMesmoSexoOuFamilia": "Mesmo sexo do estudante ou membro da família"
     },
+    "defaultConductor": "Dirigente da Sentinela padrão",
+    "noDefault": "Nenhum",
+    "setAsDefault": "Definir selecionado como padrão",
+    "removeDefault": "Remover padrão",
+    "defaultSaved": "Dirigente padrão atualizado.",
+    "defaultRemoved": "Padrão removido.",
+    "defaultError": "Erro ao atualizar o dirigente padrão.",
+    "manualOr": "ou",
+    "manualDiscursoPlaceholder": "Título do discurso (manual)",
+    "manualOradorOption": "Digitar nome manualmente",
+    "manualOradorPlaceholder": "Nome do orador",
     "pdf": {
       "create": "Criar PDF",
       "button": "Criar PDF",
@@ -749,11 +761,13 @@
       "typeLabel": "Tipo de reunião",
       "typeMidweek": "Meio de Semana",
       "typeWeekend": "Fim de Semana",
-      "typeBoth": "Ambas",
+      "typeBoth": "Todas",
+      "typeMemorial": "Comemoração",
       "generate": "Gerar PDF",
       "noMeetings": "Não há reuniões programadas no intervalo selecionado.",
       "midweekTitle": "REUNIÃO DE MEIO DE SEMANA",
       "weekendTitle": "REUNIÃO DE FIM DE SEMANA",
+      "memorialTitle": "COMEMORAÇÃO DA MORTE DE CRISTO",
       "songAndPrayer": "Cântico {{n}} e oração",
       "middleSong": "Cântico {{n}}",
       "publicTalk": "Discurso público",

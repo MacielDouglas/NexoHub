@@ -78,7 +78,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const tab: SettingsSectionId =
     rawTab && isSettingsTab(rawTab) ? rawTab : "meetings";
 
-  const [configs, events] = await Promise.all([
+  const [configs, events, conductorCandidates] = await Promise.all([
     prisma.meetingConfig.findMany({
       where: {
         organizationId: member.organization.id,
@@ -92,6 +92,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         dayOfWeek: true,
         startTime: true,
         isActive: true,
+        defaultSentinelaConductorId: true,
       },
     }),
     prisma.specialEvent.findMany({
@@ -110,6 +111,15 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         location: true,
       },
     }),
+    prisma.person.findMany({
+      where: {
+        organizationId: member.organization.id,
+        active: true,
+        OR: [{ condutorEstudoBiblico: true }, { anciao: true }],
+      },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   const t = getServerT(session.user.language);
@@ -123,6 +133,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         ...config,
         startTime: config.startTime,
       }))}
+      conductorCandidates={conductorCandidates}
       events={events.map((event) => ({
         ...event,
         date: event.date.toISOString().slice(0, 10),

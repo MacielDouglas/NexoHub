@@ -144,6 +144,24 @@ export type PdfEvent = {
   endDate: string | null;
 };
 
+type PageSlot = {
+  type: PdfMeetingType;
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+  cx: number;
+  timeX: number;
+  descX: number;
+  descW: number;
+  personX: number;
+  personW: number;
+  lineH: number;
+  rowFont: number;
+  sectionFont: number;
+  weekFont: number;
+};
+
 export async function generateMeetingsPdf(opts: {
   orgName: string;
   meetings: PdfMeeting[];
@@ -161,25 +179,74 @@ export async function generateMeetingsPdf(opts: {
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 14;
   const right = pageW - margin;
+  const top = 31;
+  const bottom = pageH - 8;
+  const usable = bottom - top;
 
-  const timeX = margin;
-  const descX = margin + 24;
-  const descW = 102;
-  const personX = descX + descW;
-  const personW = right - personX;
+  const perPage: Record<PdfMeetingType, number> = {
+    midweek: 2,
+    weekend: 4,
+    memorial: 1,
+  };
 
-  const lineH = 5.2;
-  const bottomLimit = pageH - 18;
+  const buildSlot = (
+    type: PdfMeetingType,
+    x0: number,
+    x1: number,
+    y0: number,
+    y1: number,
+  ): PageSlot => {
+    const compact = type === "weekend" || type === "memorial";
+    const lineH = compact ? 4.6 : 5.2;
+    const timeW = 22;
+    const descW = (x1 - x0) * 0.46;
+    const timeX = x0;
+    const descX = x0 + timeW;
+    const personX = descX + descW;
+    return {
+      type,
+      x0,
+      x1,
+      y0,
+      y1,
+      cx: (x0 + x1) / 2,
+      timeX,
+      descX,
+      descW,
+      personX,
+      personW: x1 - personX,
+      lineH,
+      rowFont: compact ? 9.5 : 10,
+      sectionFont: compact ? 10 : 10.5,
+      weekFont: compact ? 10.5 : 11,
+    };
+  };
 
-  const state: { y: number; currentType: PdfMeetingType | null } = {
+  const buildPageSlots = (type: PdfMeetingType): PageSlot[] => {
+    const n = perPage[type];
+    const slotH = usable / n;
+    return Array.from({ length: n }, (_, i) =>
+      buildSlot(type, margin, right, top + i * slotH, top + (i + 1) * slotH),
+    );
+  };
+
+  const state: {
+    y: number;
+    currentType: PdfMeetingType | null;
+    slots: PageSlot[];
+    slotIdx: number;
+    dryRun: boolean;
+    scale: number;
+  } = {
     y: 0,
     currentType: null,
+    slots: [],
+    slotIdx: 0,
+    dryRun: false,
+    scale: 1,
   };
 
-  const newPage = () => {
-    doc.addPage();
-    state.y = 14;
-  };
+  const currentSlot = (): PageSlot => state.slots[state.slotIdx];
 
   const drawPageHeader = (type: PdfMeetingType) => {
     doc.setFont("helvetica", "bold");
@@ -189,19 +256,54 @@ export async function generateMeetingsPdf(opts: {
     doc.text(
       type === "midweek"
         ? t("meetings.pdf.midweekTitle")
-        : t("meetings.pdf.weekendTitle"),
+        : type === "memorial"
+          ? t("meetings.pdf.memorialTitle")
+          : t("meetings.pdf.weekendTitle"),
       pageW / 2,
       25,
       { align: "center" },
     );
-    state.y = 32;
+  };
+
+  const beginPage = (type: PdfMeetingType) => {
+    drawPageHeader(type);
+    state.currentType = type;
+    state.slots = buildPageSlots(type);
+    state.slotIdx = 0;
+    state.dryRun = false;
+    state.scale = 1;
+    state.y = currentSlot().y0 + 1;
+  };
+
+  const nextPage = () => {
+    doc.addPage();
+    if (state.currentType) beginPage(state.currentType);
   };
 
   const ensure = (needed: number) => {
-    if (state.y + needed > bottomLimit) {
-      newPage();
-      if (state.currentType) drawPageHeader(state.currentType);
+    if (state.dryRun) return;
+    const slot = currentSlot();
+    if (state.y + needed > slot.y1 - 2) {
+      if (state.slotIdx + 1 < state.slots.length) {
+        state.slotIdx++;
+        state.y = currentSlot().y0 + 1;
+      } else {
+        nextPage();
+      }
     }
+  };
+
+  const fitToSlot = (slot: PageSlot, draw: () => void) => {
+    const avail = slot.y1 - slot.y0 - 2;
+    state.dryRun = true;
+    state.scale = 1;
+    state.y = slot.y0 + 1;
+    draw();
+    const used = state.y - slot.y0;
+    state.dryRun = false;
+    state.scale = used > avail ? Math.max(0.4, avail / used) : 1;
+    state.y = slot.y0 + 1;
+    draw();
   };
 
   const drawRow = (row: {
@@ -209,48 +311,73 @@ export async function generateMeetingsPdf(opts: {
     desc: string;
     persons: string[];
   }) => {
-    const descLines = doc.splitTextToSize(row.desc, descW) as string[];
+    const slot = currentSlot();
+    const lineH = slot.lineH * state.scale;
+    const f = slot.rowFont * state.scale;
+    if (state.dryRun) {
+      const descLines = doc.splitTextToSize(row.desc, slot.descW) as string[];
+      const n = Math.max(descLines.length, row.persons.length, 1);
+      state.y += n * lineH;
+      return;
+    }
+    ensure(lineH + 2);
+    const descLines = doc.splitTextToSize(row.desc, slot.descW) as string[];
     const n = Math.max(descLines.length, row.persons.length, 1);
     const h = n * lineH;
-    ensure(h + 2);
     const baseY = state.y + lineH - 1.2;
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
+    doc.setFontSize(f);
     if (row.time) {
-      doc.text(row.time, timeX, baseY);
+      doc.text(row.time, slot.timeX, baseY);
     }
-    doc.text(descLines, descX, baseY);
+    doc.text(descLines, slot.descX, baseY);
     doc.setFont("helvetica", "normal");
     row.persons.forEach((p, i) => {
-      const lines = doc.splitTextToSize(p, personW) as string[];
+      const lines = doc.splitTextToSize(p, slot.personW) as string[];
       lines.forEach((ln, j) => {
-        doc.text(ln, personX, state.y + (i + j + 1) * lineH - 1.2);
+        doc.text(ln, slot.personX, state.y + (i + j + 1) * lineH - 1.2);
       });
     });
     state.y += h;
   };
 
   const drawSectionHeader = (title: string, color?: string) => {
+    const slot = currentSlot();
+    const lineH = slot.lineH * state.scale;
+    if (state.dryRun) {
+      state.y += lineH + 2;
+      return;
+    }
     ensure(lineH + 4);
+    const s = currentSlot();
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
+    doc.setFontSize(s.sectionFont * state.scale);
     if (color) {
       const [r, g, b] = hexToRgb(color);
       doc.setTextColor(r, g, b);
     }
-    doc.text(title.toUpperCase(), pageW / 2, state.y + lineH - 1, {
+    doc.text(title.toUpperCase(), s.cx, state.y + s.lineH * state.scale - 1, {
       align: "center",
     });
     if (color) doc.setTextColor(0, 0, 0);
-    state.y += lineH + 2;
+    state.y += s.lineH * state.scale + 2;
   };
 
   const drawWeekHeader = (label: string) => {
+    const slot = currentSlot();
+    const lineH = slot.lineH * state.scale;
+    if (state.dryRun) {
+      state.y += lineH + 2;
+      return;
+    }
     ensure(lineH + 4);
+    const s = currentSlot();
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text(label, pageW / 2, state.y + lineH - 1, { align: "center" });
-    state.y += lineH + 2;
+    doc.setFontSize(s.weekFont * state.scale);
+    doc.text(label, s.cx, state.y + s.lineH * state.scale - 1, {
+      align: "center",
+    });
+    state.y += s.lineH * state.scale + 2;
   };
 
   const meetingDateTime = (m: PdfMeeting): { date: Date; time: string } => {
@@ -391,7 +518,7 @@ export async function generateMeetingsPdf(opts: {
     clock += palavrasRow?.clockAdd ?? palavrasRow?.tempoMin ?? 3;
 
     const closingNum = songNumber(assign("canticoFinal"));
-    const cpn = personName(assign("canticoFinal"));
+    const cpn = personName(assign("oracao"));
     drawRow({
       time: fmtTime(clock),
       desc:
@@ -494,14 +621,63 @@ export async function generateMeetingsPdf(opts: {
     clock += 5;
   };
 
-  const types: PdfMeetingType[] = ["midweek", "weekend"];
+  const renderMemorial = (meeting: PdfMeeting) => {
+    const assign = (role: string) =>
+      meeting.assignments.filter((a) => a.role === role);
+    const pres = assign("presidente")
+      .map(personName)
+      .filter(Boolean) as string[];
+    const openingNum = songNumber(assign("canticoInicial")[0]);
+    const discursoAssign = assign("discurso")[0];
+    const discursoManual = discursoAssign?.value ?? "";
+    const tema = discursoManual
+      ? discursoManual
+      : (discursoAssign?.contentItem?.data as { theme?: string } | null)?.theme;
+    const oradorAssign = assign("orador")[0];
+    const oradorManual = oradorAssign?.value ?? "";
+    const orador = oradorManual || assignLabel(oradorAssign);
 
-  const drawDividerLine = () => {
-    ensure(3);
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.4);
-    doc.line(margin, state.y, right, state.y);
-    state.y += 3;
+    if (pres.length) {
+      drawRow({
+        time: null,
+        desc: t("meetings.roles.presidente"),
+        persons: pres,
+      });
+    }
+    drawRow({
+      time: null,
+      desc:
+        openingNum != null
+          ? t("meetings.pdf.songAndPrayer", { n: openingNum })
+          : t("meetings.roles.canticoInicial"),
+      persons: [],
+    });
+    drawRow({
+      time: null,
+      desc: tema
+        ? `${t("meetings.pdf.publicTalk")}: ${tema}`
+        : t("meetings.roles.discurso"),
+      persons: orador ? [orador] : [],
+    });
+
+    for (const role of ["passarPao", "passarVinho", "indicador"]) {
+      const persons = assign(role).map(personName).filter(Boolean) as string[];
+      drawRow({
+        time: null,
+        desc: t(`meetings.roles.${role}`),
+        persons,
+      });
+    }
+
+    const closingNum = songNumber(assign("canticoFinal")[0]);
+    drawRow({
+      time: null,
+      desc:
+        closingNum != null
+          ? t("meetings.pdf.songAndPrayer", { n: closingNum })
+          : t("meetings.roles.canticoFinal"),
+      persons: [],
+    });
   };
 
   const isVisitWeek = (date: Date): boolean =>
@@ -513,45 +689,72 @@ export async function generateMeetingsPdf(opts: {
     });
 
   const drawVisitBanner = () => {
-    ensure(lineH + 4);
+    const slot = currentSlot();
+    const s = slot;
+    if (state.dryRun) {
+      state.y += s.lineH * state.scale + 3;
+      return;
+    }
+    ensure(s.lineH * state.scale + 4);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10.5);
+    doc.setFontSize(s.sectionFont * state.scale);
     doc.setTextColor(191, 47, 19);
-    doc.text(t("meetings.pdf.circuitVisit"), pageW / 2, state.y + lineH - 1, {
-      align: "center",
-    });
+    doc.text(
+      t("meetings.pdf.circuitVisit"),
+      s.cx,
+      state.y + s.lineH * state.scale - 1,
+      { align: "center" },
+    );
     doc.setTextColor(0, 0, 0);
-    state.y += lineH + 3;
+    state.y += s.lineH * state.scale + 3;
   };
 
+  const renderMeeting = (meeting: PdfMeeting) => {
+    const slot = currentSlot();
+    const draw = () => {
+      const { date } = meetingDateTime(meeting);
+      drawWeekHeader(weekLabel(date));
+      if (meeting.type === "midweek" && isVisitWeek(date)) {
+        drawVisitBanner();
+      }
+      if (meeting.type === "weekend") {
+        renderWeekend(meeting);
+      } else if (meeting.type === "memorial") {
+        renderMemorial(meeting);
+      } else {
+        renderMidweek(meeting);
+      }
+    };
+    fitToSlot(slot, draw);
+    if (!state.dryRun) {
+      state.slotIdx++;
+      if (state.slotIdx >= state.slots.length) {
+        nextPage();
+      } else {
+        state.y = currentSlot().y0 + 1;
+      }
+    }
+  };
+
+  const types: PdfMeetingType[] = ["midweek", "weekend", "memorial"];
+
+  let firstPage = true;
   for (const type of types) {
     const list = meetings
       .filter((m) => m.type === type)
       .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
     if (list.length === 0) continue;
 
-    state.currentType = type;
-    if (state.y > 14) newPage();
-    drawPageHeader(type);
+    if (firstPage) {
+      firstPage = false;
+      beginPage(type);
+    } else {
+      doc.addPage();
+      beginPage(type);
+    }
 
-    let prevMonthKey: string | null = null;
     for (const meeting of list) {
-      const { date } = meetingDateTime(meeting);
-      const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-      if (prevMonthKey !== null && monthKey !== prevMonthKey) {
-        drawDividerLine();
-      }
-      prevMonthKey = monthKey;
-
-      drawWeekHeader(weekLabel(date));
-      if (isVisitWeek(date)) {
-        drawVisitBanner();
-      }
-      if (meeting.type === "midweek") {
-        renderMidweek(meeting);
-      } else {
-        renderWeekend(meeting);
-      }
+      renderMeeting(meeting);
     }
   }
 

@@ -51,6 +51,7 @@ import {
   toDateKey,
   WEEKLY_BLOCKING_EVENT_TYPES,
 } from "@/lib/cleaning-assignment";
+import { SPECIAL_EVENT_TYPES } from "@/lib/special-events";
 import { cn } from "@/lib/utils";
 import {
   generateMeetingsPdf,
@@ -97,6 +98,7 @@ type MeetingConfig = {
   dayOfWeek: number;
   startTime: string;
   isActive: boolean;
+  defaultSentinelaConductorId: string | null;
 };
 
 type SpecialEvent = {
@@ -295,14 +297,16 @@ function deriveWeek(
     const memorialDay = parseDateKey(memorialEvent.date).getDay();
     const memorialIsWeekend = memorialDay === 0 || memorialDay === 6;
 
-    if (midweekConfig && !memorialIsWeekend) {
+    // Comemoração em dia de semana substitui a reunião de meio de semana.
+    // Comemoração em fim de semana substitui a reunião de fim de semana.
+    if (midweekConfig && memorialIsWeekend) {
       meetings.push({
         type: "midweek",
         date: addDays(weekStart, (midweekDay + 6) % 7),
         time: midweekConfig.startTime,
       });
     }
-    if (weekendConfig && memorialIsWeekend) {
+    if (weekendConfig && !memorialIsWeekend) {
       meetings.push({
         type: "weekend",
         date: addDays(weekStart, (weekendConfig.dayOfWeek + 6) % 7),
@@ -545,6 +549,17 @@ export function MeetingsClient({
     return map;
   }, [meetings]);
 
+  const defaultConductorId = useMemo(
+    () =>
+      configs.find((c) => c.type === "weekend")?.defaultSentinelaConductorId ??
+      null,
+    [configs],
+  );
+
+  const handleUpdateConfig = useCallback((config: MeetingConfig) => {
+    setConfigs((prev) => prev.map((c) => (c.id === config.id ? config : c)));
+  }, []);
+
   if (loading) {
     return <p className="text-muted-foreground">{t("common.loading")}</p>;
   }
@@ -638,6 +653,12 @@ export function MeetingsClient({
               sentinela={sentinela}
               subOrgs={subOrgs}
               orgName={orgName}
+              events={events}
+              defaultConductorId={defaultConductorId}
+              weekendConfigId={
+                configs.find((c) => c.type === "weekend")?.id ?? null
+              }
+              onUpdateConfig={handleUpdateConfig}
               onCreated={(record) =>
                 setMeetings((prev) => [
                   ...prev.filter((m) => m.type !== record.type),
@@ -818,7 +839,8 @@ type SlotKind =
   | "song"
   | "discurso"
   | "text"
-  | "personDual";
+  | "personDual"
+  | "orador";
 
 type Slot = {
   role: string;
@@ -826,6 +848,7 @@ type Slot = {
   kind: SlotKind;
   sortOrder: number;
   dualOf?: string; // role do slot estudante para filtrar ajudante
+  conflictsWith?: string; // role que não pode ser a mesma pessoa
   eligibility?: string; // identificador da regra de elegibilidade
 };
 
@@ -899,6 +922,14 @@ function buildSlots(
       sortOrder: 100,
     });
 
+    slots.push({
+      role: "oracao",
+      labelKey: "meetings.roles.oracao",
+      kind: "person",
+      sortOrder: 101,
+      eligibility: "oracaoMale",
+    });
+
     return slots;
   }
 
@@ -942,6 +973,7 @@ function buildSlots(
         kind: "person",
         sortOrder: 6,
         eligibility: "condutorEstudoBiblico",
+        conflictsWith: "leitorSentinela",
       },
       {
         role: "leitorSentinela",
@@ -949,6 +981,7 @@ function buildSlots(
         kind: "person",
         sortOrder: 7,
         dualOf: "condutorSentinela",
+        conflictsWith: "condutorSentinela",
         eligibility: "leitorEstudoBiblico",
       },
       {
@@ -983,9 +1016,8 @@ function buildSlots(
     {
       role: "orador",
       labelKey: "meetings.roles.orador",
-      kind: "person",
+      kind: "orador",
       sortOrder: 4,
-      eligibility: "discursoPublico",
     },
     {
       role: "passarPao",
@@ -1229,12 +1261,14 @@ function mapApostilaPart(
           labelKey: "meetings.parte",
           kind: "person",
           eligibility: "condutorEstudoBiblico",
+          conflictsWith: `${baseRole}:leitor`,
         },
         {
           role: `${baseRole}:leitor`,
           labelKey: "meetings.parteLeitor",
           kind: "person",
           eligibility: "leitorEstudoBiblico",
+          conflictsWith: `${baseRole}:condutor`,
         },
       ];
     }
@@ -1303,64 +1337,103 @@ function eligiblePeople(
     return id ? (active.find((p) => p.id === id) ?? null) : null;
   };
 
+  let base: Person[];
   switch (slot.eligibility) {
     case "presidenteVidaMinisterio":
-      return active.filter((p) => p.presidenteVidaMinisterio);
+      base = active.filter((p) => p.presidenteVidaMinisterio);
+      break;
     case "presidenteFimSemana":
-      return active.filter((p) => p.presidenteFimSemana);
+      base = active.filter((p) => p.presidenteFimSemana);
+      break;
     case "discursoPublico":
-      return active.filter((p) => p.discursoPublico);
+      base = active.filter((p) => p.discursoPublico);
+      break;
     case "batizadoMale":
-      return active.filter((p) => p.sex === "MALE" && p.batizado);
+      base = active.filter((p) => p.sex === "MALE" && p.batizado);
+      break;
     case "indicadorMale":
-      return active.filter((p) => p.sex === "MALE" && p.indicador);
+      base = active.filter((p) => p.sex === "MALE" && p.indicador);
+      break;
+    case "oracaoMale":
+      base = active.filter((p) => p.sex === "MALE" && p.oracao);
+      break;
     case "discursoTesouros":
-      return active.filter((p) => p.discursoTesouros);
+      base = active.filter((p) => p.discursoTesouros);
+      break;
     case "joiasEspirituais":
-      return active.filter((p) => p.joiasEspirituais);
+      base = active.filter((p) => p.joiasEspirituais);
+      break;
     case "maleEstudante":
-      return active.filter((p) => p.sex === "MALE" && p.estudante);
+      base = active.filter((p) => p.sex === "MALE" && p.estudante);
+      break;
     case "estudanteAny":
-      return active.filter((p) => p.estudante);
+      base = active.filter((p) => p.estudante);
+      break;
     case "estudanteIniciarConversas":
-      return active.filter((p) => p.estudante && p.iniciarConversas);
+      base = active.filter((p) => p.estudante && p.iniciarConversas);
+      break;
     case "estudanteCultivarInteresse":
-      return active.filter((p) => p.estudante && p.cultivarInteresse);
+      base = active.filter((p) => p.estudante && p.cultivarInteresse);
+      break;
     case "estudanteFazerDiscipulos":
-      return active.filter((p) => p.estudante && p.fazerDiscipulos);
+      base = active.filter((p) => p.estudante && p.fazerDiscipulos);
+      break;
     case "estudanteExplicarCrencas":
-      return active.filter((p) => p.estudante && p.explicarCrencas);
+      base = active.filter((p) => p.estudante && p.explicarCrencas);
+      break;
     case "presidenciaAnciano":
-      return active.filter(
+      base = active.filter(
         (p) => p.presidenteVidaMinisterio || p.anciao || p.privilegioServico,
       );
+      break;
     case "condutorEstudoBiblico":
-      return active.filter((p) => p.condutorEstudoBiblico || p.anciao);
+      base = active.filter((p) => p.condutorEstudoBiblico || p.anciao);
+      break;
     case "leitorEstudoBiblico":
-      return active.filter(
+      base = active.filter(
         (p) => p.sex === "MALE" && p.batizado && p.leitorEstudoBiblico,
       );
+      break;
     case "nossaVidaCrista":
-      return active.filter(
+      base = active.filter(
         (p) => p.anciao || p.privilegioServico || p.nossaVidaCrista,
       );
+      break;
     case "ajudanteMesmoSexo": {
       const estudante = getEstudante(slot.dualOf ?? "");
-      if (!estudante) return active.filter((p) => p.estudante);
-      return active.filter((p) => p.sex === estudante.sex);
+      if (!estudante) {
+        base = active.filter((p) => p.estudante);
+      } else {
+        base = active.filter((p) => p.sex === estudante.sex);
+      }
+      break;
     }
     case "ajudanteMesmoSexoOuFamilia": {
       const estudante = getEstudante(slot.dualOf ?? "");
-      if (!estudante) return active.filter((p) => p.estudante);
-      return active.filter(
-        (p) =>
-          p.sex === estudante.sex ||
-          (estudante.familyId && p.familyId === estudante.familyId),
-      );
+      if (!estudante) {
+        base = active.filter((p) => p.estudante);
+      } else {
+        base = active.filter(
+          (p) =>
+            p.sex === estudante.sex ||
+            (estudante.familyId && p.familyId === estudante.familyId),
+        );
+      }
+      break;
     }
     default:
-      return active;
+      base = active;
+      break;
   }
+
+  if (slot.conflictsWith) {
+    const otherId = getEstudanteId(slot.conflictsWith);
+    if (otherId) {
+      base = base.filter((p) => p.id !== otherId);
+    }
+  }
+
+  return base;
 }
 
 type MidweekRowKind =
@@ -1591,6 +1664,17 @@ function buildMidweekProgram(
       fixed: true,
     });
   }
+  if (slotByRole.has("oracao")) {
+    conclusaoRows.push({
+      key: "oracao",
+      kind: "person",
+      title: t("meetings.roles.oracao"),
+      tempoMin: 0,
+      role: "oracao",
+      fixed: true,
+      eligibility: "oracaoMale",
+    });
+  }
   sections.push({
     key: "conclusao",
     title: t("meetings.sections.conclusao"),
@@ -1793,6 +1877,10 @@ function MeetingCard({
   sentinela,
   subOrgs,
   orgName,
+  events,
+  defaultConductorId,
+  weekendConfigId,
+  onUpdateConfig,
   onCreated,
   onUpdated,
   onDeleted,
@@ -1810,6 +1898,10 @@ function MeetingCard({
   sentinela: SentinelaWeek | null;
   subOrgs: SubOrg[];
   orgName?: string;
+  events: SpecialEvent[];
+  defaultConductorId: string | null;
+  weekendConfigId: string | null;
+  onUpdateConfig: (config: MeetingConfig) => void;
   onCreated: (record: MeetingRecord) => void;
   onUpdated: (record: MeetingRecord) => void;
   onDeleted: (id: string) => void;
@@ -1817,6 +1909,21 @@ function MeetingCard({
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const cardEvents = useMemo(() => {
+    const weekStart = startOfWeek(date);
+    const weekEnd = addDays(weekStart, 6);
+    return events
+      .filter((ev) =>
+        (SPECIAL_EVENT_TYPES as readonly string[]).includes(ev.type),
+      )
+      .filter((ev) => ev.type !== "memorial")
+      .filter((ev) => {
+        const s = parseDateKey(ev.date);
+        const e = ev.endDate ? parseDateKey(ev.endDate) : s;
+        return e >= weekStart && s <= weekEnd;
+      });
+  }, [date, events]);
 
   const slots = useMemo(
     () => buildSlots(type, apostilaWeek),
@@ -1844,13 +1951,43 @@ function MeetingCard({
     return defaultProgram;
   });
 
+  const ensureOracaoRow = useCallback(
+    (sections: MidweekSection[]): MidweekSection[] => {
+      if (type !== "midweek") return sections;
+      const conclusao = sections.find((s) => s.key === "conclusao");
+      if (!conclusao || conclusao.rows.some((r) => r.role === "oracao")) {
+        return sections;
+      }
+      return sections.map((sec) =>
+        sec.key === "conclusao"
+          ? {
+              ...sec,
+              rows: [
+                ...sec.rows,
+                {
+                  key: "oracao",
+                  kind: "person",
+                  title: t("meetings.roles.oracao"),
+                  tempoMin: 0,
+                  role: "oracao",
+                  fixed: true,
+                  eligibility: "oracaoMale",
+                },
+              ],
+            }
+          : sec,
+      );
+    },
+    [type, t],
+  );
+
   useEffect(() => {
     if (type !== "midweek" && type !== "weekend") return;
     const saved = record?.program ?? null;
     if (saved && Array.isArray(saved.sections) && saved.sections.length > 0) {
-      setProgram(saved.sections);
+      setProgram(ensureOracaoRow(saved.sections));
     }
-  }, [type, record?.program]);
+  }, [type, record?.program, ensureOracaoRow]);
 
   const slotByRole = useMemo(
     () => new Map(slots.map((s) => [s.role, s])),
@@ -1891,18 +2028,20 @@ function MeetingCard({
       const autoItem = autoSong
         ? (songs.find((s) => s.number === autoSong)?.id ?? null)
         : null;
+      const defaultPerson =
+        slot.role === "condutorSentinela" ? defaultConductorId : null;
       return [
         {
           role: slot.role,
           sortOrder: slot.sortOrder,
-          personId: null,
+          personId: defaultPerson,
           subOrgPersonId: null,
           contentItemId: autoItem,
           value: null,
         },
       ];
     },
-    [record, type, apostilaWeek, songs, sentinela],
+    [record, type, apostilaWeek, songs, sentinela, defaultConductorId],
   );
 
   const [drafts, setDrafts] = useState<Draft[]>(() =>
@@ -2014,11 +2153,26 @@ function MeetingCard({
     [slotByRole, people, drafts],
   );
 
-  const setPerson = useCallback((role: string, personId: string | null) => {
-    setDrafts((prev) =>
-      prev.map((d) => (d.role === role ? { ...d, personId } : d)),
-    );
-  }, []);
+  const setPerson = useCallback(
+    (role: string, personId: string | null) => {
+      setDrafts((prev) => {
+        let next = prev.map((d) => (d.role === role ? { ...d, personId } : d));
+        if (personId) {
+          for (const s of slotByRole.values()) {
+            if (s.conflictsWith === role) {
+              next = next.map((d) =>
+                d.role === s.role && d.personId === personId
+                  ? { ...d, personId: null }
+                  : d,
+              );
+            }
+          }
+        }
+        return next;
+      });
+    },
+    [slotByRole],
+  );
 
   const setSubOrgPerson = useCallback(
     (role: string, subOrgPersonId: string | null) => {
@@ -2184,11 +2338,11 @@ function MeetingCard({
     setEditing(false);
     setProgram(
       record?.program?.sections?.length
-        ? record.program.sections
+        ? ensureOracaoRow(record.program.sections)
         : (defaultProgram ?? []),
     );
     setDrafts(slots.flatMap((slot) => buildDraftForSlot(slot)));
-  }, [record, defaultProgram, slots, buildDraftForSlot]);
+  }, [record, defaultProgram, slots, buildDraftForSlot, ensureOracaoRow]);
 
   const handleSave = async () => {
     if (!record) return;
@@ -2274,6 +2428,57 @@ function MeetingCard({
 
   const editable = canManage && editing;
 
+  const condutorSentinelaPersonId =
+    drafts.find((d) => d.role === "condutorSentinela")?.personId ?? null;
+
+  const defaultConductorName = defaultConductorId
+    ? (people.find((p) => p.id === defaultConductorId)?.name ?? null)
+    : null;
+
+  const handleSetDefault = async () => {
+    if (!weekendConfigId || !condutorSentinelaPersonId) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/meeting-configs/${weekendConfigId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          defaultSentinelaConductorId: condutorSentinelaPersonId,
+        }),
+      });
+      if (!res.ok) {
+        toast.error(t("meetings.defaultError"));
+        return;
+      }
+      const data = await res.json();
+      onUpdateConfig(data.config);
+      toast.success(t("meetings.defaultSaved"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClearDefault = async () => {
+    if (!weekendConfigId) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/meeting-configs/${weekendConfigId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ defaultSentinelaConductorId: null }),
+      });
+      if (!res.ok) {
+        toast.error(t("meetings.defaultError"));
+        return;
+      }
+      const data = await res.json();
+      onUpdateConfig(data.config);
+      toast.success(t("meetings.defaultRemoved"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border sm:p-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -2314,6 +2519,62 @@ function MeetingCard({
           </div>
         )}
       </div>
+
+      {cardEvents.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {cardEvents.map((ev) => {
+            const Icon = EVENT_ICONS[ev.type] ?? CalendarDays;
+            const color = EVENT_COLORS[ev.type] ?? "text-primary";
+            const label = t(`settings.specialEventTypes.${ev.type}`);
+            const when = ev.endDate
+              ? `${formatFullDate(parseDateKey(ev.date))} – ${formatFullDate(parseDateKey(ev.endDate))}`
+              : formatFullDate(parseDateKey(ev.date));
+            return (
+              <span
+                key={ev.id}
+                className="inline-flex items-center gap-1.5 rounded-full border border-current/20 bg-amber-50 px-3 py-1 text-xs font-semibold dark:bg-amber-950/40"
+              >
+                <Icon className={cn("h-3.5 w-3.5", color)} />
+                <span className={color}>{label}</span>
+                <span className="text-muted-foreground">{when}</span>
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      {type === "weekend" && editable && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 p-3">
+          <div className="text-sm">
+            <span className="font-medium">
+              {t("meetings.defaultConductor")}:
+            </span>{" "}
+            <span className="text-muted-foreground">
+              {defaultConductorName ?? t("meetings.noDefault")}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSetDefault}
+              disabled={saving || !condutorSentinelaPersonId}
+            >
+              {t("meetings.setAsDefault")}
+            </Button>
+            {defaultConductorId && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearDefault}
+                disabled={saving}
+              >
+                {t("meetings.removeDefault")}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       {!record ? (
         canManage ? (
@@ -2423,7 +2684,13 @@ function MeetingCard({
 
               if (slot.kind === "discurso") {
                 const value = slotDrafts[0]?.contentItemId ?? null;
+                const manualTitle = slotDrafts[0]?.value ?? "";
                 const item = getItem(value, "discurso");
+                const displayed = manualTitle
+                  ? manualTitle
+                  : item
+                    ? `${item.number != null ? `${item.number}. ` : ""}${item.theme}`
+                    : "—";
                 return (
                   <div key={slot.role} className="space-y-1.5">
                     <label
@@ -2433,32 +2700,71 @@ function MeetingCard({
                       {label}
                     </label>
                     {editable ? (
-                      <select
-                        id={slot.role}
-                        value={value ?? ""}
-                        onChange={(e) => {
-                          setItem(slot.role, e.target.value || null);
-                          if (slot.role === "discurso")
-                            setPerson("orador", null);
-                        }}
-                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
-                      >
-                        <option value="">{t("meetings.selectDiscurso")}</option>
-                        {discursos.map((d) => (
-                          <option key={d.id} value={d.id}>
-                            {d.number != null ? `${d.number}. ` : ""}
-                            {d.theme}
+                      <>
+                        <select
+                          id={slot.role}
+                          value={value ?? ""}
+                          onChange={(e) => {
+                            setItem(slot.role, e.target.value || null);
+                            if (slot.role === "discurso")
+                              setPerson("orador", null);
+                          }}
+                          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+                        >
+                          <option value="">
+                            {t("meetings.selectDiscurso")}
                           </option>
-                        ))}
-                      </select>
+                          {discursos.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.number != null ? `${d.number}. ` : ""}
+                              {d.theme}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {t("meetings.manualOr")}
+                          </span>
+                          <input
+                            type="text"
+                            value={manualTitle}
+                            onChange={(e) =>
+                              setValue(slot.role, e.target.value)
+                            }
+                            placeholder={t(
+                              "meetings.manualDiscursoPlaceholder",
+                            )}
+                            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+                          />
+                        </div>
+                      </>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        {item
-                          ? `${item.number != null ? `${item.number}. ` : ""}${item.theme}`
-                          : "—"}
+                        {displayed}
                       </p>
                     )}
                   </div>
+                );
+              }
+
+              if (slot.kind === "orador") {
+                return (
+                  <MemorialOradorControl
+                    key={slot.role}
+                    role={slot.role}
+                    draft={slotDrafts[0]}
+                    editable={editable}
+                    mainOptions={people.filter(
+                      (p) => p.active && p.discursoPublico,
+                    )}
+                    subOrgs={subOrgs}
+                    orgName={orgName}
+                    getPerson={getPerson}
+                    getSubOrgPerson={getSubOrgPerson}
+                    onPersonChange={setPerson}
+                    onSubOrgPersonChange={setSubOrgPerson}
+                    onValueChange={setValue}
+                  />
                 );
               }
 
@@ -2628,6 +2934,121 @@ function PersonMultiSlot({
             </option>
           ))}
         </select>
+      )}
+    </div>
+  );
+}
+
+function MemorialOradorControl({
+  role,
+  draft,
+  editable,
+  mainOptions,
+  subOrgs,
+  orgName,
+  getPerson,
+  getSubOrgPerson,
+  onPersonChange,
+  onSubOrgPersonChange,
+  onValueChange,
+}: {
+  role: string;
+  draft: Draft | undefined;
+  editable: boolean;
+  mainOptions: Person[];
+  subOrgs: SubOrg[];
+  orgName?: string;
+  getPerson: (id: string | null) => Person | null;
+  getSubOrgPerson: (id: string | null) =>
+    | (SubOrgPersonItem & {
+        subOrgName: string;
+      })
+    | null;
+  onPersonChange: (role: string, personId: string | null) => void;
+  onSubOrgPersonChange: (role: string, subOrgPersonId: string | null) => void;
+  onValueChange: (role: string, value: string) => void;
+}) {
+  const { t } = useTranslation();
+  const manual = draft?.value ?? "";
+  const selectValue = manual
+    ? "__manual__"
+    : draft?.subOrgPersonId
+      ? `sub:${draft.subOrgPersonId}`
+      : draft?.personId
+        ? `person:${draft.personId}`
+        : "";
+
+  const handleSelectChange = (v: string) => {
+    if (v === "__manual__") {
+      onPersonChange(role, null);
+      onSubOrgPersonChange(role, null);
+    } else if (v.startsWith("sub:")) {
+      onSubOrgPersonChange(role, v.slice(4));
+      onValueChange(role, "");
+    } else if (v.startsWith("person:")) {
+      onPersonChange(role, v.slice(7));
+      onValueChange(role, "");
+    } else {
+      onPersonChange(role, null);
+      onValueChange(role, "");
+    }
+  };
+
+  if (!editable) {
+    const person = getPerson(draft?.personId ?? null);
+    const subOrgPerson = getSubOrgPerson(draft?.subOrgPersonId ?? null);
+    const display = manual
+      ? manual
+      : subOrgPerson
+        ? `${subOrgPerson.name} (${subOrgPerson.subOrgName})`
+        : person
+          ? `${person.name}${orgName ? ` (${orgName})` : ""}`
+          : "—";
+    return <p className="text-sm text-muted-foreground">{display}</p>;
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={`orador-${role}`} className="block text-sm font-medium">
+        {t("meetings.roles.orador")}
+      </label>
+      <select
+        id={`orador-${role}`}
+        value={selectValue}
+        onChange={(e) => handleSelectChange(e.target.value)}
+        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+      >
+        <option value="">{t("meetings.selectPerson")}</option>
+        <option value="__manual__">{t("meetings.manualOradorOption")}</option>
+        {orgName && (
+          <optgroup label={t("meetings.pdf.congregation")}>
+            {mainOptions.map((p) => (
+              <option key={`person:${p.id}`} value={`person:${p.id}`}>
+                {p.name}
+              </option>
+            ))}
+          </optgroup>
+        )}
+        {subOrgs
+          .filter((so) => so.people.length > 0)
+          .map((so) => (
+            <optgroup key={so.id} label={so.name}>
+              {so.people.map((p) => (
+                <option key={`sub:${p.id}`} value={`sub:${p.id}`}>
+                  {p.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+      </select>
+      {selectValue === "__manual__" && (
+        <input
+          type="text"
+          value={manual}
+          onChange={(e) => onValueChange(role, e.target.value)}
+          placeholder={t("meetings.manualOradorPlaceholder")}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+        />
       )}
     </div>
   );
@@ -3327,7 +3748,9 @@ function MeetingPdfDialog({
 }) {
   const [from, setFrom] = useState<Date | null>(null);
   const [to, setTo] = useState<Date | null>(null);
-  const [type, setType] = useState<"both" | "midweek" | "weekend">("both");
+  const [type, setType] = useState<"both" | "midweek" | "weekend" | "memorial">(
+    "both",
+  );
   const [generating, setGenerating] = useState(false);
 
   const canGenerate = Boolean(from && to) && !generating;
@@ -3349,7 +3772,9 @@ function MeetingPdfDialog({
           assignments: PdfAssignment[];
         }>;
       };
-      const wanted = new Set(type === "both" ? ["midweek", "weekend"] : [type]);
+      const wanted = new Set(
+        type === "both" ? ["midweek", "weekend", "memorial"] : [type],
+      );
       const pdfMeetings: PdfMeeting[] = (data.meetings ?? [])
         .filter((m) => wanted.has(m.type))
         .map((m) => {
@@ -3441,13 +3866,16 @@ function MeetingPdfDialog({
               id="meeting-pdf-type"
               value={type}
               onChange={(e) =>
-                setType(e.target.value as "both" | "midweek" | "weekend")
+                setType(
+                  e.target.value as "both" | "midweek" | "weekend" | "memorial",
+                )
               }
               className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
             >
               <option value="both">{t("meetings.pdf.typeBoth")}</option>
               <option value="midweek">{t("meetings.pdf.typeMidweek")}</option>
               <option value="weekend">{t("meetings.pdf.typeWeekend")}</option>
+              <option value="memorial">{t("meetings.pdf.typeMemorial")}</option>
             </select>
           </div>
         </div>

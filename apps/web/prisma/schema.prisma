@@ -140,17 +140,19 @@ model InviteToken {
 }
 
 model MeetingConfig {
-  id              String   @id @default(cuid())
-  organizationId  String
-  type            String   @default("midweek")
-  dayOfWeek       Int
-  startTime       String
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                          String   @id @default(cuid())
+  organizationId              String
+  type                        String   @default("midweek")
+  dayOfWeek                   Int
+  startTime                   String
+  isActive                    Boolean  @default(true)
+  defaultSentinelaConductorId String?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parts        MeetingPart[]
+  organization               Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parts                      MeetingPart[]
+  defaultSentinelaConductor  Person?     @relation("DefaultSentinelaConductor", fields: [defaultSentinelaConductorId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, type])
 }
@@ -403,6 +405,7 @@ model Person {
   personTalks            PersonTalk[]
   cleaningAssignments    CleaningAssignment[]
   meetingAssignments     MeetingAssignment[]
+  sentinelaConductorDefaults MeetingConfig[] @relation("DefaultSentinelaConductor")
 
   @@index([organizationId, sex])
   @@index([organizationId, active])

@@ -5,6 +5,39 @@ import { handleApiError, readJsonRequest } from "@/lib/http";
 import { canManageSchedules, getUserOrg } from "@/lib/org-utils";
 import { prisma } from "@/lib/prisma";
 
+function validateConductorReaderConflict(
+  assignments: Array<{
+    role: string;
+    personId?: string | null;
+  }>,
+): string | null {
+  const byRole = new Map<string, string | null>();
+  for (const a of assignments) {
+    if (a.personId) byRole.set(a.role, a.personId);
+  }
+
+  const pairs: Array<[string, string]> = [
+    ["condutorSentinela", "leitorSentinela"],
+  ];
+
+  const conductorRoles = [...byRole.keys()].filter((r) =>
+    /^secao:\d+:\d+:condutor$/.test(r),
+  );
+  for (const condRole of conductorRoles) {
+    const leitorRole = condRole.replace(/:condutor$/, ":leitor");
+    pairs.push([condRole, leitorRole]);
+  }
+
+  for (const [cond, leitor] of pairs) {
+    const condId = byRole.get(cond);
+    const leitorId = byRole.get(leitor);
+    if (condId && condId === leitorId) {
+      return `${cond} / ${leitor}`;
+    }
+  }
+  return null;
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -109,6 +142,16 @@ export async function PUT(
           { status: 400 },
         );
       }
+    }
+
+    const conflict = validateConductorReaderConflict(assignments);
+    if (conflict) {
+      return NextResponse.json(
+        {
+          error: `O condutor e o leitor não podem ser a mesma pessoa (${conflict})`,
+        },
+        { status: 400 },
+      );
     }
 
     await prisma.$transaction([

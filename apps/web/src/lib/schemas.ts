@@ -39,6 +39,7 @@ export const updateMeetingConfigSchema = z
     dayOfWeek: dayOfWeek.optional(),
     startTime: timeOfDay.optional(),
     isActive: z.boolean().optional(),
+    defaultSentinelaConductorId: z.string().nullable().optional(),
   })
   .strict();
 
