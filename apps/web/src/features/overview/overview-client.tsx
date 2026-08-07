@@ -250,7 +250,12 @@ function ItemRow({
   const Icon = KIND_ICON[item.kind];
 
   const isCleaning = item.kind === "cleaning";
-  const task = isCleaning ? (item.task ?? t("overview.noCleaningTask")) : null;
+  const taskKey = isCleaning ? item.task : null;
+  const task = taskKey
+    ? t(taskKey)
+    : isCleaning
+      ? t("overview.noCleaningTask")
+      : null;
 
   return (
     <li className="rounded-2xl bg-card ring-1 ring-white/10">
