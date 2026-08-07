@@ -15,6 +15,7 @@ export type CleaningSectorDefault = {
   allowYoung?: boolean;
   gender?: Gender;
   sortOrder: number;
+  task?: string;
 };
 
 export const DEFAULT_SECTORS: CleaningSectorDefault[] = [
@@ -26,6 +27,7 @@ export const DEFAULT_SECTORS: CleaningSectorDefault[] = [
     allowYoung: false,
     gender: "male",
     sortOrder: 0,
+    task: "cleaning.defaults.meeting.bathroomMale.task",
   },
   {
     key: "bathroomFemale",
@@ -35,6 +37,7 @@ export const DEFAULT_SECTORS: CleaningSectorDefault[] = [
     allowYoung: false,
     gender: "female",
     sortOrder: 1,
+    task: "cleaning.defaults.meeting.bathroomFemale.task",
   },
   {
     key: "auditorium",
@@ -44,6 +47,7 @@ export const DEFAULT_SECTORS: CleaningSectorDefault[] = [
     allowYoung: true,
     gender: "any",
     sortOrder: 2,
+    task: "cleaning.defaults.meeting.auditorium.task",
   },
   {
     key: "supplies",
@@ -53,6 +57,7 @@ export const DEFAULT_SECTORS: CleaningSectorDefault[] = [
     allowYoung: true,
     gender: "any",
     sortOrder: 3,
+    task: "cleaning.defaults.meeting.supplies.task",
   },
   {
     key: "trash",
@@ -62,108 +67,126 @@ export const DEFAULT_SECTORS: CleaningSectorDefault[] = [
     allowYoung: true,
     gender: "any",
     sortOrder: 4,
+    task: "cleaning.defaults.meeting.trash.task",
   },
   {
     key: "cobwebs",
     type: "weekly",
     unit: "family",
     sortOrder: 0,
+    task: "cleaning.defaults.weekly.cobwebs.task",
   },
   {
     key: "floor",
     type: "weekly",
     unit: "group",
     sortOrder: 1,
+    task: "cleaning.defaults.weekly.floor.task",
   },
   {
     key: "doorsWindows",
     type: "weekly",
     unit: "family",
     sortOrder: 2,
+    task: "cleaning.defaults.weekly.doorsWindows.task",
   },
   {
     key: "objects",
     type: "weekly",
     unit: "family",
     sortOrder: 3,
+    task: "cleaning.defaults.weekly.objects.task",
   },
   {
     key: "microphones",
     type: "weekly",
     unit: "family",
     sortOrder: 4,
+    task: "cleaning.defaults.weekly.microphones.task",
   },
   {
     key: "chairs",
     type: "weekly",
     unit: "group",
     sortOrder: 5,
+    task: "cleaning.defaults.weekly.chairs.task",
   },
   {
     key: "gardens",
     type: "weekly",
     unit: "group",
     sortOrder: 6,
+    task: "cleaning.defaults.weekly.gardens.task",
   },
   {
     key: "laundry",
     type: "weekly",
     unit: "family",
     sortOrder: 7,
+    task: "cleaning.defaults.weekly.laundry.task",
   },
   {
     key: "forgottenObjects",
     type: "weekly",
     unit: "family",
     sortOrder: 8,
+    task: "cleaning.defaults.weekly.forgottenObjects.task",
   },
   {
     key: "walls",
     type: "general",
     unit: "group",
     sortOrder: 0,
+    task: "cleaning.defaults.general.walls.task",
   },
   {
     key: "blinds",
     type: "general",
     unit: "family",
     sortOrder: 1,
+    task: "cleaning.defaults.general.blinds.task",
   },
   {
     key: "fans",
     type: "general",
     unit: "group",
     sortOrder: 2,
+    task: "cleaning.defaults.general.fans.task",
   },
   {
     key: "bathrooms",
     type: "general",
     unit: "group",
     sortOrder: 3,
+    task: "cleaning.defaults.general.bathrooms.task",
   },
   {
     key: "gates",
     type: "general",
     unit: "group",
     sortOrder: 4,
+    task: "cleaning.defaults.general.gates.task",
   },
   {
     key: "garden",
     type: "general",
     unit: "group",
     sortOrder: 5,
+    task: "cleaning.defaults.general.garden.task",
   },
   {
     key: "sidewalks",
     type: "general",
     unit: "group",
     sortOrder: 6,
+    task: "cleaning.defaults.general.sidewalks.task",
   },
   {
     key: "cleaningRoom",
     type: "general",
     unit: "family",
     sortOrder: 7,
+    task: "cleaning.defaults.general.cleaningRoom.task",
   },
 ];
 

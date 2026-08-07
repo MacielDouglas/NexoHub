@@ -61,7 +61,7 @@ export async function POST(request: Request) {
           where: { id: existing.id },
           data: {
             name: null,
-            task: null,
+            task: defaults.task ?? null,
             unit: defaults.unit,
             peopleCount:
               type === "meeting" ? (defaults.peopleCount ?? null) : null,
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
           type,
           defaultKey: defaults.key,
           name: null,
-          task: null,
+          task: defaults.task ?? null,
           unit: defaults.unit,
           peopleCount:
             type === "meeting" ? (defaults.peopleCount ?? null) : null,
