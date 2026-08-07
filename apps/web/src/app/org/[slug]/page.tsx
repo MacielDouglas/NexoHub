@@ -49,6 +49,7 @@ type CleaningRow = {
     type: string;
     name: string | null;
     defaultKey: string | null;
+    task: string | null;
   };
 };
 
@@ -63,6 +64,7 @@ function buildCleaningItem(a: CleaningRow): OverviewItem {
     title: a.sector.defaultKey ? null : a.sector.name,
     subtitleKey: `cleaning.types.${a.sector.type}`,
     subtitle: null,
+    task: a.sector.task,
   };
 }
 
@@ -160,7 +162,7 @@ export default async function OrganizationPage({
             id: true,
             date: true,
             sector: {
-              select: { type: true, name: true, defaultKey: true },
+              select: { type: true, name: true, defaultKey: true, task: true },
             },
           },
           orderBy: { date: "asc" },

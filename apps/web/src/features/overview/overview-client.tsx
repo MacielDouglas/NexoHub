@@ -5,6 +5,7 @@ import {
   CalendarClock,
   CalendarDays,
   CalendarRange,
+  ChevronDown,
   type LucideIcon,
   MonitorSpeaker,
   Sparkles,
@@ -22,6 +23,7 @@ export type OverviewItem = {
   title: string | null;
   subtitleKey: string | null;
   subtitle: string | null;
+  task?: string | null;
 };
 
 type NextMeeting = {
@@ -247,35 +249,81 @@ function ItemRow({
   const subtitle = item.subtitleKey ? t(item.subtitleKey) : item.subtitle;
   const Icon = KIND_ICON[item.kind];
 
+  const isCleaningWithTask = item.kind === "cleaning" && item.task;
+
   return (
-    <li className="flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-white/10 sm:p-4">
-      <span
-        className={`flex size-10 shrink-0 items-center justify-center rounded-full ${KIND_ICON_CLASS[item.kind]}`}
-      >
-        <Icon className="size-4" aria-hidden="true" />
-      </span>
+    <li className="rounded-2xl bg-card ring-1 ring-white/10">
+      {isCleaningWithTask ? (
+        <details className="group p-3 sm:p-4">
+          <summary className="flex items-center gap-3 list-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+            <span
+              className={`flex size-10 shrink-0 items-center justify-center rounded-full ${KIND_ICON_CLASS[item.kind]}`}
+            >
+              <Icon className="size-4" aria-hidden="true" />
+            </span>
 
-      <div className="min-w-0 flex-1">
-        {title ? (
-          <p className="truncate text-sm font-medium text-foreground">
-            {title}
-          </p>
-        ) : null}
-        {subtitle ? (
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {subtitle}
-          </p>
-        ) : null}
-      </div>
+            <div className="min-w-0 flex-1">
+              {title ? (
+                <p className="truncate text-sm font-medium text-foreground">
+                  {title}
+                </p>
+              ) : null}
+              {subtitle ? (
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                  {subtitle}
+                </p>
+              ) : null}
+            </div>
 
-      <div className="flex shrink-0 items-center gap-2">
-        <Badge variant={KIND_VARIANT[item.kind]}>
-          {t(`overview.kinds.${item.kind}`)}
-        </Badge>
-        <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
-          {formatDate(item.date)}
-        </span>
-      </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Badge variant={KIND_VARIANT[item.kind]}>
+                {t(`overview.kinds.${item.kind}`)}
+              </Badge>
+              <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                {formatDate(item.date)}
+              </span>
+              <ChevronDown
+                className="size-4 text-muted-foreground transition-transform group-open:rotate-180"
+                aria-hidden="true"
+              />
+            </div>
+          </summary>
+
+          <div className="mt-3 pt-3 border-t border-white/10">
+            <p className="text-sm text-foreground">{item.task}</p>
+          </div>
+        </details>
+      ) : (
+        <div className="flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-white/10 sm:p-4">
+          <span
+            className={`flex size-10 shrink-0 items-center justify-center rounded-full ${KIND_ICON_CLASS[item.kind]}`}
+          >
+            <Icon className="size-4" aria-hidden="true" />
+          </span>
+
+          <div className="min-w-0 flex-1">
+            {title ? (
+              <p className="truncate text-sm font-medium text-foreground">
+                {title}
+              </p>
+            ) : null}
+            {subtitle ? (
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                {subtitle}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <Badge variant={KIND_VARIANT[item.kind]}>
+              {t(`overview.kinds.${item.kind}`)}
+            </Badge>
+            <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+              {formatDate(item.date)}
+            </span>
+          </div>
+        </div>
+      )}
     </li>
   );
 }
