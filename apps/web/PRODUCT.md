@@ -32,7 +32,7 @@ Interface web multi-tenant (Next.js 16, Tailwind v4, shadcn/ui sobre Base UI, Pr
 
 ## Brand Commitments
 
-Direção visual pinada pelo usuário: app bancário **Itaú atual** — fundo escuro (ink), laranja assinatura `#EC7000` como acento dominante, cards escuros, números em destaque (linguagem de saldo). Escopo extendido pelo usuário: o mundo Itaú veste **todo o aplicativo** (auth, shell org, overview, Pessoas, meeting-content, settings, admin) com tokens promovidos ao `:root`; a **dashboard** (`/dashboard`, `/dashboard/members`) permanece no mundo claro, isolada pela classe `.light-world`.
+Direção visual pinada pelo usuário: app bancário **Itaú atual** — fundo escuro (ink), laranja assinatura `#EC7000` como acento dominante, cards escuros, números em destaque (linguagem de saldo). Escopo extendido pelo usuário: o mundo Itaú veste **todo o aplicativo** (auth, shell org, overview, Pessoas, meeting-content, settings, admin) com tokens promovidos ao `:root`.
 
 ## Evidence on Hand
 
@@ -43,7 +43,7 @@ Implementação vigente em `src/features/people/` (`people-client.tsx`, `person-
 - Operar primeiro: a tarefa, o estado e o conteúdo permanecem sempre legíveis; a expressão nunca obscurece a função.
 - Números e métricas em destaque, com hierarquia de "saldo" bancário.
 - Fidelidade ao mundo Itaú: laranja `#EC7000` sobre ink escuro, cantos arredondados, sem brilho excessivo.
-- Mundo escuro global; a dashboard é a única ilha clara isolada por `.light-world`.
+- Mundo escuro global Itaú em todo o app, sem ilhas claras.
 - Preservar funcionalidade, i18n e acessibilidade existentes.
 - Modo da superfície: **Operate**.
 

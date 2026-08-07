@@ -159,7 +159,7 @@ export function AdminClient() {
             className="text-sm text-muted-foreground hover:text-foreground"
             onClick={exitOrg}
           >
-            {t("nav.dashboard")}
+            {t("nav.home")}
           </Link>
           <SignOutButton />
         </div>

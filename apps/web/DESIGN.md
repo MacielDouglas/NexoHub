@@ -89,20 +89,18 @@ components:
 
 O produto inteiro é um banco digital para a congregação. O mundo Itaú — tinta `#0c0c12` + laranja `#ec7000` — foi **promovido ao `:root` global** e veste todo o app: auth (login, welcome, create-org), o shell da organização (sidebar, drawer, painel arredondado) e todas as páginas `/org/*` (overview, Pessoas, meeting-content, settings) e admin.
 
-Uma superfície permanece no **mundo claro** como ilha própria: a **dashboard** (`/dashboard`, `/dashboard/members`), protegida pela classe `.light-world` que restaura os tokens luzes (azul `#2563eb` + violeta `#7c3aed`). É uma decisão de escopo do usuário: o app inteiro segue o padrão do banco; a dashboard mantém seu visual operacional claro.
-
 O painel arredondado (`rounded-3xl`, ring branco a 10%) é o "app dentro do app": envolve o conteúdo de todas as rotas `/org/*` via layout. Números usam `tabular-nums` e peso semibold para escanear como valores. Cards têm cantos generosos, ring sutis no lugar de sombras, e um único glow laranja no hero como momento de assinatura.
 
 **Key Characteristics:**
-- Mundo global escuro Itaú; a dashboard é a única ilha clara (`.light-world`).
-- Laranja `#ec7000` como único acento do mundo escuro; no mundo claro da dashboard, o acento volta a ser azul/violeta.
+- Mundo global escuro Itaú em todo o app (sem ilhas claras).
+- Laranja `#ec7000` como único acento do mundo escuro.
 - Profundidade por camadas tonais (card sobre ink, muted sobre card) + ring 1px, não por sombras duras.
 - Números tabulares e pesos fortes para leitura de métricas/valores.
 - Cantos: `rounded-3xl` no painel, `rounded-2xl` no hero/linhas, `rounded-full` em buscas e CTA.
 
 ## Colors
 
-O `:root` carrega a **paleta Itaú escura** como padrão global. A classe `.light-world` carrega a paleta clara de gestão, aplicada apenas na dashboard.
+O `:root` carrega a **paleta Itaú escura** como padrão global — não há escopo claro reverso.
 
 ### Primary (global)
 - **Laranja Itaú** (#ec7000): único acento do mundo escuro — CTAs, total do hero, sidebar ativa, ícones de destaque, ring de foco.
@@ -117,11 +115,6 @@ O `:root` carrega a **paleta Itaú escura** como padrão global. A classe `.ligh
 - **Cinza Pálido** (#9aa1ad): texto secundário sobre fundo escuro (≥4.5:1).
 - **Vermelho Saldo** (#ff5d6c): estados destrutivos (badge "Inativo", remoção) sobre fundo escuro.
 - **Borda Escura** (#242733): hairlines sobre a tinta.
-
-### A ilha clara (#.light-world, só dashboard)
-- **Azul Nexohub** (#2563eb): acento da dashboard — botões, links, foco.
-- **Violeta Nexohub** (#7c3aed): acento secundário da dashboard — hero gradiente, badges.
-- **Fundo Gelado** (#f8fafd), **Branco Cartão** (#ffffff), **Mist Neutral** (#eef2f8), **Cinza Nevoeiro** (#64748b), **Borda Clara** (#e6ebf3).
 
 ### Named Rules
 **A Regra da Raridade Laranja.** No mundo escuro, o laranja `#ec7000` aparece em poucos pontos — CTA, total, glow do hero — e sua raridade é o que o faz parecer uma assinatura, não um tema.
@@ -196,7 +189,7 @@ O sistema é **plano por camadas tonais**: profundidade vem de stacking de super
 - **Focus:** `border-ring`/`ring-primary/50` (laranja no mundo escuro).
 
 ### Navigation
-- Shell global escuro com sidebar (links ativos `bg-primary text-primary-foreground`), shared por todas as rotas `/org/*`. A dashboard tem header próprio claro com `DashboardNav` (fora do mundo escuro).
+- Shell global escuro com sidebar (links ativos `bg-primary text-primary-foreground`), shared por todas as rotas `/org/*`.
 - SideNav interno (settings/meeting-content) e BottomNav mobile usam os mesmos tokens escuros.
 
 ### Hero "Saldo" (componente de assinatura)
@@ -209,7 +202,7 @@ O sistema é **plano por camadas tonais**: profundidade vem de stacking de super
 
 ### Do:
 - **Do** usar `tabular-nums` + semibold em todo número que representa métrica.
-- **Do** manter o laranja `#ec7000` como o acento único do mundo escuro global; confinar o azul/violeta à ilha clara da dashboard (`.light-world`).
+- **Do** manter o laranja `#ec7000` como o acento único do mundo escuro global.
 - **Do** definir superfícies com rings de 1px (`white/10`, `white/5`) em vez de sombras.
 - **Do** manter i18n: todas as strings novas/alteradas via `t()` em pt.json/es.json.
 - **Do** usar `rounded-full` para CTA e busca, `rounded-2xl`/`rounded-xl` para cards.
@@ -217,5 +210,4 @@ O sistema é **plano por camadas tonais**: profundidade vem de stacking de super
 ### Don't:
 - **Don't** usar gradientes de texto para destaque — peso e tamanho bastam.
 - **Don't** adicionar cores além do laranja no mundo escuro (sem verde/rosa/ciano como acentos).
-- **Don't** usar tokens azul/violeta do mundo claro fora da dashboard (`.light-world`), nem vazar tokens escuros para dentro dela.
 - **Don't** usar sombras duras com offset zero como default — o sistema é flat com rings.

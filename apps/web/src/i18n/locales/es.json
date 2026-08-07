@@ -29,13 +29,8 @@
     "greeting": "Bienvenido de nuevo"
   },
   "nav": {
-    "dashboard": "Panel",
-    "settings": "Ajustes",
     "signOut": "Salir",
-    "home": "Inicio",
-    "members": "Miembros",
-    "admin": "Admin",
-    "meetingContent": "Contenido de las Reuniones"
+    "home": "Inicio"
   },
   "OrganizationNavigation": {
     "organization": "Congregación",
@@ -135,35 +130,6 @@
     "copyCode": "Copiar",
     "codeCopied": "¡Código copiado!",
     "tokenHint": "Comparte este código con el invitado."
-  },
-  "dashboard": {
-    "title": "Panel",
-    "welcome": "Bienvenido, {{name}}",
-    "subtitle": "Sigue la actividad de la congregación",
-    "statMeetings": "Reuniones",
-    "statConfigs": "Configuración activa",
-    "statParts": "Partes",
-    "statMembers": "Miembros",
-    "meetingsTitle": "Reuniones",
-    "noMeetings": "No hay reuniones configuradas.",
-    "meetingParts": "{{count}} partes",
-    "eventsTitle": "Eventos Especiales",
-    "noEvents": "No hay eventos especiales.",
-    "manageSettings": "Gestionar configuración"
-  },
-  "home": {
-    "welcome": "Bienvenido, {{name}}",
-    "subtitle": "Sigue las reuniones de tu congregación",
-    "nextMeeting": "Próxima reunión",
-    "noMeetings": "No hay reuniones configuradas.",
-    "today": "Hoy",
-    "tomorrow": "Mañana",
-    "statMeetings": "Reuniones",
-    "statMembers": "Miembros",
-    "statEvents": "Eventos",
-    "schedule": "Próximas reuniones",
-    "upcomingEvents": "Próximos eventos especiales",
-    "noEvents": "No hay eventos especiales."
   },
   "settings": {
     "title": "Ajustes",
