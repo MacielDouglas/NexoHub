@@ -136,4 +136,60 @@
   html {
     @apply font-sans;
   }
+
+  /* Hover states only on devices that support hover (not touch) */
+  @media (hover: hover) {
+    .hover-only\:bg-primary\/80:hover {
+      @apply bg-primary/80;
+    }
+    .hover-only\:bg-muted:hover {
+      @apply bg-muted;
+    }
+    .hover-only\:bg-muted\/50:hover {
+      @apply bg-muted/50;
+    }
+    .hover-only\:bg-destructive\/20:hover {
+      @apply bg-destructive/20;
+    }
+    .hover-only\:bg-destructive\/30:hover {
+      @apply bg-destructive/30;
+    }
+    .hover-only\:bg-input\/50:hover {
+      @apply bg-input/50;
+    }
+    .hover-only\:bg-secondary\/5:hover {
+      @apply bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)];
+    }
+    .hover-only\:underline:hover {
+      @apply underline;
+    }
+  }
+
+  /* Touch devices: larger tap targets */
+  @media (pointer: coarse) {
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    .touch-input {
+      min-height: 44px;
+    }
+    .touch-button {
+      min-height: 44px;
+    }
+  }
+
+  /* Safe area insets for notches/Dynamic Island */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
 }
