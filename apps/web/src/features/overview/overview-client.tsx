@@ -4,6 +4,7 @@ import {
   Brush,
   CalendarClock,
   CalendarDays,
+  CalendarRange,
   type LucideIcon,
   MonitorSpeaker,
   Sparkles,
@@ -12,7 +13,6 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export type OverviewItem = {
   id: string;
@@ -34,6 +34,7 @@ type Props = {
   personName: string | null;
   weekStart: string;
   weekEnd: string;
+  today: string;
   nextMeeting: NextMeeting | null;
   weekAssignments: OverviewItem[];
   upcoming: OverviewItem[];
@@ -56,8 +57,8 @@ const KIND_ICON: Record<OverviewItem["kind"], LucideIcon> = {
 };
 
 const KIND_ICON_CLASS: Record<OverviewItem["kind"], string> = {
-  meeting: "bg-primary/10 text-primary",
-  designation: "bg-secondary text-secondary-foreground",
+  meeting: "bg-primary/15 text-primary",
+  designation: "bg-white/10 text-foreground",
   cleaning: "bg-muted text-muted-foreground",
 };
 
@@ -65,6 +66,7 @@ export function OverviewClient({
   personName,
   weekStart,
   weekEnd,
+  today,
   nextMeeting,
   weekAssignments,
   upcoming,
@@ -82,31 +84,47 @@ export function OverviewClient({
       year: "numeric",
     });
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t("overview.title")}</h1>
-        <p className="mt-1 text-muted-foreground">{t("overview.subtitle")}</p>
-      </div>
+  const isToday = nextMeeting?.date === today;
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="size-4 text-muted-foreground" />
+  return (
+    <div className="space-y-6 pt-4">
+      <header>
+        <h1 className="text-2xl font-semibold text-foreground">
+          {t("overview.title")}
+        </h1>
+        <p className="mt-1 text-muted-foreground">{t("overview.subtitle")}</p>
+      </header>
+
+      <section
+        className="rounded-2xl bg-card ring-1 ring-white/10"
+        aria-label={t("overview.currentWeek")}
+      >
+        <div className="flex items-center gap-2 px-5 pt-5">
+          <CalendarRange className="size-4 text-primary" aria-hidden="true" />
+          <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {t("overview.currentWeek")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </h2>
+          <span className="h-px flex-1 bg-white/10" aria-hidden="true" />
+        </div>
+
+        <div className="space-y-3 p-5 pt-3 sm:p-6 sm:pt-3">
           <p className="text-sm text-muted-foreground">
             {t("overview.weekRange")}{" "}
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-foreground tabular-nums">
               {formatDate(weekStart)} – {formatDate(weekEnd)}
             </span>
           </p>
-          <div className="rounded-2xl bg-muted/50 p-4">
+
+          <div className="rounded-xl bg-muted/40 p-3 ring-1 ring-white/5">
             <p className="flex items-center gap-2 text-sm font-medium">
-              <CalendarClock className="size-4 text-primary" />
+              <CalendarClock
+                className="size-4 text-primary"
+                aria-hidden="true"
+              />
               {t("overview.nextMeeting")}
+              {isToday ? (
+                <Badge className="ml-1">{t("overview.today")}</Badge>
+              ) : null}
             </p>
             {nextMeeting ? (
               <p className="mt-1.5 text-sm text-muted-foreground">
@@ -114,7 +132,9 @@ export function OverviewClient({
                   {t(`meetings.types.${nextMeeting.type}`)}
                 </span>
                 {" · "}
-                {formatDate(nextMeeting.date)}
+                <span className="tabular-nums">
+                  {formatDate(nextMeeting.date)}
+                </span>
                 {nextMeeting.time ? ` · ${nextMeeting.time}` : ""}
               </p>
             ) : (
@@ -123,98 +143,86 @@ export function OverviewClient({
               </p>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {!personName ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
-            <span className="flex size-11 items-center justify-center rounded-3xl bg-muted text-muted-foreground">
-              <UserRound className="size-5" />
-            </span>
-            <p className="text-sm text-muted-foreground">
-              {t("overview.noPerson")}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-card p-10 text-center ring-1 ring-white/10">
+          <span className="flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <UserRound className="size-5" aria-hidden="true" />
+          </span>
+          <p className="text-sm text-muted-foreground">
+            {t("overview.noPerson")}
+          </p>
+        </div>
       ) : (
         <>
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="size-4 text-muted-foreground" />
-                  {t("overview.yourAssignments")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {weekAssignments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("overview.noAssignments")}
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {weekAssignments.map((item) => (
-                      <ItemRow
-                        key={item.id}
-                        item={item}
-                        formatDate={formatDate}
-                      />
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
+          <div className="grid gap-8 md:grid-cols-2 md:gap-6">
+            <AssignmentGroup
+              icon={Sparkles}
+              title={t("overview.yourAssignments")}
+              items={weekAssignments}
+              empty={t("overview.noAssignments")}
+              formatDate={formatDate}
+            />
 
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("overview.upcoming")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {upcoming.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("overview.noUpcoming")}
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {upcoming.map((item) => (
-                      <ItemRow
-                        key={item.id}
-                        item={item}
-                        formatDate={formatDate}
-                      />
-                    ))}
-                  </ul>
-                )}
-              </CardContent>
-            </Card>
+            <AssignmentGroup
+              icon={CalendarClock}
+              title={t("overview.upcoming")}
+              items={upcoming}
+              empty={t("overview.noUpcoming")}
+              formatDate={formatDate}
+            />
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("overview.pastMonth")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pastMonth.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {t("overview.noPast")}
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {pastMonth.map((item) => (
-                    <ItemRow
-                      key={item.id}
-                      item={item}
-                      formatDate={formatDate}
-                    />
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
+          <AssignmentGroup
+            icon={CalendarRange}
+            title={t("overview.pastMonth")}
+            items={pastMonth}
+            empty={t("overview.noPast")}
+            formatDate={formatDate}
+          />
         </>
       )}
     </div>
+  );
+}
+
+function AssignmentGroup({
+  icon: Icon,
+  title,
+  items,
+  empty,
+  formatDate,
+}: {
+  icon: LucideIcon;
+  title: string;
+  items: OverviewItem[];
+  empty: string;
+  formatDate: (key: string) => string;
+}) {
+  return (
+    <section aria-label={title}>
+      <div className="flex items-center gap-2 px-1">
+        <Icon className="size-3.5 text-muted-foreground" aria-hidden="true" />
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {title}
+        </h2>
+        <span className="h-px flex-1 bg-white/10" aria-hidden="true" />
+      </div>
+
+      {items.length === 0 ? (
+        <div className="mt-2 flex flex-col items-center justify-center gap-2 rounded-2xl bg-muted/40 px-4 py-8 text-center ring-1 ring-white/5">
+          <p className="text-sm text-muted-foreground">{empty}</p>
+        </div>
+      ) : (
+        <ul className="mt-2 space-y-2">
+          {items.map((item) => (
+            <ItemRow key={item.id} item={item} formatDate={formatDate} />
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -231,12 +239,13 @@ function ItemRow({
   const Icon = KIND_ICON[item.kind];
 
   return (
-    <li className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3">
+    <li className="flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-white/10 sm:p-4">
       <span
-        className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${KIND_ICON_CLASS[item.kind]}`}
+        className={`flex size-10 shrink-0 items-center justify-center rounded-full ${KIND_ICON_CLASS[item.kind]}`}
       >
         <Icon className="size-4" aria-hidden="true" />
       </span>
+
       <div className="min-w-0 flex-1">
         {title ? (
           <p className="truncate text-sm font-medium text-foreground">
@@ -249,11 +258,12 @@ function ItemRow({
           </p>
         ) : null}
       </div>
+
       <div className="flex shrink-0 items-center gap-2">
         <Badge variant={KIND_VARIANT[item.kind]}>
           {t(`overview.kinds.${item.kind}`)}
         </Badge>
-        <span className="text-xs whitespace-nowrap text-muted-foreground">
+        <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
           {formatDate(item.date)}
         </span>
       </div>

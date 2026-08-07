@@ -278,6 +278,7 @@ export default async function OrganizationPage({
       personName={person?.name ?? null}
       weekStart={toDateKey(weekStart)}
       weekEnd={toDateKey(weekEnd)}
+      today={toDateKey(today)}
       nextMeeting={nextMeeting}
       weekAssignments={weekAssignments}
       upcoming={upcoming}
