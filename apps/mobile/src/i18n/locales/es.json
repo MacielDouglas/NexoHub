@@ -464,5 +464,63 @@
     "sectionAssignments": "Designaciones (reuniones)",
     "sectionPrivileges": "Privilegios (reuniones)",
     "sectionServicePrivileges": "Privilegios de servicio (reuniones)"
+  },
+  "overview": {
+    "title": "Vista general",
+    "subtitle": "Sigue la semana actual y las asignaciones de la persona vinculada a ti.",
+    "currentWeek": "Semana actual",
+    "weekRange": "Semana del",
+    "nextMeeting": "Próxima reunión",
+    "noNextMeeting": "No queda ninguna reunión esta semana.",
+    "yourAssignments": "Tus asignaciones",
+    "noAssignments": "No tienes asignaciones esta semana.",
+    "upcoming": "Próximas asignaciones",
+    "noUpcoming": "No hay asignaciones futuras.",
+    "pastMonth": "Asignaciones pasadas del mes",
+    "noPast": "No hay asignaciones pasadas este mes.",
+    "noPerson": "Tu cuenta aún no está vinculada a ninguna persona registrada.",
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "inDays": "En {{count}} días",
+    "weekCountLabel": "Asignaciones esta semana",
+    "noCleaningTask": "No hay tarea definida para este sector.",
+    "kinds": {
+      "meeting": "Reunión",
+      "designation": "Designación",
+      "cleaning": "Limpieza"
+    }
+  },
+  "meetings": {
+    "types": {
+      "midweek": "Entre Semana",
+      "weekend": "Fin de Semana",
+      "memorial": "Conmemoración"
+    },
+    "roles": {
+      "presidente": "Presidente",
+      "canticoInicial": "Cántico inicial",
+      "canticoMeio": "Cántico del medio",
+      "canticoFinal": "Cántico final",
+      "canticoFinalOracao": "Cántico final y oración",
+      "palavrasIntroducao": "Palabras de introducción",
+      "palavrasConclusao": "Palabras de conclusión",
+      "discurso": "Discurso",
+      "orador": "Orador",
+      "passarPao": "Pasar el pan",
+      "passarVinho": "Pasar el vino",
+      "indicador": "Indicadores",
+      "condutor": "Conductor",
+      "leitor": "Lector",
+      "oracao": "Oración"
+    }
+  },
+  "designations": {
+    "roles": {
+      "som": "Sonido",
+      "video": "Video",
+      "palco": "Escenario",
+      "mic": "Micrófono volador",
+      "indicador": "Indicador"
+    }
   }
 }
