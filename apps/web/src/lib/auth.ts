@@ -42,9 +42,10 @@ export const auth = betterAuth({
     },
   },
 
-  trustedOrigins: [process.env.BETTER_AUTH_URL].filter((v): v is string =>
-    Boolean(v),
-  ),
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL,
+    process.env.EXPO_PUBLIC_API_URL,
+  ].filter((v): v is string => Boolean(v)),
 
   plugins: [nextCookies(), organization()],
 });
