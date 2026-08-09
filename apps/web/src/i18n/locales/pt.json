@@ -46,6 +46,7 @@
     "overview": "Visão geral",
     "meetings": "Reuniões",
     "people": "Pessoas",
+    "profile": "Perfil",
     "groups": "Grupos",
     "meetingContent": "Conteúdo das reuniões",
     "families": "Famílias",
@@ -112,7 +113,7 @@
       "member": "Membro"
     },
     "promoteOwner": "Tornar Owner",
-    "demoteOwner": "Rebaixar",
+    "demoteOwner": "Rebaixar para Admin",
     "promoteAdmin": "Tornar Admin",
     "remove": "Remover",
     "removeConfirmTitle": "Remover membro?",
@@ -405,6 +406,7 @@
     "search": "Buscar",
     "searchPlaceholder": "Buscar por nome ou família...",
     "add": "Nova pessoa",
+    "tabMembers": "Membros",
     "edit": "Editar pessoa",
     "remove": "Remover",
     "noFamilyGroup": "Sem família",
@@ -837,5 +839,16 @@
       "designation": "Designação",
       "cleaning": "Limpeza"
     }
+  },
+  "profile": {
+    "title": "Perfil",
+    "subtitle": "Veja e edite os dados da sua conta.",
+    "account": "Conta",
+    "person": "Pessoa vinculada",
+    "personDescription": "A pessoa cadastrada na congregação vinculada à sua conta.",
+    "noPerson": "Sua conta ainda não está vinculada a nenhuma pessoa cadastrada.",
+    "personName": "Nome da pessoa",
+    "minLength": "O nome deve ter pelo menos 3 caracteres.",
+    "saved": "Perfil atualizado com sucesso."
   }
 }

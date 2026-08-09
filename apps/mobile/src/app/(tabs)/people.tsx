@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -18,6 +19,7 @@ import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { MembersPanel } from "@/components/members-panel";
 
 type PersonData = {
   id: string;
@@ -67,7 +69,8 @@ export default function PeopleScreen() {
   const safeAreaInsets = useSafeAreaInsets();
   const theme = useTheme();
   const { t } = useTranslation();
-  const { session } = useAuth();
+  const { organizationRole } = useAuth();
+  const router = useRouter();
   const [people, setPeople] = useState<PersonData[]>([]);
   const [families, setFamilies] = useState<FamilyData[]>([]);
   const [users, setUsers] = useState<MemberUser[]>([]);
@@ -75,9 +78,16 @@ export default function PeopleScreen() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<PersonData | null>(null);
+  const [tab, setTab] = useState<"people" | "members">("people");
 
-  const currentRole = session?.user?.globalRole;
+  const currentRole = organizationRole;
   const canManage = currentRole === "owner" || currentRole === "admin";
+
+  useEffect(() => {
+    if (organizationRole && !canManage) {
+      router.replace("/");
+    }
+  }, [organizationRole, canManage, router]);
 
   const insets = {
     ...safeAreaInsets,
@@ -179,12 +189,33 @@ export default function PeopleScreen() {
         </ThemedText>
 
         {canManage && !showForm && (
-          <Pressable
-            onPress={startCreate}
-            style={({ pressed }) => [styles.primaryBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.8 }]}
-          >
-            <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>{t("people.add")}</ThemedText>
-          </Pressable>
+          <ThemedView style={styles.segmentRow}>
+            {(
+              [
+                { key: "people", label: t("nav.people") },
+                { key: "members", label: t("nav.members") },
+              ] as const
+            ).map((item) => (
+              <Pressable
+                key={item.key}
+                onPress={() => setTab(item.key)}
+                style={({ pressed }) => [
+                  styles.segmentBtn,
+                  { backgroundColor: tab === item.key ? theme.primary : theme.backgroundSelected },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <ThemedText
+                  style={{
+                    color: tab === item.key ? theme.primaryForeground : theme.text,
+                    fontWeight: "600",
+                  }}
+                >
+                  {item.label}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </ThemedView>
         )}
 
         {showForm && (
@@ -195,6 +226,21 @@ export default function PeopleScreen() {
             onCancel={() => { setShowForm(false); setEditing(null); }}
             onSaved={async () => { setShowForm(false); setEditing(null); await fetchAll(); }}
           />
+        )}
+
+        {tab === "members" ? (
+          <MembersPanel />
+        ) : (
+          <>
+        {canManage && !showForm && (
+          <ThemedView style={styles.headerActions}>
+            <Pressable
+              onPress={startCreate}
+              style={({ pressed }) => [styles.primaryBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.8 }]}
+            >
+              <ThemedText style={{ color: theme.primaryForeground, fontWeight: "600" }}>{t("people.add")}</ThemedText>
+            </Pressable>
+          </ThemedView>
         )}
 
         {loading ? (
@@ -249,6 +295,8 @@ export default function PeopleScreen() {
                 ))}
               </ThemedView>
             )}
+          </>
+        )}
           </>
         )}
       </ThemedView>
@@ -545,6 +593,9 @@ const styles = StyleSheet.create({
   familyPicker: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.one },
   familyBtn: { paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, borderRadius: Spacing.two, borderWidth: 1 },
   actionsRow: { flexDirection: "row", gap: Spacing.two, marginTop: Spacing.two },
+  headerActions: { flexDirection: "row", gap: Spacing.two, marginBottom: Spacing.four },
+  segmentRow: { flexDirection: "row", gap: Spacing.one, marginBottom: Spacing.four },
+  segmentBtn: { flex: 1, paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center" },
   primaryBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1 },
   secondaryBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center", flex: 1 },
 });

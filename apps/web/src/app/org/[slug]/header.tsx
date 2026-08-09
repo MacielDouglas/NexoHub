@@ -17,6 +17,7 @@ type OrgHeaderProps = {
   userName: string | null;
   userEmail?: string | null;
   language: string | null | undefined;
+  role?: string;
   organization: Organization;
 };
 
@@ -34,6 +35,7 @@ export function OrgHeader({
   userName,
   userEmail,
   language,
+  role,
   organization,
 }: OrgHeaderProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -79,6 +81,7 @@ export function OrgHeader({
         currentOrganization={organization}
         userName={userName ?? "Usuário"}
         userEmail={userEmail}
+        role={role}
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
       />

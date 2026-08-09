@@ -11,12 +11,17 @@ import { getNavItems } from "./nav-items";
 type OrgSidebarProps = {
   currentSlug: string;
   organizationName: string;
+  role?: string;
 };
 
-export function Sidebar({ currentSlug, organizationName }: OrgSidebarProps) {
+export function Sidebar({
+  currentSlug,
+  organizationName,
+  role,
+}: OrgSidebarProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const items = getNavItems(currentSlug);
+  const items = getNavItems(currentSlug, role);
 
   return (
     <aside className="hidden border-r bg-background/80 lg:sticky lg:top-0 lg:block lg:h-screen">

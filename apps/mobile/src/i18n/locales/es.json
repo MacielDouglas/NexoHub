@@ -34,7 +34,8 @@
     "admin": "Admin",
     "signOut": "Salir",
     "meetingContent": "Contenido de las Reuniones",
-    "people": "Personas"
+    "people": "Personas",
+    "profile": "Perfil"
   },
   "home": {
     "welcome": "Bienvenido, {{name}}",
@@ -522,5 +523,18 @@
       "mic": "Micrófono volador",
       "indicador": "Indicador"
     }
+  },
+  "profile": {
+    "title": "Perfil",
+    "subtitle": "Consulta y edita los datos de tu cuenta.",
+    "account": "Cuenta",
+    "person": "Persona vinculada",
+    "personDescription": "La persona registrada en la congregación vinculada a tu cuenta.",
+    "noPerson": "Tu cuenta aún no está vinculada a ninguna persona registrada.",
+    "personName": "Nombre de la persona",
+    "namePlaceholder": "Escribe el nombre de la persona",
+    "minLength": "El nombre debe tener al menos 3 caracteres.",
+    "duplicateName": "Ya existe una persona con ese nombre en la congregación.",
+    "saved": "Perfil actualizado con éxito."
   }
 }

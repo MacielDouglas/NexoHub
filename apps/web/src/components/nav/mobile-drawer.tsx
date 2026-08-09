@@ -17,6 +17,7 @@ type MobileDrawerProps = {
   currentOrganization: CurrentOrganization;
   userName: string;
   userEmail?: string | null;
+  role?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -25,12 +26,13 @@ export function MobileDrawer({
   currentOrganization,
   userName,
   userEmail,
+  role,
   open,
   onOpenChange,
 }: MobileDrawerProps) {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const items = getNavItems(currentOrganization.slug);
+  const items = getNavItems(currentOrganization.slug, role);
 
   if (!open) return null;
 

@@ -42,18 +42,28 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type {
+  InviteToken as InviteTokenData,
+  Member as MemberData,
+  MembersPanelLabels,
+} from "@/features/members/members-panel";
+import { MembersPanel } from "@/features/members/members-panel";
 import { cn } from "@/lib/utils";
 import { PersonDialog } from "./person-dialog";
 import type { Family, MemberUser, PeopleStats, Person } from "./types";
 
 type Props = {
-  slug: string;
   canManage: boolean;
+  currentUserId: string | null;
+  currentRole: string;
   people: Person[];
   families: Family[];
   users: MemberUser[];
   stats: PeopleStats;
   subOrgs: { id: string; name: string }[];
+  initialMembers: MemberData[];
+  initialTokens: InviteTokenData[];
+  membersLabels: MembersPanelLabels;
 };
 
 type StatCell = {
@@ -64,15 +74,21 @@ type StatCell = {
 
 export function PeopleClient({
   canManage,
+  currentUserId,
+  currentRole,
   people,
   families,
   users,
   stats,
   subOrgs,
+  initialMembers,
+  initialTokens,
+  membersLabels,
 }: Props) {
   const { t } = useTranslation();
   const router = useRouter();
 
+  const [tab, setTab] = useState<"people" | "members">("people");
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Person | null>(null);
@@ -208,241 +224,290 @@ export function PeopleClient({
           <p className="mt-1 text-muted-foreground">{t("people.subtitle")}</p>
         </div>
 
-        {canManage && (
-          <Button onClick={openCreate} className="h-10 rounded-full px-5">
-            <FaUserPlus aria-hidden="true" />
-            {t("people.add")}
-          </Button>
+        {canManage && tab === "people" && (
+          <div className="flex items-center gap-2">
+            <Button onClick={openCreate} className="h-10 rounded-full px-5">
+              <FaUserPlus aria-hidden="true" />
+              {t("people.add")}
+            </Button>
+          </div>
         )}
       </header>
 
-      <section
-        className="relative overflow-hidden rounded-2xl bg-card ring-1 ring-white/10"
-        aria-label={t("people.titleLabel")}
-      >
+      {canManage && (
         <div
-          className="bank-hero-glow pointer-events-none absolute inset-0"
-          aria-hidden="true"
+          role="tablist"
+          aria-label={t("people.title")}
+          className="inline-flex w-fit items-center gap-1 rounded-full bg-card p-1 ring-1 ring-white/10"
+        >
+          {(
+            [
+              { key: "people", label: t("people.title") },
+              { key: "members", label: t("people.tabMembers") },
+            ] as const
+          ).map((tabItem) => (
+            <button
+              key={tabItem.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === tabItem.key}
+              onClick={() => setTab(tabItem.key)}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                tab === tabItem.key
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-white/10 hover:text-foreground",
+              )}
+            >
+              {tabItem.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === "members" ? (
+        <MembersPanel
+          currentUserId={currentUserId}
+          currentRole={currentRole}
+          initialMembers={initialMembers}
+          initialTokens={initialTokens}
+          labels={membersLabels}
         />
+      ) : (
+        <>
+          <section
+            className="relative overflow-hidden rounded-2xl bg-card ring-1 ring-white/10"
+            aria-label={t("people.titleLabel")}
+          >
+            <div
+              className="bank-hero-glow pointer-events-none absolute inset-0"
+              aria-hidden="true"
+            />
 
-        <div className="relative grid gap-4 p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                {t("people.stats.total")}
-              </p>
-              <p className="mt-1 text-4xl font-semibold tracking-tight text-foreground tabular-nums sm:text-5xl">
-                {stats.total}
-              </p>
-            </div>
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
-              <FaUsers className="size-5" aria-hidden="true" />
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-            {secondaryStats.map((cell) => {
-              const Icon = cell.icon;
-              return (
-                <div
-                  key={cell.key}
-                  className="rounded-xl bg-muted/40 p-3 ring-1 ring-white/5"
-                >
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Icon className="size-3.5" aria-hidden="true" />
-                    <p className="truncate text-xs font-medium">{cell.label}</p>
-                  </div>
-                  <p className="mt-1.5 text-2xl font-semibold text-foreground tabular-nums">
-                    {stats[cell.key]}
+            <div className="relative grid gap-4 p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {t("people.stats.total")}
+                  </p>
+                  <p className="mt-1 text-4xl font-semibold tracking-tight text-foreground tabular-nums sm:text-5xl">
+                    {stats.total}
                   </p>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+                <span className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
+                  <FaUsers className="size-5" aria-hidden="true" />
+                </span>
+              </div>
 
-      <div className="relative max-w-md">
-        <FaMagnifyingGlass
-          className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden="true"
-        />
-        <Input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t("people.searchPlaceholder")}
-          aria-label={t("people.search")}
-          className="h-10 rounded-full border-white/10 bg-card pl-10"
-        />
-      </div>
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+                {secondaryStats.map((cell) => {
+                  const Icon = cell.icon;
+                  return (
+                    <div
+                      key={cell.key}
+                      className="rounded-xl bg-muted/40 p-3 ring-1 ring-white/5"
+                    >
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Icon className="size-3.5" aria-hidden="true" />
+                        <p className="truncate text-xs font-medium">
+                          {cell.label}
+                        </p>
+                      </div>
+                      <p className="mt-1.5 text-2xl font-semibold text-foreground tabular-nums">
+                        {stats[cell.key]}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
 
-      <section aria-label={t("people.title")}>
-        {groupedPeople.familyNames.length === 0 &&
-        groupedPeople.noFamily.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-card p-10 text-center ring-1 ring-white/10">
-            <span className="flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <FaUsers className="size-5" aria-hidden="true" />
-            </span>
-            <p className="text-sm text-muted-foreground">
-              {search ? t("people.noSearchResults") : t("people.noPeople")}
-            </p>
+          <div className="relative max-w-md">
+            <FaMagnifyingGlass
+              className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("people.searchPlaceholder")}
+              aria-label={t("people.search")}
+              className="h-10 rounded-full border-white/10 bg-card pl-10"
+            />
           </div>
-        ) : (
-          <div className="space-y-5">
-            {groupedPeople.familyNames.map((familyName) => {
-              const members = groupedPeople.grouped[familyName];
-              return (
-                <div key={familyName} className="space-y-2">
-                  <div className="flex items-center gap-2 px-1">
-                    <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      {familyName}
-                    </h3>
-                    <span
-                      className="h-px flex-1 bg-white/10"
-                      aria-hidden="true"
-                    />
-                  </div>
+
+          <section aria-label={t("people.title")}>
+            {groupedPeople.familyNames.length === 0 &&
+            groupedPeople.noFamily.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-card p-10 text-center ring-1 ring-white/10">
+                <span className="flex size-11 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <FaUsers className="size-5" aria-hidden="true" />
+                </span>
+                <p className="text-sm text-muted-foreground">
+                  {search ? t("people.noSearchResults") : t("people.noPeople")}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {groupedPeople.familyNames.map((familyName) => {
+                  const members = groupedPeople.grouped[familyName];
+                  return (
+                    <div key={familyName} className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          {familyName}
+                        </h3>
+                        <span
+                          className="h-px flex-1 bg-white/10"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        {members.map((person) => (
+                          <PersonRow
+                            key={person.id}
+                            person={person}
+                            canManage={canManage}
+                            onEdit={openEdit}
+                            onDelete={setDeleting}
+                            onMigrate={setMigrating}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {groupedPeople.noFamily.length > 0 && (
                   <div className="space-y-2">
-                    {members.map((person) => (
-                      <PersonRow
-                        key={person.id}
-                        person={person}
-                        canManage={canManage}
-                        onEdit={openEdit}
-                        onDelete={setDeleting}
-                        onMigrate={setMigrating}
+                    <div className="flex items-center gap-2 px-1">
+                      <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        {t("people.noFamilyGroup")}
+                      </h3>
+                      <span
+                        className="h-px flex-1 bg-white/10"
+                        aria-hidden="true"
                       />
-                    ))}
+                    </div>
+                    <div className="space-y-2">
+                      {groupedPeople.noFamily.map((person) => (
+                        <PersonRow
+                          key={person.id}
+                          person={person}
+                          canManage={canManage}
+                          onEdit={openEdit}
+                          onDelete={setDeleting}
+                          onMigrate={setMigrating}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-
-            {groupedPeople.noFamily.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 px-1">
-                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    {t("people.noFamilyGroup")}
-                  </h3>
-                  <span
-                    className="h-px flex-1 bg-white/10"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="space-y-2">
-                  {groupedPeople.noFamily.map((person) => (
-                    <PersonRow
-                      key={person.id}
-                      person={person}
-                      canManage={canManage}
-                      onEdit={openEdit}
-                      onDelete={setDeleting}
-                      onMigrate={setMigrating}
-                    />
-                  ))}
-                </div>
+                )}
               </div>
             )}
-          </div>
-        )}
-      </section>
+          </section>
 
-      <PersonDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        person={editing}
-        families={families}
-        users={users}
-        onSaved={handleSaved}
-      />
+          <PersonDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            person={editing}
+            families={families}
+            users={users}
+            onSaved={handleSaved}
+          />
 
-      <AlertDialog
-        open={Boolean(deleting)}
-        onOpenChange={(open) => {
-          if (!open) setDeleting(null);
-        }}
-      >
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("people.removeConfirmTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleting
-                ? t("people.removeConfirmDescription", { name: deleting.name })
-                : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={removing}
-            >
-              {removing ? t("common.loading") : t("people.remove")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={Boolean(migrating)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setMigrating(null);
-            setMigrateSubOrgId("");
-          }
-        }}
-      >
-        <AlertDialogContent size="sm">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("people.migrateTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {migrating
-                ? t("people.migrateDescription", { name: migrating.name })
-                : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          {subOrgs.length > 0 ? (
-            <div
-              className="space-y-1"
-              role="listbox"
-              aria-label={t("people.migrateSelect")}
-            >
-              {subOrgs.map((org) => (
-                <button
-                  key={org.id}
-                  type="button"
-                  onClick={() => setMigrateSubOrgId(org.id)}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors",
-                    migrateSubOrgId === org.id
-                      ? "bg-primary/15 text-primary"
-                      : "text-muted-foreground hover:bg-white/10 hover:text-foreground",
-                  )}
+          <AlertDialog
+            open={Boolean(deleting)}
+            onOpenChange={(open) => {
+              if (!open) setDeleting(null);
+            }}
+          >
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {t("people.removeConfirmTitle")}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {deleting
+                    ? t("people.removeConfirmDescription", {
+                        name: deleting.name,
+                      })
+                    : ""}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={removing}
                 >
-                  {org.name}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              {t("people.migrateNoSubOrgs")}
-            </p>
-          )}
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleMigrate}
-              disabled={migratingBusy || !migrateSubOrgId}
-            >
-              {migratingBusy ? t("common.loading") : t("people.migrate")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+                  {removing ? t("common.loading") : t("people.remove")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog
+            open={Boolean(migrating)}
+            onOpenChange={(open) => {
+              if (!open) {
+                setMigrating(null);
+                setMigrateSubOrgId("");
+              }
+            }}
+          >
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("people.migrateTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {migrating
+                    ? t("people.migrateDescription", { name: migrating.name })
+                    : ""}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              {subOrgs.length > 0 ? (
+                <div
+                  className="space-y-1"
+                  role="listbox"
+                  aria-label={t("people.migrateSelect")}
+                >
+                  {subOrgs.map((org) => (
+                    <button
+                      key={org.id}
+                      type="button"
+                      onClick={() => setMigrateSubOrgId(org.id)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                        migrateSubOrgId === org.id
+                          ? "bg-primary/15 text-primary"
+                          : "text-muted-foreground hover:bg-white/10 hover:text-foreground",
+                      )}
+                    >
+                      {org.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {t("people.migrateNoSubOrgs")}
+                </p>
+              )}
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleMigrate}
+                  disabled={migratingBusy || !migrateSubOrgId}
+                >
+                  {migratingBusy ? t("common.loading") : t("people.migrate")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
     </div>
   );
 }

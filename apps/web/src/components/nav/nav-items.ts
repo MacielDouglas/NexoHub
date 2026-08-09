@@ -8,6 +8,7 @@ import {
   NotebookPen,
   ScrollText,
   Settings,
+  UserRound,
   Users,
   UsersRound,
 } from "lucide-react";
@@ -19,8 +20,8 @@ export type NavItem = {
   exact?: boolean;
 };
 
-export function getNavItems(slug: string): NavItem[] {
-  return [
+export function getNavItems(slug: string, role?: string): NavItem[] {
+  const items: NavItem[] = [
     {
       href: `/org/${slug}`,
       label: "overview",
@@ -74,9 +75,20 @@ export function getNavItems(slug: string): NavItem[] {
       icon: NotebookPen,
     },
     {
+      href: `/org/${slug}/profile`,
+      label: "profile",
+      icon: UserRound,
+    },
+    {
       href: `/org/${slug}/settings`,
       label: "settings",
       icon: Settings,
     },
   ];
+
+  const canManage = role === "owner" || role === "admin";
+  if (!canManage) {
+    return items.filter((item) => item.label !== "people");
+  }
+  return items;
 }

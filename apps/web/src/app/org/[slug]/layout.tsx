@@ -38,12 +38,17 @@ export default async function OrganizationLayout({
   return (
     <div className="min-h-screen bg-background">
       <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <Sidebar currentSlug={org.slug} organizationName={org.name} />
+        <Sidebar
+          currentSlug={org.slug}
+          organizationName={org.name}
+          role={member?.role}
+        />
         <div className="flex min-h-screen flex-col">
           <OrgHeader
             userName={session.user.name ?? null}
             userEmail={session.user.email}
             language={session.user.language}
+            role={member?.role}
             organization={{ id: org.id, name: org.name, slug: org.slug }}
           />
           <div className="flex-1 p-0 md:p-6">

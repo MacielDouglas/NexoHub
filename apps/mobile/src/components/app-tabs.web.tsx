@@ -14,9 +14,12 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useAuth } from '@/lib/auth-context';
 
 export default function AppTabs() {
   const { t } = useTranslation();
+  const { organizationRole } = useAuth();
+  const canManage = organizationRole === 'owner' || organizationRole === 'admin';
 
   return (
     <Tabs>
@@ -26,14 +29,16 @@ export default function AppTabs() {
           <TabTrigger name="home" href="/" asChild>
             <TabButton>{t('nav.home')}</TabButton>
           </TabTrigger>
-          <TabTrigger name="members" href="/members" asChild>
-            <TabButton>{t('nav.members')}</TabButton>
-          </TabTrigger>
-          <TabTrigger name="people" href={'/people' as Href} asChild>
-            <TabButton>{t('nav.people')}</TabButton>
-          </TabTrigger>
+          {canManage && (
+            <TabTrigger name="people" href={'/people' as Href} asChild>
+              <TabButton>{t('nav.people')}</TabButton>
+            </TabTrigger>
+          )}
           <TabTrigger name="meeting-content" href="/meeting-content" asChild>
             <TabButton>{t('nav.meetingContent')}</TabButton>
+          </TabTrigger>
+          <TabTrigger name="profile" href="/profile" asChild>
+            <TabButton>{t('nav.profile')}</TabButton>
           </TabTrigger>
           <TabTrigger name="settings" href="/settings" asChild>
             <TabButton>{t('nav.settings')}</TabButton>
