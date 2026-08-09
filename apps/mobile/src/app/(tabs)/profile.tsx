@@ -4,11 +4,13 @@ import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
+import { PeoplePanel } from "@/components/people-panel";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 type ProfileData = {
   userId: string | null;
@@ -23,10 +25,9 @@ export default function ProfileScreen() {
   const safeAreaInsets = useSafeAreaInsets();
   const theme = useTheme();
   const { t } = useTranslation();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [personName, setPersonName] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { organizationRole } = useAuth();
+  const canManage = organizationRole === "owner" || organizationRole === "admin";
+  const [tab, setTab] = useState<"profile" | "people">("profile");
 
   const insets = {
     ...safeAreaInsets,
@@ -35,13 +36,87 @@ export default function ProfileScreen() {
 
   const contentPlatformStyle = Platform.select({
     android: {
-      paddingTop: insets.top,
+      paddingTop: canManage ? 0 : insets.top,
       paddingLeft: insets.left,
       paddingRight: insets.right,
       paddingBottom: insets.bottom,
     },
-    web: { paddingTop: Spacing.six, paddingBottom: Spacing.four },
+    web: {
+      paddingTop: canManage ? Spacing.two : Spacing.six,
+      paddingBottom: Spacing.four,
+    },
   });
+
+  return (
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
+      {canManage && (
+        <ThemedView
+          style={[
+            styles.segmentWrapper,
+            { paddingTop: Platform.OS === "web" ? Spacing.six : insets.top },
+          ]}
+        >
+          <ThemedView style={styles.segmentRow}>
+            {(
+              [
+                { key: "profile", label: t("profile.title") },
+                { key: "people", label: t("nav.people") },
+              ] as const
+            ).map((item) => (
+              <Pressable
+                key={item.key}
+                onPress={() => setTab(item.key)}
+                style={({ pressed }) => [
+                  styles.segmentBtn,
+                  {
+                    backgroundColor:
+                      tab === item.key ? theme.primary : theme.backgroundSelected,
+                  },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <ThemedText
+                  style={{
+                    color:
+                      tab === item.key ? theme.primaryForeground : theme.text,
+                    fontWeight: "600",
+                  }}
+                >
+                  {item.label}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </ThemedView>
+        </ThemedView>
+      )}
+
+      {tab === "people" ? (
+        <PeoplePanel embedded />
+      ) : (
+        <ProfileContent
+          insets={insets}
+          contentPlatformStyle={contentPlatformStyle}
+        />
+      )}
+    </View>
+  );
+}
+
+function ProfileContent({
+  insets,
+  contentPlatformStyle,
+}: {
+  insets: ReturnType<typeof useSafeAreaInsets> & { bottom: number };
+  contentPlatformStyle:
+    | { paddingTop?: number; paddingBottom?: number }
+    | undefined;
+}) {
+  const theme = useTheme();
+  const { t } = useTranslation();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [personName, setPersonName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await apiFetch("/api/profile");
@@ -183,6 +258,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
   scrollView: { flex: 1 },
   contentContainer: { flexDirection: "row", justifyContent: "center" },
   container: { maxWidth: MaxContentWidth, flexGrow: 1, paddingHorizontal: Spacing.four, paddingTop: Spacing.six },
@@ -211,4 +287,7 @@ const styles = StyleSheet.create({
   input: { borderRadius: Spacing.two, borderWidth: 1, paddingHorizontal: Spacing.two, paddingVertical: Spacing.one, fontSize: 16 },
   primaryBtn: { paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center" },
   spacer: { height: Spacing.four },
+  segmentWrapper: { paddingHorizontal: Spacing.four, paddingBottom: Spacing.two },
+  segmentRow: { flexDirection: "row", gap: Spacing.one },
+  segmentBtn: { flex: 1, paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: "center" },
 });

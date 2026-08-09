@@ -217,13 +217,13 @@ const EVENT_ICONS: Record<
 };
 
 const EVENT_COLORS: Record<string, string> = {
-  memorial: "text-amber-600",
-  specialTalk: "text-blue-600",
-  circuitVisit: "text-emerald-600",
-  convention: "text-purple-600",
-  assemblyTraveling: "text-orange-600",
-  assemblyRepresentative: "text-indigo-600",
-  specialMeeting: "text-rose-600",
+  memorial: "text-amber-400",
+  specialTalk: "text-blue-400",
+  circuitVisit: "text-emerald-400",
+  convention: "text-purple-400",
+  assemblyTraveling: "text-orange-400",
+  assemblyRepresentative: "text-indigo-400",
+  specialMeeting: "text-rose-400",
 };
 
 const MEETING_ICONS: Record<
@@ -236,9 +236,9 @@ const MEETING_ICONS: Record<
 };
 
 const MEETING_COLORS: Record<MeetingType, string> = {
-  midweek: "text-blue-600",
-  weekend: "text-emerald-600",
-  memorial: "text-amber-600",
+  midweek: "text-blue-400",
+  weekend: "text-emerald-400",
+  memorial: "text-amber-400",
 };
 
 type DerivedMeeting = {
@@ -592,7 +592,7 @@ export function MeetingsClient({
         <p className="mt-1 text-muted-foreground">{t("meetings.subtitle")}</p>
       </div>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -662,7 +662,7 @@ export function MeetingsClient({
             <div
               role="tablist"
               aria-label={t("meetings.title")}
-              className="flex w-fit max-w-full items-center gap-1 rounded-2xl border border-border bg-card p-1 shadow-sm"
+              className="flex max-w-full items-center gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-1"
             >
               {(
                 [
@@ -676,11 +676,12 @@ export function MeetingsClient({
                   role="tab"
                   aria-selected={cardTab === item.key}
                   onClick={() => setCardTab(item.key)}
-                  className={
+                  className={cn(
+                    "shrink-0 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-medium transition-colors",
                     cardTab === item.key
-                      ? "rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors"
-                      : "rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                  }
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
                 >
                   {item.label}
                 </button>
@@ -767,7 +768,7 @@ function WeekDaysGrid({
   }
 
   return (
-    <div className="rounded-2xl bg-card p-3 shadow-sm ring-1 ring-border sm:p-4">
+    <div className="rounded-2xl bg-card p-3 ring-1 ring-border sm:p-4">
       <div className="grid grid-cols-7 gap-1.5">
         {days.map((day, i) => {
           const key = toDateKey(day);
@@ -783,7 +784,7 @@ function WeekDaysGrid({
               )}
             >
               <span className="text-xs font-medium text-muted-foreground">
-                {WEEKDAY_LABELS[i]}
+                {WEEKDAY_LABELS[i].slice(0, 3)}
               </span>
               <span className="text-sm font-semibold">
                 {day.getDate().toString().padStart(2, "0")}
@@ -794,11 +795,11 @@ function WeekDaysGrid({
                     className={cn(
                       "flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
                       meeting.type === "midweek" &&
-                        "bg-blue-500/15 text-blue-600",
+                        "bg-blue-500/15 text-blue-400",
                       meeting.type === "weekend" &&
-                        "bg-emerald-500/15 text-emerald-600",
+                        "bg-emerald-500/15 text-emerald-400",
                       meeting.type === "memorial" &&
-                        "bg-amber-500/15 text-amber-600",
+                        "bg-amber-500/15 text-amber-400",
                     )}
                   >
                     {(() => {
@@ -858,27 +859,54 @@ function WeekDaysGrid({
 function BlockedWeekBanner({ events }: { events: SpecialEvent[] }) {
   const { t } = useTranslation();
   return (
-    <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-6 shadow-sm dark:border-amber-600/50 dark:bg-amber-950/40">
-      <h2 className="text-lg font-semibold">{t("meetings.blockedTitle")}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {t("meetings.blockedDescription")}
-      </p>
-      <ul className="mt-3 space-y-1.5">
-        {events.map((ev) => (
-          <li key={ev.id} className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-medium">
-              {t(`settings.specialEventTypes.${ev.type}`)}
-            </span>
-            <span className="text-muted-foreground">
-              · {formatFullDate(parseDateKey(ev.date))}
-              {ev.endDate
-                ? ` – ${formatFullDate(parseDateKey(ev.endDate))}`
-                : ""}
-              {ev.time ? ` · ${ev.time}` : ""}
-              {ev.location ? ` · ${ev.location}` : ""}
-            </span>
-          </li>
-        ))}
+    <div className="relative mt-6 overflow-hidden rounded-3xl border border-primary/25 bg-card p-6 sm:p-8">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_100%_0%,rgb(236_112_0/0.22),transparent_55%)]"
+        aria-hidden="true"
+      />
+      <div className="relative flex items-start gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/30">
+          <Sparkles className="h-6 w-6" aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-xl font-semibold text-foreground">
+            {t("meetings.blockedTitle")}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("meetings.blockedDescription")}
+          </p>
+        </div>
+      </div>
+
+      <ul className="relative mt-5 space-y-2">
+        {events.map((ev) => {
+          const Icon = EVENT_ICONS[ev.type] ?? Sparkles;
+          return (
+            <li
+              key={ev.id}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-border bg-muted/60 px-4 py-3"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <span className="font-semibold text-foreground">
+                {t(`settings.specialEventTypes.${ev.type}`)}
+              </span>
+              <span className="min-w-0 text-sm text-muted-foreground">
+                {formatFullDate(parseDateKey(ev.date))}
+                {ev.endDate
+                  ? ` – ${formatFullDate(parseDateKey(ev.endDate))}`
+                  : ""}
+                {ev.time ? ` · ${ev.time}` : ""}
+              </span>
+              {ev.location ? (
+                <span className="w-full text-sm text-muted-foreground sm:w-auto">
+                  📍 {ev.location}
+                </span>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -2583,7 +2611,7 @@ function MeetingCard({
             return (
               <span
                 key={ev.id}
-                className="inline-flex items-center gap-1.5 rounded-full border border-current/20 bg-amber-50 px-3 py-1 text-xs font-semibold dark:bg-amber-950/40"
+                className="inline-flex items-center gap-1.5 rounded-full border border-current/20 bg-white/5 px-3 py-1 text-xs font-semibold"
               >
                 <Icon className={cn("h-3.5 w-3.5", color)} />
                 <span className={color}>{label}</span>

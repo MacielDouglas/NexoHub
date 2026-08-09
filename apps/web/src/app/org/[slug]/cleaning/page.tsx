@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { CleaningAssignmentsClient } from "@/features/cleaning/cleaning-assignments-client";
 import { auth } from "@/lib/auth";
 import { getUserOrg } from "@/lib/org-utils";
 
@@ -8,7 +7,8 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export default async function CleaningPage({ params: _params }: PageProps) {
+export default async function CleaningPage({ params }: PageProps) {
+  const { slug } = await params;
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
@@ -27,10 +27,5 @@ export default async function CleaningPage({ params: _params }: PageProps) {
     redirect("/welcome");
   }
 
-  return (
-    <CleaningAssignmentsClient
-      role={member.role}
-      organizationId={member.organizationId}
-    />
-  );
+  redirect(`/org/${slug}/designacoes?tab=cleaning`);
 }

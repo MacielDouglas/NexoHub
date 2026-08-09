@@ -84,12 +84,14 @@ function talkLabel(item: CatalogItem): string {
 
 export function SubOrgDetailClient({
   role,
-  organizationId,
+  _organizationId,
   subOrgId,
+  backHref,
 }: {
   role?: string;
-  organizationId: string;
+  _organizationId: string;
   subOrgId: string;
+  backHref: string;
 }) {
   const { t } = useTranslation();
   const canManage = role === "owner" || role === "admin";
@@ -308,7 +310,7 @@ export function SubOrgDetailClient({
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-6 py-8">
+      <div className="mx-auto w-full min-w-0 max-w-5xl px-4 py-8 sm:px-6">
         <p className="text-muted-foreground">{t("common.loading")}</p>
       </div>
     );
@@ -316,24 +318,24 @@ export function SubOrgDetailClient({
 
   if (!subOrg) {
     return (
-      <div className="mx-auto max-w-5xl px-6 py-8">
+      <div className="mx-auto w-full min-w-0 max-w-5xl px-4 py-8 sm:px-6">
         <p className="text-muted-foreground">{t("people.subOrg.notFound")}</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
+    <div className="mx-auto w-full min-w-0 max-w-5xl px-4 py-8 sm:px-6">
       <Link
-        href={`/org/${organizationId}/sub-org`}
+        href={backHref}
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
       >
         <ArrowLeft className="h-4 w-4" />
         {t("people.subOrg.back")}
       </Link>
 
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-semibold">{subOrg.name}</h1>
           {subOrg.description && (
             <p className="mt-1 text-muted-foreground">{subOrg.description}</p>
@@ -343,7 +345,7 @@ export function SubOrgDetailClient({
           </p>
         </div>
         {canManage && (
-          <Button onClick={openCreate}>
+          <Button onClick={openCreate} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-1" />
             {t("people.subOrg.addPerson")}
           </Button>

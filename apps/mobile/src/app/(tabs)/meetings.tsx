@@ -3,6 +3,7 @@ import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GroupsDiscursosPanel } from '@/components/groups-discursos-panel';
 import { MeetingContentPanel } from '@/components/meeting-content-panel';
 import { MeetingsCalendar } from '@/components/meetings-calendar';
 import { ThemedText } from '@/components/themed-text';
@@ -19,7 +20,7 @@ export default function MeetingsScreen() {
 
   const canManage = organizationRole === 'owner' || organizationRole === 'admin';
 
-  const [tab, setTab] = useState<'meetings' | 'content'>('meetings');
+  const [tab, setTab] = useState<'meetings' | 'groups' | 'content'>('meetings');
 
   const insets = {
     ...safeAreaInsets,
@@ -53,6 +54,7 @@ export default function MeetingsScreen() {
             {(
               [
                 { key: 'meetings', label: t('meetings.tabMeetings') },
+                { key: 'groups', label: t('meetings.tabGroups') },
                 { key: 'content', label: t('meetings.tabContent') },
               ] as const
             ).map((item) => (
@@ -78,7 +80,13 @@ export default function MeetingsScreen() {
           </ThemedView>
         )}
 
-        {tab === 'content' ? <MeetingContentPanel /> : <MeetingsCalendar />}
+        {tab === 'groups' ? (
+          <GroupsDiscursosPanel />
+        ) : tab === 'content' ? (
+          <MeetingContentPanel />
+        ) : (
+          <MeetingsCalendar />
+        )}
       </ThemedView>
     </ScrollView>
   );

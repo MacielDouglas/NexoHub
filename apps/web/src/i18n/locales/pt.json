@@ -392,6 +392,8 @@
   "people": {
     "title": "Pessoas",
     "subtitle": "Cadastro de pessoas da congregação",
+    "mainCongregation": "Congregação principal",
+    "mainCongregationTalks": "Discursos públicos dos irmãos da congregação",
     "titleLabel": "Pessoas cadastradas",
     "stats": {
       "total": "Total de pessoas",
@@ -637,7 +639,8 @@
     "prevWeek": "Semana anterior",
     "nextWeek": "Próxima semana",
     "today": "Hoje",
-    "tabContent": "Conteúdo das reuniões",
+    "tabContent": "Conteúdo",
+    "tabGroups": "Discursos",
     "tabMidweek": "Reunião Meio de Semana",
     "tabWeekend": "Reunião de fim de semana",
     "types": {
@@ -754,6 +757,8 @@
   "designations": {
     "title": "Designações",
     "subtitle": "Gere e gerencie as designações de som, vídeo, palco, microfone volante e indicadores das reuniões.",
+    "tabCleaning": "Designações de limpeza",
+    "tabMeeting": "Designações de reunião",
     "createProgram": "Criar programa",
     "createHint": "Escolha o período, ajuste as quantidades e gere automaticamente as designações com rotação entre os irmãos.",
     "modalHint": "Escolha o período, defina as quantidades e gere as designações automaticamente.",

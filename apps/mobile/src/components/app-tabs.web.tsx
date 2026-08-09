@@ -6,7 +6,6 @@ import {
   TabTriggerSlotProps,
   TabListProps,
 } from 'expo-router/ui';
-import type { Href } from 'expo-router';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -14,12 +13,9 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { useAuth } from '@/lib/auth-context';
 
 export default function AppTabs() {
   const { t } = useTranslation();
-  const { organizationRole } = useAuth();
-  const canManage = organizationRole === 'owner' || organizationRole === 'admin';
 
   return (
     <Tabs>
@@ -29,11 +25,6 @@ export default function AppTabs() {
           <TabTrigger name="home" href="/" asChild>
             <TabButton>{t('nav.home')}</TabButton>
           </TabTrigger>
-          {canManage && (
-            <TabTrigger name="people" href={'/people' as Href} asChild>
-              <TabButton>{t('nav.people')}</TabButton>
-            </TabTrigger>
-          )}
           <TabTrigger name="meetings" href="/meetings" asChild>
             <TabButton>{t('nav.meetings')}</TabButton>
           </TabTrigger>

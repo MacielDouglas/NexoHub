@@ -1,15 +1,10 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BrushCleaning,
   CalendarDays,
   ClipboardCheck,
-  FolderKanban,
   Home,
-  ScrollText,
   Settings,
   UserRound,
-  Users,
-  UsersRound,
 } from "lucide-react";
 
 export type NavItem = {
@@ -19,8 +14,8 @@ export type NavItem = {
   exact?: boolean;
 };
 
-export function getNavItems(slug: string, role?: string): NavItem[] {
-  const items: NavItem[] = [
+export function getNavItems(slug: string, _role?: string): NavItem[] {
+  return [
     {
       href: `/org/${slug}`,
       label: "overview",
@@ -33,40 +28,9 @@ export function getNavItems(slug: string, role?: string): NavItem[] {
       icon: CalendarDays,
     },
     {
-      href: `/org/${slug}/people`,
-      label: "people",
-      icon: Users,
-    },
-    {
-      href: `/org/${slug}/groups`,
-      label: "groups",
-      icon: FolderKanban,
-    },
-
-    {
-      href: `/org/${slug}/families`,
-      label: "families",
-      icon: UsersRound,
-    },
-    {
-      href: `/org/${slug}/cleaning`,
-      label: "cleaning",
-      icon: BrushCleaning,
-    },
-    {
       href: `/org/${slug}/designacoes`,
       label: "designacoes",
       icon: ClipboardCheck,
-    },
-    {
-      href: `/org/${slug}/discursos`,
-      label: "outlines",
-      icon: ScrollText,
-    },
-    {
-      href: `/org/${slug}/sub-org`,
-      label: "sub-org",
-      icon: ScrollText,
     },
     {
       href: `/org/${slug}/profile`,
@@ -79,10 +43,4 @@ export function getNavItems(slug: string, role?: string): NavItem[] {
       icon: Settings,
     },
   ];
-
-  const canManage = role === "owner" || role === "admin";
-  if (!canManage) {
-    return items.filter((item) => item.label !== "people");
-  }
-  return items;
 }

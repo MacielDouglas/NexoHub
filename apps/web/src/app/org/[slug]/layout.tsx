@@ -53,7 +53,9 @@ export default async function OrganizationLayout({
           />
           <div className="flex-1 p-0 md:p-6">
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 rounded-3xl bg-background ring-1 ring-white/10 md:gap-6">
-              <main className="px-0 pb-6 sm:px-6 md:px-8">{children}</main>
+              <main className="min-w-0 px-0 pb-6 sm:px-6 md:px-8">
+                {children}
+              </main>
             </div>
           </div>
         </div>

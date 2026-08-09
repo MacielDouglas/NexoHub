@@ -63,7 +63,7 @@ export function CreateOrgClient({ lang }: { lang?: string | null }) {
       </div>
 
       <div className="relative w-full max-w-md">
-        <Card className="border-0 bg-card shadow-2xl ring-1 ring-white/10">
+        <Card className="rounded-3xl border-0 bg-card shadow-2xl ring-1 ring-white/10">
           <CardHeader className="items-center text-center">
             <div className="bank-hero-glow mb-2 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/30">
               <span className="text-3xl font-bold text-primary-foreground">
@@ -93,7 +93,7 @@ export function CreateOrgClient({ lang }: { lang?: string | null }) {
             <Button
               onClick={handleCreate}
               disabled={!name.trim() || submitting}
-              className="h-12 w-full rounded-xl text-[17px] font-semibold"
+              className="h-12 w-full rounded-full text-[17px] font-semibold"
             >
               {submitting ? t("common.loading") : t("createOrg.submit")}
             </Button>

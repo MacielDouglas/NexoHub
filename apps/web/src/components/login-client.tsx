@@ -55,7 +55,7 @@ export function LoginClient() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isSigningIn}
-            className="flex h-13 w-full items-center justify-center gap-3 rounded-xl bg-primary px-6 text-[17px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-60"
+            className="flex h-13 w-full items-center justify-center gap-3 rounded-full bg-primary px-6 text-[17px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 active:opacity-80 disabled:opacity-60"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
               <path

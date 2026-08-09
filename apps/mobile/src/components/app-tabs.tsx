@@ -2,13 +2,10 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
 import { Colors } from '@/constants/theme';
-import { useAuth } from '@/lib/auth-context';
 
 export default function AppTabs() {
   const colors = Colors.light;
   const { t } = useTranslation();
-  const { organizationRole } = useAuth();
-  const canManage = organizationRole === 'owner' || organizationRole === 'admin';
 
   return (
     <NativeTabs
@@ -22,17 +19,6 @@ export default function AppTabs() {
           renderingMode="template"
         />
       </NativeTabs.Trigger>
-
-      {canManage && (
-        <NativeTabs.Trigger name="people">
-          <NativeTabs.Trigger.Label>{t('nav.people')}</NativeTabs.Trigger.Label>
-          <NativeTabs.Trigger.Icon
-            sf="person.3"
-            src={require('@/assets/images/tabIcons/people.png')}
-            renderingMode="template"
-          />
-        </NativeTabs.Trigger>
-      )}
 
       <NativeTabs.Trigger name="meetings">
         <NativeTabs.Trigger.Label>{t('nav.meetings')}</NativeTabs.Trigger.Label>

@@ -291,14 +291,14 @@ export function DiscursosClient({
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-6 py-8">
+      <div className="mx-auto w-full min-w-0 max-w-5xl px-4 py-8 sm:px-6">
         <p className="text-muted-foreground">{t("common.loading")}</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
+    <div className="mx-auto w-full min-w-0 max-w-5xl px-4 py-8 sm:px-6">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">
           {t("people.discursos.title")}
@@ -335,13 +335,13 @@ export function DiscursosClient({
               key={person.id}
               className="rounded-2xl bg-card ring-1 ring-border"
             >
-              <div className="px-5 py-4 border-b flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-muted">
+              <div className="px-5 py-4 border-b flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-muted">
                     <CalendarDays className="h-5 w-5" aria-hidden="true" />
                   </div>
-                  <div>
-                    <p className="font-medium">{person.name}</p>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{person.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {person.sex === "MALE"
                         ? t("people.form.sexMale")
@@ -363,6 +363,7 @@ export function DiscursosClient({
                     variant="outline"
                     size="sm"
                     onClick={() => openAddDialog(person.id)}
+                    className="w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     {t("people.discursos.addTalk")}

@@ -7,57 +7,84 @@ import { MeetingContentBottomNav } from "@/features/meeting-content/components/m
 import { MeetingContentSideNav } from "@/features/meeting-content/components/meeting-content-side-nav";
 import type { MeetingContentSectionId } from "@/features/meeting-content/nav/meeting-content-nav";
 import { cn } from "@/lib/utils";
+import { GroupsDiscursosClient } from "./groups-discursos-client";
 import { MeetingsClient } from "./meetings-client";
 
 type Props = {
   slug: string;
   role?: string;
   orgName?: string;
-  view: "meetings" | "content";
+  organizationId?: string;
+  view: "meetings" | "content" | "groups";
   tab: MeetingContentSectionId;
+  subOrg: string | null;
 };
 
-export function MeetingsPageClient({ slug, role, orgName, view, tab }: Props) {
+export function MeetingsPageClient({
+  slug,
+  role,
+  orgName,
+  organizationId,
+  view,
+  tab,
+  subOrg,
+}: Props) {
   const { t } = useTranslation();
   const canManage = role === "owner" || role === "admin";
   const contentActive = canManage && view === "content";
+  const groupsActive = view === "groups";
+
+  const tabs: { key: string; label: string; href: string }[] = [
+    {
+      key: "meetings",
+      label: t("meetings.title"),
+      href: `/org/${slug}/meetings`,
+    },
+    {
+      key: "groups",
+      label: t("meetings.tabGroups"),
+      href: `/org/${slug}/meetings?view=groups`,
+    },
+  ];
+  if (canManage) {
+    tabs.push({
+      key: "content",
+      label: t("meetings.tabContent"),
+      href: `/org/${slug}/meetings?view=content`,
+    });
+  }
+
+  const isActive = (key: string) =>
+    key === "content"
+      ? contentActive
+      : key === "groups"
+        ? groupsActive
+        : !contentActive && !groupsActive;
 
   return (
-    <div className="space-y-5">
-      {canManage && (
-        <div
-          role="tablist"
-          aria-label={t("meetings.title")}
-          className="flex w-fit max-w-full items-center gap-1 rounded-2xl border border-border bg-card p-1 shadow-sm"
-        >
+    <div className="min-w-0 space-y-5">
+      <div
+        role="tablist"
+        aria-label={t("meetings.title")}
+        className="flex w-fit max-w-full items-center gap-1 rounded-2xl border border-border bg-card p-1 shadow-sm"
+      >
+        {tabs.map((item) => (
           <Link
+            key={item.key}
             role="tab"
-            aria-selected={!contentActive}
-            href={`/org/${slug}/meetings`}
+            aria-selected={isActive(item.key)}
+            href={item.href}
             className={cn(
               "rounded-xl px-4 py-2 text-sm font-medium transition-colors",
-              !contentActive
+              isActive(item.key)
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {t("meetings.title")}
+            {item.label}
           </Link>
-          <Link
-            role="tab"
-            aria-selected={contentActive}
-            href={`/org/${slug}/meetings?view=content`}
-            className={cn(
-              "rounded-xl px-4 py-2 text-sm font-medium transition-colors",
-              contentActive
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t("meetings.tabContent")}
-          </Link>
-        </div>
-      )}
+        ))}
+      </div>
 
       {contentActive ? (
         <div className="grid gap-5 md:grid-cols-[260px_minmax(0,1fr)] md:items-start">
@@ -71,6 +98,13 @@ export function MeetingsPageClient({ slug, role, orgName, view, tab }: Props) {
             <MeetingContentClient tab={tab} role={role} />
           </div>
         </div>
+      ) : groupsActive ? (
+        <GroupsDiscursosClient
+          slug={slug}
+          role={role ?? ""}
+          organizationId={organizationId ?? ""}
+          selected={subOrg}
+        />
       ) : (
         <MeetingsClient role={role} orgName={orgName} />
       )}

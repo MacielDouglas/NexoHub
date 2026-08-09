@@ -128,7 +128,7 @@ export function SpecialEventForm({ event, eventTypeLabels }: Props) {
       </div>
 
       {isAnnual ? (
-        <p className="text-xs font-medium text-amber-600">
+        <p className="text-xs font-medium text-amber-400">
           Permitido apenas 1 por ano
         </p>
       ) : null}

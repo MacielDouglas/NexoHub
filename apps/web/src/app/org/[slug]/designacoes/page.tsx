@@ -1,14 +1,19 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { DesignationsClient } from "@/features/designacoes/designations-client";
+import { DesignacoesPageClient } from "@/features/designacoes/designacoes-page-client";
 import { auth } from "@/lib/auth";
 import { getUserOrg } from "@/lib/org-utils";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function DesignacoesPage({ params: _params }: PageProps) {
+export default async function DesignacoesPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const { slug } = await params;
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
@@ -27,7 +32,18 @@ export default async function DesignacoesPage({ params: _params }: PageProps) {
     redirect("/welcome");
   }
 
+  const sp = await searchParams;
+  const rawTab = Array.isArray(sp.tab) ? sp.tab[0] : sp.tab;
+  const tab: "cleaning" | "meeting" =
+    rawTab === "cleaning" ? "cleaning" : "meeting";
+
   return (
-    <DesignationsClient role={member.role} orgName={member.organization.name} />
+    <DesignacoesPageClient
+      slug={slug}
+      role={member.role}
+      orgName={member.organization.name}
+      organizationId={member.organizationId}
+      tab={tab}
+    />
   );
 }

@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -370,22 +371,53 @@ export function MeetingsCalendar() {
           </ThemedView>
 
           {derivation.blocked ? (
-            <ThemedView
-              type="backgroundElement"
-              style={[styles.blockedBanner, { borderColor: theme.warning }]}
+            <LinearGradient
+              colors={['#2563EB', '#4F46E5', '#7C3AED']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.blockedBanner}
             >
-              <ThemedText type="smallBold">{t('meetings.blockedTitle')}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('meetings.blockedDescription')}
-              </ThemedText>
-              {derivation.blockingEvents.map((ev) => (
-                <ThemedText key={ev.id} type="small" themeColor="textSecondary">
-                  • {t(`settings.specialEventTypes.${ev.type}`)} · {formatFullDate(parseDateKey(ev.date))}
-                  {ev.endDate ? ` – ${formatFullDate(parseDateKey(ev.endDate))}` : ''}
-                  {ev.time ? ` · ${ev.time}` : ''}
-                </ThemedText>
-              ))}
-            </ThemedView>
+              <View style={styles.blockedHeader}>
+                <View style={styles.blockedBadge}>
+                  <ThemedText style={styles.blockedBadgeText}>🎉</ThemedText>
+                </View>
+                <View style={styles.blockedHeaderText}>
+                  <ThemedText style={styles.blockedTitle}>
+                    {t('meetings.blockedTitle')}
+                  </ThemedText>
+                  <ThemedText style={styles.blockedSubtitle}>
+                    {t('meetings.blockedDescription')}
+                  </ThemedText>
+                </View>
+              </View>
+
+              <View style={styles.blockedEvents}>
+                {derivation.blockingEvents.map((ev) => (
+                  <View key={ev.id} style={styles.blockedEventChip}>
+                    <ThemedText style={styles.blockedEventEmoji}>
+                      {EVENT_EMOJI[ev.type] ?? '🎉'}
+                    </ThemedText>
+                    <View style={styles.blockedEventInfo}>
+                      <ThemedText style={styles.blockedEventName}>
+                        {t(`settings.specialEventTypes.${ev.type}`)}
+                      </ThemedText>
+                      <ThemedText style={styles.blockedEventMeta}>
+                        {formatFullDate(parseDateKey(ev.date))}
+                        {ev.endDate
+                          ? ` – ${formatFullDate(parseDateKey(ev.endDate))}`
+                          : ''}
+                        {ev.time ? ` · ${ev.time}` : ''}
+                      </ThemedText>
+                      {ev.location ? (
+                        <ThemedText style={styles.blockedEventMeta}>
+                          📍 {ev.location}
+                        </ThemedText>
+                      ) : null}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </LinearGradient>
           ) : (
             <View style={styles.meetingsList}>
               {derivation.meetings.length === 0 && (
@@ -1892,11 +1924,51 @@ const styles = StyleSheet.create({
   dayNumber: { fontSize: 13 },
   dayMarks: { minHeight: 16, alignItems: 'center' },
   blockedBanner: {
-    borderRadius: Spacing.three,
-    borderWidth: 1,
-    padding: Spacing.three,
-    gap: Spacing.one,
+    borderRadius: 20,
+    padding: Spacing.four,
+    gap: Spacing.three,
     marginBottom: Spacing.three,
+  },
+  blockedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  blockedBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  blockedBadgeText: { fontSize: 24 },
+  blockedHeaderText: { flex: 1 },
+  blockedTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
+  blockedSubtitle: {
+    color: 'rgba(255,255,255,0.92)',
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: Spacing.one,
+  },
+  blockedEvents: { gap: Spacing.two },
+  blockedEventChip: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.two,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: Spacing.three,
+  },
+  blockedEventEmoji: { fontSize: 18, marginTop: 1 },
+  blockedEventInfo: { flex: 1 },
+  blockedEventName: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  blockedEventMeta: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 12.5,
+    lineHeight: 18,
+    marginTop: 1,
   },
   meetingsList: { gap: Spacing.three },
   cardTabRow: { flexDirection: 'row', gap: Spacing.one },

@@ -38,19 +38,27 @@ export default async function MeetingsPage({
   const { slug } = await params;
   const sp = await searchParams;
   const rawView = Array.isArray(sp.view) ? sp.view[0] : sp.view;
-  const view: "meetings" | "content" =
-    rawView === "content" ? "content" : "meetings";
+  const view: "meetings" | "content" | "groups" =
+    rawView === "content"
+      ? "content"
+      : rawView === "groups"
+        ? "groups"
+        : "meetings";
   const rawTab = Array.isArray(sp.tab) ? sp.tab[0] : sp.tab;
   const tab: MeetingContentSectionId =
     rawTab && isMeetingContentTab(rawTab) ? rawTab : "apostila";
+  const rawSubOrg = Array.isArray(sp.subOrg) ? sp.subOrg[0] : sp.subOrg;
+  const subOrg = rawSubOrg ? decodeURIComponent(rawSubOrg) : null;
 
   return (
     <MeetingsPageClient
       slug={slug}
       role={member.role}
       orgName={member.organization.name}
+      organizationId={member.organizationId}
       view={view}
       tab={tab}
+      subOrg={subOrg}
     />
   );
 }

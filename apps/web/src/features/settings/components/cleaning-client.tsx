@@ -358,7 +358,7 @@ function WeeklySettings({
           type="button"
           onClick={() => onUpdate({ weeklyEnabled: false })}
           disabled={saving}
-          className="rounded-xl border border-red-500 px-5 py-2.5 text-sm font-medium text-red-500 transition-opacity hover:opacity-80 disabled:opacity-50"
+          className="rounded-xl border border-destructive px-5 py-2.5 text-sm font-medium text-destructive transition-opacity hover:opacity-80 disabled:opacity-50"
         >
           {t("cleaning.disable")}
         </button>
@@ -402,7 +402,7 @@ function SectorList({
       <button
         type="button"
         onClick={onAdd}
-        className="rounded-xl bg-[#1F2937] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+        className="rounded-xl bg-secondary px-5 py-2.5 text-sm font-medium text-secondary-foreground transition-opacity hover:opacity-90"
       >
         {t("cleaning.addSector")}
       </button>
@@ -452,7 +452,7 @@ function SectorCard({
         <button
           type="button"
           onClick={onDelete}
-          className="text-sm font-medium text-red-500 hover:underline"
+          className="text-sm font-medium text-destructive hover:underline"
         >
           {t("common.remove")}
         </button>
@@ -697,7 +697,7 @@ function SectorModal({
             </>
           )}
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <div className="flex gap-3">
             {onRestore && (

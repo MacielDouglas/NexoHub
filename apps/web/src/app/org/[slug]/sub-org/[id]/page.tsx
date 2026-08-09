@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { SubOrgDetailClient } from "@/features/sub-org/sub-org-detail-client";
 import { auth } from "@/lib/auth";
 import { getUserOrg } from "@/lib/org-utils";
 
@@ -27,13 +26,8 @@ export default async function SubOrgDetailPage({ params }: PageProps) {
     redirect("/welcome");
   }
 
-  const { id } = await params;
-
-  return (
-    <SubOrgDetailClient
-      role={member.role}
-      organizationId={member.organizationId}
-      subOrgId={id}
-    />
+  const { slug, id } = await params;
+  redirect(
+    `/org/${slug}/meetings?view=groups&subOrg=${encodeURIComponent(id)}`,
   );
 }
