@@ -34,8 +34,8 @@ export default function AppTabs() {
               <TabButton>{t('nav.people')}</TabButton>
             </TabTrigger>
           )}
-          <TabTrigger name="meeting-content" href="/meeting-content" asChild>
-            <TabButton>{t('nav.meetingContent')}</TabButton>
+          <TabTrigger name="meetings" href="/meetings" asChild>
+            <TabButton>{t('nav.meetings')}</TabButton>
           </TabTrigger>
           <TabTrigger name="profile" href="/profile" asChild>
             <TabButton>{t('nav.profile')}</TabButton>

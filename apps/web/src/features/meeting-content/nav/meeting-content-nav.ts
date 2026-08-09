@@ -50,14 +50,14 @@ export const MEETING_CONTENT_SECTIONS = [
 ] as const satisfies readonly ContentSection[];
 
 export function meetingContentBasePath(slug: string): string {
-  return `/org/${slug}/meeting-content`;
+  return `/org/${slug}/meetings?view=content`;
 }
 
 export function meetingContentTabPath(
   slug: string,
   section: MeetingContentSectionId,
 ): string {
-  return `${meetingContentBasePath(slug)}?tab=${section}`;
+  return `${meetingContentBasePath(slug)}&tab=${section}`;
 }
 
 export function isMeetingContentTab(

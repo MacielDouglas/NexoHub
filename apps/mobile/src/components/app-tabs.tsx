@@ -34,11 +34,11 @@ export default function AppTabs() {
         </NativeTabs.Trigger>
       )}
 
-      <NativeTabs.Trigger name="meeting-content">
-        <NativeTabs.Trigger.Label>{t('nav.meetingContent')}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger name="meetings">
+        <NativeTabs.Trigger.Label>{t('nav.meetings')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf="books.vertical"
-          src={require('@/assets/images/tabIcons/books.png')}
+          sf="calendar"
+          src={require('@/assets/images/tabIcons/calendar.png')}
           renderingMode="template"
         />
       </NativeTabs.Trigger>

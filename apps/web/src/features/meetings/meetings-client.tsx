@@ -349,6 +349,7 @@ export function MeetingsClient({
   const { t } = useTranslation();
   const canManage = role === "owner" || role === "admin";
   const [pdfOpen, setPdfOpen] = useState(false);
+  const [cardTab, setCardTab] = useState<"midweek" | "weekend">("midweek");
 
   const [weekStart, setWeekStart] = useState<Date>(() =>
     startOfWeek(new Date()),
@@ -556,6 +557,26 @@ export function MeetingsClient({
     [configs],
   );
 
+  const memorialMeeting = useMemo(
+    () => derivation.meetings.find((m) => m.type === "memorial") ?? null,
+    [derivation.meetings],
+  );
+  const hasRegularMeetings = useMemo(
+    () =>
+      derivation.meetings.some(
+        (m) => m.type === "midweek" || m.type === "weekend",
+      ),
+    [derivation.meetings],
+  );
+  const visibleMeetings = useMemo(
+    () => derivation.meetings.filter((m) => m.type === cardTab),
+    [derivation.meetings, cardTab],
+  );
+  const cardsToRender = useMemo(
+    () => [...(memorialMeeting ? [memorialMeeting] : []), ...visibleMeetings],
+    [memorialMeeting, visibleMeetings],
+  );
+
   const handleUpdateConfig = useCallback((config: MeetingConfig) => {
     setConfigs((prev) => prev.map((c) => (c.id === config.id ? config : c)));
   }, []);
@@ -637,7 +658,37 @@ export function MeetingsClient({
             </p>
           )}
 
-          {derivation.meetings.map((dm) => (
+          {hasRegularMeetings && (
+            <div
+              role="tablist"
+              aria-label={t("meetings.title")}
+              className="flex w-fit max-w-full items-center gap-1 rounded-2xl border border-border bg-card p-1 shadow-sm"
+            >
+              {(
+                [
+                  { key: "midweek", label: t("meetings.tabMidweek") },
+                  { key: "weekend", label: t("meetings.tabWeekend") },
+                ] as const
+              ).map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={cardTab === item.key}
+                  onClick={() => setCardTab(item.key)}
+                  className={
+                    cardTab === item.key
+                      ? "rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors"
+                      : "rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  }
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {cardsToRender.map((dm) => (
             <MeetingCard
               key={`${dm.type}-${toDateKey(dm.date)}`}
               type={dm.type}

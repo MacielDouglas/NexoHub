@@ -637,6 +637,9 @@
     "prevWeek": "Semana anterior",
     "nextWeek": "Próxima semana",
     "today": "Hoy",
+    "tabContent": "Contenido de las reuniones",
+    "tabMidweek": "Reunión de entre semana",
+    "tabWeekend": "Reunión de fin de semana",
     "types": {
       "midweek": "Entre semana",
       "weekend": "Fin de semana",

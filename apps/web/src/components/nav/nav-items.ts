@@ -5,7 +5,6 @@ import {
   ClipboardCheck,
   FolderKanban,
   Home,
-  NotebookPen,
   ScrollText,
   Settings,
   UserRound,
@@ -68,11 +67,6 @@ export function getNavItems(slug: string, role?: string): NavItem[] {
       href: `/org/${slug}/sub-org`,
       label: "sub-org",
       icon: ScrollText,
-    },
-    {
-      href: `/org/${slug}/meeting-content`,
-      label: "meetingContent",
-      icon: NotebookPen,
     },
     {
       href: `/org/${slug}/profile`,

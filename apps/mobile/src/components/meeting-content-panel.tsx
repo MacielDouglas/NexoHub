@@ -1,15 +1,14 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ItemEditor } from '@/components/meeting-content-editors';
 import { SectionNav, type SectionNavItem } from '@/components/section-nav';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
@@ -64,8 +63,7 @@ const MEETING_CONTENT_SECTIONS: SectionNavItem[] = [
 
 type ContentTabKey = (typeof MEETING_CONTENT_SECTIONS)[number]['id'];
 
-export default function MeetingContentScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
+export function MeetingContentPanel() {
   const theme = useTheme();
   const { t } = useTranslation();
   const { organizationRole } = useAuth();
@@ -82,24 +80,6 @@ export default function MeetingContentScreen() {
   const [songTitles, setSongTitles] = useState<Map<number, string>>(new Map());
 
   const isFlat = tab === 'discursos' || tab === 'canticos';
-
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
-  };
-
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
 
   const fetchContents = useCallback(async () => {
     const res = await apiFetch('/api/meeting-content');
@@ -432,28 +412,16 @@ export default function MeetingContentScreen() {
     num == null ? null : (songTitles.get(num) ?? null);
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}
-    >
-      <ThemedView style={styles.container}>
-        <ThemedText type="subtitle" style={styles.title}>
-          {t('meetingContent.title')}
-        </ThemedText>
-        <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-          {t('meetingContent.subtitle')}
-        </ThemedText>
-
-        <SectionNav
-          items={MEETING_CONTENT_SECTIONS}
-          activeId={tab}
-          onSelect={(key) => {
-            setTab(key);
-            setSelected(null);
-          }}
-          ariaLabel={t('meetingContent.title')}
-        />
+    <ThemedView style={styles.container}>
+      <SectionNav
+        items={MEETING_CONTENT_SECTIONS}
+        activeId={tab}
+        onSelect={(key) => {
+          setTab(key);
+          setSelected(null);
+        }}
+        ariaLabel={t('meetingContent.title')}
+      />
 
         {loading ? (
           <ThemedText themeColor="textSecondary" style={{ textAlign: 'center', marginTop: Spacing.four }}>
@@ -565,8 +533,7 @@ export default function MeetingContentScreen() {
             )}
           </>
         )}
-      </ThemedView>
-    </ScrollView>
+    </ThemedView>
   );
 }
 
@@ -1111,13 +1078,9 @@ function ItemDetail({
 }
 
 const styles = StyleSheet.create({
-  scrollView: { flex: 1 },
-  contentContainer: { flexDirection: 'row', justifyContent: 'center' },
   container: {
+    width: '100%',
     maxWidth: MaxContentWidth,
-    flexGrow: 1,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.six,
   },
   title: { marginBottom: Spacing.one },
   subtitle: { marginBottom: Spacing.four },
