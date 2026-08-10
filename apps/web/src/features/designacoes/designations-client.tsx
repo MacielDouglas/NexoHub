@@ -7,6 +7,7 @@ import { es, ptBR } from "react-day-picker/locale";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { MonthlyAssignmentsTable } from "@/components/monthly-assignments-table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -227,6 +228,52 @@ export function DesignationsClient({ role, orgName }: Props) {
     () => new Set(programs.flatMap((p) => p.assignments.map((a) => a.date))),
     [programs],
   );
+
+  const monthTable = useMemo(() => {
+    const now = new Date();
+    const monthPrefix = now.toISOString().slice(0, 7);
+    const monthEntries = programs
+      .flatMap((p) => p.assignments)
+      .filter((a) => a.date.startsWith(monthPrefix));
+
+    if (monthEntries.length === 0) {
+      return { columns: [], rows: [] };
+    }
+
+    const dateSet = new Set(monthEntries.map((a) => a.date));
+    const roleSet = new Set(monthEntries.map((a) => a.role));
+    const columns = DESIGNATION_ROLES.filter((role) => roleSet.has(role));
+
+    const rows = [...dateSet]
+      .sort()
+      .map((date) => {
+        const cells: Record<string, string[]> = {};
+        for (const role of columns) {
+          const names = monthEntries
+            .filter(
+              (a) =>
+                a.date === date &&
+                a.role === role &&
+                a.personId &&
+                a.personName,
+            )
+            .map((a) =>
+              a.sector ? `${a.personName} (${a.sector})` : a.personName,
+            );
+          if (names.length > 0) cells[role] = names;
+        }
+        return { date, cells };
+      })
+      .filter((row) => Object.keys(row.cells).length > 0);
+
+    return {
+      columns: columns.map((role) => ({
+        id: role,
+        label: roleLabel(role, t),
+      })),
+      rows,
+    };
+  }, [programs, t]);
 
   const { included, skipped } = useMemo(() => {
     if (!range?.from || !range?.to) return { included: [], skipped: [] };
@@ -457,6 +504,19 @@ export function DesignationsClient({ role, orgName }: Props) {
           {t("designations.subtitle")}
         </p>
       </header>
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("designations.currentMonth")}
+        </h2>
+        <MonthlyAssignmentsTable
+          dateLabel={t("designations.date")}
+          columns={monthTable.columns}
+          rows={monthTable.rows}
+          emptyMessage={t("designations.noAssignmentsMonth")}
+          dateLocale={dateLocale}
+        />
+      </section>
 
       {canManage && (
         <section className="rounded-2xl bg-card p-5 ring-1 ring-white/10 sm:p-6">

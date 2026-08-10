@@ -7,6 +7,7 @@ import { es, ptBR } from "react-day-picker/locale";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { MonthlyAssignmentsTable } from "@/components/monthly-assignments-table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -198,6 +199,49 @@ export function CleaningAssignmentsClient({ role }: Props) {
         .sort((a, b) => a.sortOrder - b.sortOrder),
     [sectors, activeType],
   );
+
+  const monthTable = useMemo(() => {
+    const now = new Date();
+    const monthPrefix = now.toISOString().slice(0, 7);
+    const monthAssignments = schedules
+      .filter((s) => s.type === activeType)
+      .flatMap((s) => s.assignments)
+      .filter((a) => a.date.startsWith(monthPrefix));
+
+    if (monthAssignments.length === 0) {
+      return { columns: [], rows: [] };
+    }
+
+    const dateSet = new Set(monthAssignments.map((a) => a.date));
+    const rows = [...dateSet]
+      .sort()
+      .map((date) => {
+        const cells: Record<string, string[]> = {};
+        for (const sector of typeSectors) {
+          const names = monthAssignments
+            .filter((a) => a.date === date && a.sectorId === sector.id)
+            .map((a) => a.personName);
+          if (names.length > 0) cells[sector.id] = names;
+        }
+        return { date, cells };
+      })
+      .filter((row) => Object.keys(row.cells).length > 0);
+
+    return {
+      columns: typeSectors.map((sector) => ({
+        id: sector.id,
+        label: sectorLabel(
+          {
+            name: sector.name,
+            defaultKey: sector.defaultKey,
+            type: sector.type,
+          },
+          t,
+        ),
+      })),
+      rows,
+    };
+  }, [schedules, activeType, typeSectors, t]);
 
   const meetingBlockedDates = useMemo(
     () =>
@@ -620,6 +664,19 @@ export function CleaningAssignmentsClient({ role }: Props) {
       </div>
 
       <TypePicker value={activeType} onChange={setActiveType} />
+
+      <section className="space-y-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          {t("cleaningAssignment.currentMonth")}
+        </h2>
+        <MonthlyAssignmentsTable
+          dateLabel={t("cleaningAssignment.date")}
+          columns={monthTable.columns}
+          rows={monthTable.rows}
+          emptyMessage={t("cleaningAssignment.noAssignmentsMonth")}
+          dateLocale={dateLocale}
+        />
+      </section>
 
       {canManage && (
         <div className="mt-6 mb-8 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">

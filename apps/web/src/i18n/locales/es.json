@@ -134,6 +134,9 @@
     "promoteOwner": "Hacer Owner",
     "demoteOwner": "Degradar a Admin",
     "promoteAdmin": "Hacer Admin",
+    "demoteAdmin": "Degradar a Miembro",
+    "demoteAdminConfirmTitle": "¿Degradar a Miembro?",
+    "demoteAdminConfirmDescription": "{{name}} perderá el acceso administrativo y pasará a ser Miembro.",
     "remove": "Quitar",
     "removeConfirmTitle": "¿Quitar miembro?",
     "removeConfirmDescription": "{{name}} perderá el acceso a esta congregación.",
@@ -661,7 +664,9 @@
       "selected": "Seleccionado",
       "blocked": "No disponible",
       "specialEvent": "Evento especial"
-    }
+    },
+    "currentMonth": "Designaciones del mes actual",
+    "noAssignmentsMonth": "No hay designaciones este mes."
   },
   "meetings": {
     "title": "Reuniones",
@@ -852,7 +857,10 @@
       "title": "ASIGNACIONES",
       "period": "Período",
       "date": "Fecha"
-    }
+    },
+    "currentMonth": "Designaciones del mes actual",
+    "noAssignmentsMonth": "No hay designaciones este mes.",
+    "date": "Fecha"
   },
   "overview": {
     "title": "Resumen",

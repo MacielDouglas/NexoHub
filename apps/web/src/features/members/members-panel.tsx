@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FaClipboard, FaTrashCan, FaUserPlus } from "react-icons/fa6";
 import { toast } from "sonner";
 
@@ -58,6 +58,9 @@ export type MembersPanelLabels = {
   promoteOwner: string;
   demoteOwner: string;
   promoteAdmin: string;
+  demoteAdmin: string;
+  demoteAdminConfirmTitle: string;
+  demoteAdminConfirmDescription: string;
   remove: string;
   memberRemoved: string;
   removeConfirmTitle: string;
@@ -88,6 +91,7 @@ export function MembersPanel({
   const [tokens, setTokens] = useState<InviteToken[]>(initialTokens);
   const [creating, setCreating] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState<Member | null>(null);
+  const [confirmingDemote, setConfirmingDemote] = useState<Member | null>(null);
   const [confirmingRevoke, setConfirmingRevoke] = useState<InviteToken | null>(
     null,
   );
@@ -95,6 +99,17 @@ export function MembersPanel({
 
   const isOwner = currentRole === "owner";
   const canManage = isOwner || currentRole === "admin";
+
+  const memberGroups = useMemo(() => {
+    const groups: { role: string; members: Member[] }[] = [];
+    for (const role of ["owner", "admin", "member"] as const) {
+      const list = members
+        .filter((m) => m.role === role)
+        .sort((a, b) => a.user.name.localeCompare(b.user.name));
+      if (list.length > 0) groups.push({ role, members: list });
+    }
+    return groups;
+  }, [members]);
 
   const fetchAll = useCallback(async () => {
     const [memberRes, tokenRes] = await Promise.all([
@@ -135,6 +150,22 @@ export function MembersPanel({
       return;
     }
     toast.success(labels.memberRemoved);
+    await fetchAll();
+  }
+
+  async function demoteMember(member: Member) {
+    setConfirmingDemote(null);
+    const res = await fetch(`/api/members/${member.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "member" }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      toast.error(data?.error ?? labels.error);
+      return;
+    }
+    toast.success(labels.roleUpdated);
     await fetchAll();
   }
 
@@ -290,98 +321,38 @@ export function MembersPanel({
             {labels.noMembers}
           </p>
         ) : (
-          <div className="space-y-2">
-            {members.map((member) => (
-              <div
-                key={member.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/30 p-3"
-              >
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  {member.user.image ? (
-                    // biome-ignore lint/performance/noImgElement: user avatar from external auth provider
-                    <img
-                      src={member.user.image}
-                      alt=""
-                      className="size-10 rounded-full object-cover ring-1 ring-white/10"
-                    />
-                  ) : (
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
-                      {member.user.name.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {member.user.name}
-                      {member.userId === currentUserId && (
-                        <span className="text-muted-foreground">
-                          {" "}
-                          ({labels.you})
-                        </span>
-                      )}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {member.user.email}
-                    </p>
-                  </div>
+          <div className="space-y-5">
+            {memberGroups.map((group) => (
+              <div key={group.role} className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {labels.roles[group.role] ?? group.role}
+                  </h3>
+                  <span
+                    className="h-px flex-1 bg-white/10"
+                    aria-hidden="true"
+                  />
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {group.members.length}
+                  </span>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge
-                    variant={
-                      member.role === "owner"
-                        ? "default"
-                        : member.role === "admin"
-                          ? "secondary"
-                          : "outline"
-                    }
-                    className="text-xs"
-                  >
-                    {labels.roles[member.role] ?? member.role}
-                  </Badge>
-
-                  {canManage && member.userId !== currentUserId ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      {isOwner && member.role !== "owner" ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => updateRole(member.id, "owner")}
-                        >
-                          {labels.promoteOwner}
-                        </Button>
-                      ) : null}
-                      {isOwner && member.role === "owner" ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => updateRole(member.id, "admin")}
-                        >
-                          {labels.demoteOwner}
-                        </Button>
-                      ) : null}
-                      {member.role !== "admin" && member.role !== "owner" ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => updateRole(member.id, "admin")}
-                        >
-                          {labels.promoteAdmin}
-                        </Button>
-                      ) : null}
-                      {((isOwner && member.role !== "owner") ||
-                        (currentRole === "admin" &&
-                          member.role === "member")) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive"
-                          onClick={() => setConfirmingRemove(member)}
-                        >
-                          {labels.remove}
-                        </Button>
-                      )}
-                    </div>
-                  ) : null}
+                <div className="space-y-2">
+                  {group.members.map((member) => (
+                    <MemberRow
+                      key={member.id}
+                      member={member}
+                      labels={labels}
+                      currentUserId={currentUserId}
+                      currentRole={currentRole}
+                      canManage={canManage}
+                      isOwner={isOwner}
+                      onPromoteOwner={updateRole}
+                      onDemoteOwner={updateRole}
+                      onPromoteAdmin={updateRole}
+                      onDemoteAdmin={setConfirmingDemote}
+                      onRemove={setConfirmingRemove}
+                    />
+                  ))}
                 </div>
               </div>
             ))}
@@ -410,6 +381,37 @@ export function MembersPanel({
               disabled={revoking}
             >
               {revoking ? labels.loading : labels.revoke}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(confirmingDemote)}
+        onOpenChange={(open) => {
+          if (!open) setConfirmingDemote(null);
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {labels.demoteAdminConfirmTitle}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmingDemote
+                ? labels.demoteAdminConfirmDescription.replace(
+                    "{{name}}",
+                    confirmingDemote.user.name,
+                  )
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{labels.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmingDemote && demoteMember(confirmingDemote)}
+            >
+              {labels.demoteAdmin}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -458,6 +460,129 @@ export function MembersPanel({
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function MemberRow({
+  member,
+  labels,
+  currentUserId,
+  currentRole,
+  canManage,
+  isOwner,
+  onPromoteOwner,
+  onDemoteOwner,
+  onPromoteAdmin,
+  onDemoteAdmin,
+  onRemove,
+}: {
+  member: Member;
+  labels: MembersPanelLabels;
+  currentUserId: string | null;
+  currentRole: string;
+  canManage: boolean;
+  isOwner: boolean;
+  onPromoteOwner: (id: string, role: string) => void;
+  onDemoteOwner: (id: string, role: string) => void;
+  onPromoteAdmin: (id: string, role: string) => void;
+  onDemoteAdmin: (member: Member) => void;
+  onRemove: (member: Member) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/30 p-3 transition-colors hover:bg-muted/50">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {member.user.image ? (
+          // biome-ignore lint/performance/noImgElement: user avatar from external auth provider
+          <img
+            src={member.user.image}
+            alt=""
+            className="size-10 rounded-full object-cover ring-1 ring-white/10"
+          />
+        ) : (
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+            {member.user.name.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">
+            {member.user.name}
+            {member.userId === currentUserId && (
+              <span className="text-muted-foreground"> ({labels.you})</span>
+            )}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {member.user.email}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge
+          variant={
+            member.role === "owner"
+              ? "default"
+              : member.role === "admin"
+                ? "secondary"
+                : "outline"
+          }
+          className="text-xs"
+        >
+          {labels.roles[member.role] ?? member.role}
+        </Badge>
+
+        {canManage && member.userId !== currentUserId ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {isOwner && member.role !== "owner" ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onPromoteOwner(member.id, "owner")}
+              >
+                {labels.promoteOwner}
+              </Button>
+            ) : null}
+            {isOwner && member.role === "owner" ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDemoteOwner(member.id, "admin")}
+              >
+                {labels.demoteOwner}
+              </Button>
+            ) : null}
+            {member.role !== "admin" && member.role !== "owner" ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onPromoteAdmin(member.id, "admin")}
+              >
+                {labels.promoteAdmin}
+              </Button>
+            ) : null}
+            {member.role === "admin" ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDemoteAdmin(member)}
+              >
+                {labels.demoteAdmin}
+              </Button>
+            ) : null}
+            {((isOwner && member.role !== "owner") ||
+              (currentRole === "admin" && member.role === "member")) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive"
+                onClick={() => onRemove(member)}
+              >
+                {labels.remove}
+              </Button>
+            )}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

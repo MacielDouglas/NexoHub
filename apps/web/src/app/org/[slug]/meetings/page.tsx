@@ -38,8 +38,10 @@ export default async function MeetingsPage({
   const { slug } = await params;
   const sp = await searchParams;
   const rawView = Array.isArray(sp.view) ? sp.view[0] : sp.view;
-  const view: "meetings" | "content" | "groups" =
-    rawView === "content"
+  const canManage = member.role === "owner" || member.role === "admin";
+  const view: "meetings" | "content" | "groups" = !canManage
+    ? "meetings"
+    : rawView === "content"
       ? "content"
       : rawView === "groups"
         ? "groups"

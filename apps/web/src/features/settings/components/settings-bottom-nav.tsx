@@ -6,16 +6,19 @@ import {
 
 type Props = {
   slug: string;
+  canManageSettings: boolean;
 };
 
-export function SettingsBottomNav({ slug }: Props) {
-  const items = SETTINGS_SECTIONS.map((section) => ({
-    id: section.id,
-    shortLabel: section.shortLabel,
-    label: section.label,
-    iconName: section.iconName,
-    href: settingsTabPath(slug, section.id),
-  }));
+export function SettingsBottomNav({ slug, canManageSettings }: Props) {
+  const items = canManageSettings
+    ? SETTINGS_SECTIONS.map((section) => ({
+        id: section.id,
+        shortLabel: section.shortLabel,
+        label: section.label,
+        iconName: section.iconName,
+        href: settingsTabPath(slug, section.id),
+      }))
+    : [];
 
   return (
     <BottomNav

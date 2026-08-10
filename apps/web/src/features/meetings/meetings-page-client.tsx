@@ -32,7 +32,7 @@ export function MeetingsPageClient({
   const { t } = useTranslation();
   const canManage = role === "owner" || role === "admin";
   const contentActive = canManage && view === "content";
-  const groupsActive = view === "groups";
+  const groupsActive = canManage && view === "groups";
 
   const tabs: { key: string; label: string; href: string }[] = [
     {
@@ -40,13 +40,13 @@ export function MeetingsPageClient({
       label: t("meetings.title"),
       href: `/org/${slug}/meetings`,
     },
-    {
+  ];
+  if (canManage) {
+    tabs.push({
       key: "groups",
       label: t("meetings.tabGroups"),
       href: `/org/${slug}/meetings?view=groups`,
-    },
-  ];
-  if (canManage) {
+    });
     tabs.push({
       key: "content",
       label: t("meetings.tabContent"),

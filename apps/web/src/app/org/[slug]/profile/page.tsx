@@ -159,6 +159,11 @@ export default async function ProfilePage({ params, searchParams }: PageProps) {
         promoteOwner: t("members.promoteOwner"),
         demoteOwner: t("members.demoteOwner"),
         promoteAdmin: t("members.promoteAdmin"),
+        demoteAdmin: t("members.demoteAdmin"),
+        demoteAdminConfirmTitle: t("members.demoteAdminConfirmTitle"),
+        demoteAdminConfirmDescription: t(
+          "members.demoteAdminConfirmDescription",
+        ),
         remove: t("members.remove"),
         memberRemoved: t("members.memberRemoved"),
         removeConfirmTitle: t("members.removeConfirmTitle"),

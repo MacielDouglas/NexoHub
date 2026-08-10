@@ -31,6 +31,8 @@ type Person = {
 type Props = {
   slug: string;
   isSuperUser: boolean;
+  canManageSettings: boolean;
+  isMember: boolean;
   tab: SettingsSectionId;
   configs: MeetingConfig[];
   conductorCandidates: Person[];
@@ -49,6 +51,8 @@ type Props = {
 export function SettingsPageView({
   slug,
   isSuperUser,
+  canManageSettings,
+  isMember,
   tab,
   configs,
   conductorCandidates,
@@ -63,58 +67,69 @@ export function SettingsPageView({
         <p className="mt-1 text-muted-foreground">{labels.subtitle}</p>
       </div>
 
-      {tab === "meetings" ? (
+      {canManageSettings ? (
         <>
-          <SettingsSectionShell
-            title="Dias de reuniões"
-            description="Configure os dois dias fixos de reunião da congregação. Todo o aplicativo usa essas informações como referência."
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <MeetingDayCard
-                slug={slug}
-                type="midweek"
-                config={configs.find((c) => c.type === "midweek")}
-              />
-              <MeetingDayCard
-                slug={slug}
-                type="weekend"
-                config={configs.find((c) => c.type === "weekend")}
-                conductorCandidates={conductorCandidates}
-              />
-            </div>
-          </SettingsSectionShell>
+          {tab === "meetings" ? (
+            <>
+              <SettingsSectionShell
+                title="Dias de reuniões"
+                description="Configure os dois dias fixos de reunião da congregação. Todo o aplicativo usa essas informações como referência."
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <MeetingDayCard
+                    slug={slug}
+                    type="midweek"
+                    config={configs.find((c) => c.type === "midweek")}
+                  />
+                  <MeetingDayCard
+                    slug={slug}
+                    type="weekend"
+                    config={configs.find((c) => c.type === "weekend")}
+                    conductorCandidates={conductorCandidates}
+                  />
+                </div>
+              </SettingsSectionShell>
 
-          <SettingsSectionShell
-            title="Eventos especiais"
-            description="Cadastre os eventos especiais opcionais do ano."
-          >
-            <SpecialEventsSection
-              slug={slug}
-              events={events}
-              eventTypeLabels={eventTypeLabels}
-            />
-          </SettingsSectionShell>
+              <SettingsSectionShell
+                title="Eventos especiais"
+                description="Cadastre os eventos especiais opcionais do ano."
+              >
+                <SpecialEventsSection
+                  slug={slug}
+                  events={events}
+                  eventTypeLabels={eventTypeLabels}
+                />
+              </SettingsSectionShell>
+            </>
+          ) : null}
+
+          {tab === "cleaning" ? (
+            <SettingsSectionShell
+              title="Limpeza"
+              description="Configure os tipos de limpeza e os setores da congregação."
+            >
+              <CleaningClient />
+            </SettingsSectionShell>
+          ) : null}
+
+          {tab === "assignments" ? (
+            <SettingsSectionShell
+              title="Designações"
+              description="Atribuição de tarefas em breve."
+            >
+              <p className="text-sm text-muted-foreground">
+                Esta área ainda está em construção.
+              </p>
+            </SettingsSectionShell>
+          ) : null}
         </>
-      ) : null}
-
-      {tab === "cleaning" ? (
-        <SettingsSectionShell
-          title="Limpeza"
-          description="Configure os tipos de limpeza e os setores da congregação."
-        >
-          <CleaningClient />
-        </SettingsSectionShell>
-      ) : null}
-
-      {tab === "assignments" ? (
-        <SettingsSectionShell
-          title="Designações"
-          description="Atribuição de tarefas em breve."
-        >
+      ) : isMember ? (
+        <div className="rounded-2xl bg-card p-6 ring-1 ring-white/10">
           <p className="text-sm text-muted-foreground">
-            Esta área ainda está em construção.
+            Você não tem permissão para alterar as configurações da organização.
+            Entre em contato com um administrador.
           </p>
-        </SettingsSectionShell>
+        </div>
       ) : null}
 
       <AccountSection

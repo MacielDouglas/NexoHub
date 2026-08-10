@@ -1,5 +1,4 @@
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { SettingsPageView } from "@/features/settings/components/settings-page-view";
 import {
   isSettingsTab,
@@ -15,87 +14,110 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type MeetingConfig = {
+  id: string;
+  type: string;
+  dayOfWeek: number;
+  startTime: string;
+  isActive: boolean;
+  defaultSentinelaConductorId: string | null;
+};
+
+type SpecialEvent = {
+  id: string;
+  type: string;
+  date: Date | string;
+  endDate: Date | string | null;
+  time: string | null;
+  location: string | null;
+};
+
+type Person = {
+  id: string;
+  name: string;
+};
+
 export default async function SettingsPage({ searchParams }: PageProps) {
   const requestHeaders = await headers();
   const session = await auth.api.getSession({ headers: requestHeaders });
-
-  if (!session) {
-    redirect("/login");
-  }
-
   const member = await getUserOrg(requestHeaders);
 
+  // Layout already validates and redirects if no member
   if (!member) {
-    if (session.user.globalRole === "super_user") {
-      redirect("/admin");
-    }
-
-    if (session.user.globalRole === "owner") {
-      redirect("/create-org");
-    }
-
-    redirect("/welcome");
+    return null;
   }
 
-  if (member.role !== "owner") {
-    redirect("/app");
-  }
+  const canManageSettings = member.role === "owner" || member.role === "admin";
+  const isMember = member.role === "member";
 
   const params = await searchParams;
   const rawTab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
   const tab: SettingsSectionId =
     rawTab && isSettingsTab(rawTab) ? rawTab : "meetings";
 
-  const [configs, events, conductorCandidates] = await Promise.all([
-    prisma.meetingConfig.findMany({
-      where: {
-        organizationId: member.organization.id,
-      },
-      orderBy: {
-        type: "asc",
-      },
-      select: {
-        id: true,
-        type: true,
-        dayOfWeek: true,
-        startTime: true,
-        isActive: true,
-        defaultSentinelaConductorId: true,
-      },
-    }),
-    prisma.specialEvent.findMany({
-      where: {
-        organizationId: member.organization.id,
-      },
-      orderBy: {
-        date: "asc",
-      },
-      select: {
-        id: true,
-        type: true,
-        date: true,
-        endDate: true,
-        time: true,
-        location: true,
-      },
-    }),
-    prisma.person.findMany({
-      where: {
-        organizationId: member.organization.id,
-        active: true,
-        OR: [{ condutorEstudoBiblico: true }, { anciao: true }],
-      },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-  ]);
+  let configs: MeetingConfig[] = [];
+  let events: SpecialEvent[] = [];
+  let conductorCandidates: Person[] = [];
 
-  const t = getServerT(session.user.language);
+  if (canManageSettings) {
+    const [configsData, eventsData, conductorCandidatesData] =
+      await Promise.all([
+        prisma.meetingConfig.findMany({
+          where: {
+            organizationId: member.organization.id,
+          },
+          orderBy: {
+            type: "asc",
+          },
+          select: {
+            id: true,
+            type: true,
+            dayOfWeek: true,
+            startTime: true,
+            isActive: true,
+            defaultSentinelaConductorId: true,
+          },
+        }),
+        prisma.specialEvent.findMany({
+          where: {
+            organizationId: member.organization.id,
+          },
+          orderBy: {
+            date: "asc",
+          },
+          select: {
+            id: true,
+            type: true,
+            date: true,
+            endDate: true,
+            time: true,
+            location: true,
+          },
+        }),
+        prisma.person.findMany({
+          where: {
+            organizationId: member.organization.id,
+            active: true,
+            OR: [{ condutorEstudoBiblico: true }, { anciao: true }],
+          },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        }),
+      ]);
+
+    configs = configsData;
+    events = eventsData;
+    conductorCandidates = conductorCandidatesData;
+  }
+
+  const t = getServerT(session?.user.language ?? "pt");
 
   return (
     <SettingsPageView
       slug={member.organization.slug}
       isSuperUser={member.isSuperUser}
+      canManageSettings={canManageSettings}
+      isMember={isMember}
       tab={tab}
       configs={configs.map((config) => ({
         ...config,
@@ -104,9 +126,14 @@ export default async function SettingsPage({ searchParams }: PageProps) {
       conductorCandidates={conductorCandidates}
       events={events.map((event) => ({
         ...event,
-        date: event.date.toISOString().slice(0, 10),
+        date:
+          event.date instanceof Date
+            ? event.date.toISOString().slice(0, 10)
+            : event.date,
         endDate: event.endDate
-          ? event.endDate.toISOString().slice(0, 10)
+          ? event.endDate instanceof Date
+            ? event.endDate.toISOString().slice(0, 10)
+            : event.endDate
           : null,
       }))}
       labels={{
