@@ -48,6 +48,9 @@
     "signOut": "Sair",
     "home": "Início"
   },
+  "footer": {
+    "developedBy": "Desenvolvido por"
+  },
   "OrganizationNavigation": {
     "organization": "Congregação",
     "currentOrganization": "Organização atual",
@@ -523,7 +526,7 @@
     "subOrg": {
       "title": "Sub-organizações",
       "subtitle": "Gerencie sub-organizações e suas pessoas",
-      "createNew": "Nova sub-organização",
+      "createNew": "Nova congregação",
       "createTitle": "Criar sub-organização",
       "name": "Nome",
       "namePlaceholder": "Nome da sub-organização",

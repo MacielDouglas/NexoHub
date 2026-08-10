@@ -5,6 +5,7 @@ import "./globals.css";
 import { I18nProvider } from "@/components/i18n-provider";
 import { I18nSync } from "@/components/i18n-sync";
 import { Toaster } from "@/components/ui/sonner";
+import { SITE_AUTHOR, SITE_NAME, SITE_TAGLINE_PT, SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,14 +18,59 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nexohub",
-  description: "Gerenciador de Reuniões",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_NAME,
+    template: `%s · ${SITE_NAME}`,
+  },
+  description: SITE_TAGLINE_PT,
+  applicationName: SITE_NAME,
+  authors: [{ name: SITE_AUTHOR.name, url: SITE_AUTHOR.url }],
+  creator: SITE_AUTHOR.name,
+  keywords: [
+    "congregação",
+    "reuniões",
+    "designações",
+    "programação de reunião",
+    "gestão de membros",
+    "testemunhas de jeová",
+    "mobile-first",
+  ],
+  category: "organization",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    alternateLocale: "es_ES",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_TAGLINE_PT,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_TAGLINE_PT,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#ec7000",
 };
 
 export default function RootLayout({

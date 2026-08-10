@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/nav/sidebar";
 import { auth } from "@/lib/auth";
 import { getUserOrg } from "@/lib/org-utils";
 import { OrgHeader } from "./header";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type OrganizationLayoutProps = {
   children: React.ReactNode;

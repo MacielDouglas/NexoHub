@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { SiteFooter } from "@/components/site-footer";
 import { cn } from "@/lib/utils";
 
 export default function DemoLayout({
@@ -101,6 +102,7 @@ export default function DemoLayout({
         </header>
         <main className="min-w-0 flex-1 pb-10">{children}</main>
       </div>
+      <SiteFooter />
     </div>
   );
 }

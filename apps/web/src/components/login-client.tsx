@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { SiteFooter } from "@/components/site-footer";
 import { authClient } from "@/lib/auth-client";
 
 export function LoginClient() {
@@ -92,6 +93,8 @@ export function LoginClient() {
           </p>
         </div>
       </div>
+
+      <SiteFooter />
     </div>
   );
 }

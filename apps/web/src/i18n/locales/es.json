@@ -48,6 +48,9 @@
     "signOut": "Salir",
     "home": "Inicio"
   },
+  "footer": {
+    "developedBy": "Desarrollado por"
+  },
   "OrganizationNavigation": {
     "organization": "Congregación",
     "currentOrganization": "Organización actual",
@@ -523,7 +526,7 @@
     "subOrg": {
       "title": "Sub-organizaciones",
       "subtitle": "Gestiona sub-organizaciones y sus personas",
-      "createNew": "Nueva sub-organización",
+      "createNew": "Nueva congregación",
       "createTitle": "Crear sub-organización",
       "name": "Nombre",
       "namePlaceholder": "Nombre de la sub-organización",
