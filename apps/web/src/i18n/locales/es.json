@@ -149,7 +149,19 @@
     "tokenCreated": "¡Código creado! Cópialo y envíalo al invitado.",
     "copyCode": "Copiar",
     "codeCopied": "¡Código copiado!",
-    "tokenHint": "Comparte este código con el invitado."
+    "tokenHint": "Comparte este código con el invitado.",
+    "tokensTitle": "Códigos de invitación",
+    "noTokens": "Aún no hay códigos creados.",
+    "revoke": "Revocar",
+    "revokeConfirmTitle": "¿Revocar código?",
+    "revokeConfirmDescription": "Este código ya no podrá utilizarse.",
+    "tokenRevoked": "Código revocado.",
+    "tokenStatus": {
+      "active": "Activo",
+      "used": "Usado",
+      "revoked": "Revocado",
+      "expired": "Expirado"
+    }
   },
   "settings": {
     "title": "Ajustes",

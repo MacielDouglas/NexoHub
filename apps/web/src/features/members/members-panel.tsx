@@ -1,9 +1,19 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { FaClipboard, FaUserPlus } from "react-icons/fa6";
+import { FaClipboard, FaTrashCan, FaUserPlus } from "react-icons/fa6";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -25,6 +35,7 @@ export type InviteToken = {
   status: string;
   expiresAt: string;
   createdAt: string;
+  usedBy?: { id: string; name: string; email: string } | null;
 };
 
 export type MembersPanelLabels = {
@@ -34,6 +45,13 @@ export type MembersPanelLabels = {
   copyCode: string;
   tokenHint: string;
   codeCopied: string;
+  tokensTitle: string;
+  noTokens: string;
+  revoke: string;
+  revokeConfirmTitle: string;
+  revokeConfirmDescription: string;
+  tokenRevoked: string;
+  tokenStatus: Record<string, string>;
   listTitle: string;
   noMembers: string;
   you: string;
@@ -70,6 +88,10 @@ export function MembersPanel({
   const [tokens, setTokens] = useState<InviteToken[]>(initialTokens);
   const [creating, setCreating] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState<Member | null>(null);
+  const [confirmingRevoke, setConfirmingRevoke] = useState<InviteToken | null>(
+    null,
+  );
+  const [revoking, setRevoking] = useState(false);
 
   const isOwner = currentRole === "owner";
   const canManage = isOwner || currentRole === "admin";
@@ -140,7 +162,34 @@ export function MembersPanel({
     toast.success(labels.codeCopied);
   }
 
-  const activeToken = tokens.find((token) => token.status === "active");
+  async function revokeToken() {
+    if (!confirmingRevoke) return;
+    setRevoking(true);
+    try {
+      const res = await fetch(`/api/tokens/${confirmingRevoke.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(data?.error ?? labels.error);
+        return;
+      }
+      toast.success(labels.tokenRevoked);
+      setConfirmingRevoke(null);
+      await fetchAll();
+    } finally {
+      setRevoking(false);
+    }
+  }
+
+  function tokenStatusLabel(token: InviteToken): string {
+    if (token.status === "active") {
+      return new Date(token.expiresAt) < new Date()
+        ? (labels.tokenStatus.expired ?? labels.tokenStatus.revoked)
+        : labels.tokenStatus.active;
+    }
+    return labels.tokenStatus[token.status] ?? token.status;
+  }
 
   return (
     <div className="space-y-6">
@@ -151,34 +200,85 @@ export function MembersPanel({
             {labels.inviteDescription}
           </p>
 
-          {activeToken ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 p-4">
-              <div className="min-w-0">
-                <p className="font-mono text-xl font-semibold">
-                  {activeToken.code}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {labels.tokenHint}
-                </p>
-              </div>
-              <Button
-                onClick={() => copyCode(activeToken.code)}
-                className="h-9 rounded-full px-4"
-              >
-                <FaClipboard aria-hidden="true" className="mr-1.5 size-3.5" />
-                {labels.copyCode}
-              </Button>
-            </div>
-          ) : (
-            <Button
-              onClick={createToken}
-              disabled={creating}
-              className="h-10 rounded-full px-5"
-            >
-              <FaUserPlus aria-hidden="true" className="mr-1.5 size-3.5" />
-              {creating ? labels.loading : labels.createToken}
-            </Button>
-          )}
+          <Button
+            onClick={createToken}
+            disabled={creating}
+            className="h-10 rounded-full px-5"
+          >
+            <FaUserPlus aria-hidden="true" className="mr-1.5 size-3.5" />
+            {creating ? labels.loading : labels.createToken}
+          </Button>
+        </section>
+      ) : null}
+
+      {tokens.length > 0 && canManage ? (
+        <section className="space-y-3 rounded-2xl bg-card p-5 ring-1 ring-white/10">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            {labels.tokensTitle}
+          </h3>
+
+          <div className="space-y-2">
+            {tokens.map((token) => {
+              const isActive = token.status === "active";
+              const isExpired =
+                isActive && new Date(token.expiresAt) < new Date();
+              return (
+                <div
+                  key={token.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/30 p-3"
+                >
+                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+                    <span className="font-mono text-lg tracking-widest">
+                      {token.code}
+                    </span>
+                    <Badge
+                      variant={
+                        isActive && !isExpired
+                          ? "default"
+                          : token.status === "used"
+                            ? "secondary"
+                            : "outline"
+                      }
+                    >
+                      {tokenStatusLabel(token)}
+                    </Badge>
+                    {token.usedBy ? (
+                      <span className="text-xs text-muted-foreground">
+                        {token.usedBy.name}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {isActive && !isExpired ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyCode(token.code)}
+                      >
+                        <FaClipboard
+                          aria-hidden="true"
+                          className="mr-1.5 size-3.5"
+                        />
+                        {labels.copyCode}
+                      </Button>
+                    ) : null}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={() => setConfirmingRevoke(token)}
+                    >
+                      <FaTrashCan
+                        aria-hidden="true"
+                        className="mr-1.5 size-3.5"
+                      />
+                      {labels.revoke}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </section>
       ) : null}
 
@@ -288,6 +388,32 @@ export function MembersPanel({
           </div>
         )}
       </section>
+
+      <AlertDialog
+        open={Boolean(confirmingRevoke)}
+        onOpenChange={(open) => {
+          if (!open) setConfirmingRevoke(null);
+        }}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{labels.revokeConfirmTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {labels.revokeConfirmDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{labels.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={revokeToken}
+              disabled={revoking}
+            >
+              {revoking ? labels.loading : labels.revoke}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {confirmingRemove ? (
         // biome-ignore lint/a11y/noStaticElementInteractions: modal overlay with keyboard handler
