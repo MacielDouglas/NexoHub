@@ -51,14 +51,16 @@ export default async function MeetingsPage({
   const subOrg = rawSubOrg ? decodeURIComponent(rawSubOrg) : null;
 
   return (
-    <MeetingsPageClient
-      slug={slug}
-      role={member.role}
-      orgName={member.organization.name}
-      organizationId={member.organizationId}
-      view={view}
-      tab={tab}
-      subOrg={subOrg}
-    />
+    <div className="min-w-0 space-y-5 p-2 md:p-0">
+      <MeetingsPageClient
+        slug={slug}
+        role={member.role}
+        orgName={member.organization.name}
+        organizationId={member.organizationId}
+        view={view}
+        tab={tab}
+        subOrg={subOrg}
+      />
+    </div>
   );
 }

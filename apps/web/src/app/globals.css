@@ -135,6 +135,10 @@
   }
   html {
     @apply font-sans;
+    overflow-x: clip;
+  }
+  body {
+    overflow-x: clip;
   }
 
   /* Hover states only on devices that support hover (not touch) */

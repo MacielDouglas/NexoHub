@@ -4,6 +4,7 @@ import { CalendarDays, Edit, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +32,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type DiscursoDate = {
+  id: string;
+  date: string;
+  notes: string | null;
+};
+
 type Discurso = {
   id: string;
   personId: string;
@@ -38,7 +45,7 @@ type Discurso = {
   meetingContentItemId: string;
   number: number | null;
   theme: string;
-  dates: { id: string; date: string; notes: string | null }[];
+  dates: DiscursoDate[];
   lastDate: string | null;
 };
 
@@ -57,6 +64,39 @@ type TalkCatalogItem = {
   theme: string;
 };
 
+type ConfirmDelete = {
+  type: "talk" | "date";
+  id: string;
+} | null;
+
+type MeetingContentResponse = {
+  contents?: Array<{
+    items?: Array<{
+      id: string;
+      data?: {
+        number?: number | null;
+        theme?: string;
+      };
+    }>;
+  }>;
+};
+
+type PersonTalkResponse = {
+  talks?: Array<{
+    id: string;
+    personId: string;
+    personName: string;
+    meetingContentItemId: string;
+    meetingContentItem?: {
+      data?: {
+        number?: number | null;
+        theme?: string;
+      };
+    };
+    dates?: DiscursoDate[];
+  }>;
+};
+
 export function DiscursosClient({
   role,
   organizationId,
@@ -65,6 +105,7 @@ export function DiscursosClient({
   organizationId: string;
 }) {
   const { t } = useTranslation();
+
   const canManage = role === "owner" || role === "admin";
 
   const [people, setPeople] = useState<Person[]>([]);
@@ -78,6 +119,7 @@ export function DiscursosClient({
   );
   const [addDialogTalkId, setAddDialogTalkId] = useState<string | null>(null);
   const [addDialogDate, setAddDialogDate] = useState("");
+  const [isAddingTalk, setIsAddingTalk] = useState(false);
 
   const [datesDialogOpen, setDatesDialogOpen] = useState(false);
   const [datesDialogTalk, setDatesDialogTalk] = useState<Discurso | null>(null);
@@ -85,172 +127,268 @@ export function DiscursosClient({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editDialogTalk, setEditDialogTalk] = useState<Discurso | null>(null);
   const [editDateValue, setEditDateValue] = useState("");
+  const [isAddingDate, setIsAddingDate] = useState(false);
 
-  const [confirmDelete, setConfirmDelete] = useState<{
-    type: "talk" | "date";
-    id: string;
-  } | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ConfirmDelete>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchPeople = useCallback(async () => {
-    const res = await fetch(
-      `/api/people?orgId=${organizationId}&onlyApproved=true`,
+    const response = await fetch(
+      `/api/people?orgId=${encodeURIComponent(
+        organizationId,
+      )}&onlyApproved=true`,
+      {
+        method: "GET",
+        cache: "no-store",
+      },
     );
-    if (res.ok) {
-      const data = await res.json();
-      setPeople(data.people ?? []);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch people");
     }
+
+    const data = await response.json();
+    setPeople(data.people ?? []);
   }, [organizationId]);
 
   const fetchCatalog = useCallback(async () => {
-    const res = await fetch(
-      `/api/meeting-content?type=discursos&includeItems=1`,
+    const response = await fetch(
+      "/api/meeting-content?type=discursos&includeItems=1",
+      {
+        method: "GET",
+        cache: "no-store",
+      },
     );
-    if (res.ok) {
-      const data = await res.json();
-      const items = (data.contents ?? [])
-        .flatMap(
-          (c: {
-            items?: {
-              id: string;
-              data: { number?: number | null; theme?: string };
-            }[];
-          }) => c.items ?? [],
-        )
-        .map(
-          (item: {
-            id: string;
-            data: { number?: number | null; theme?: string };
-          }) => ({
-            id: item.id,
-            number: item.data.number ?? null,
-            theme: item.data.theme ?? "",
-          }),
-        );
-      setCatalog(items);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch talk catalog");
     }
+
+    const data: MeetingContentResponse = await response.json();
+
+    const items =
+      data.contents
+        ?.flatMap((content) => content.items ?? [])
+        .map((item) => ({
+          id: item.id,
+          number: item.data?.number ?? null,
+          theme: item.data?.theme ?? "",
+        })) ?? [];
+
+    setCatalog(items);
   }, []);
 
   const fetchDiscursos = useCallback(async () => {
-    const res = await fetch(`/api/person-talks?orgId=${organizationId}`);
-    if (res.ok) {
-      const data = await res.json();
-      const formatted = (data.talks ?? []).map(
-        (t: {
-          id: string;
-          personId: string;
-          personName: string;
-          meetingContentItemId: string;
-          meetingContentItem: {
-            data: { number?: number | null; theme?: string };
-          };
-          dates: { id: string; date: string; notes: string | null }[];
-        }) => {
-          const lastDate = t.dates[0]?.date ?? null;
-          return {
-            id: t.id,
-            personId: t.personId,
-            personName: t.personName,
-            meetingContentItemId: t.meetingContentItemId,
-            number: t.meetingContentItem.data.number,
-            theme: t.meetingContentItem.data.theme,
-            dates: t.dates,
-            lastDate,
-          };
-        },
-      );
-      setDiscursos(formatted);
+    const response = await fetch(
+      `/api/person-talks?orgId=${encodeURIComponent(organizationId)}`,
+      {
+        method: "GET",
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch talks");
     }
+
+    const data: PersonTalkResponse = await response.json();
+
+    const formatted: Discurso[] =
+      data.talks?.map((talk) => {
+        const dates = talk.dates ?? [];
+
+        return {
+          id: talk.id,
+          personId: talk.personId,
+          personName: talk.personName,
+          meetingContentItemId: talk.meetingContentItemId,
+          number: talk.meetingContentItem?.data?.number ?? null,
+          theme: talk.meetingContentItem?.data?.theme ?? "",
+          dates,
+          lastDate: dates[0]?.date ?? null,
+        };
+      }) ?? [];
+
+    setDiscursos(formatted);
   }, [organizationId]);
 
-  useEffect(() => {
-    async function init() {
-      setLoading(true);
-      await Promise.all([fetchPeople(), fetchCatalog(), fetchDiscursos()]);
-      setLoading(false);
+  const refreshDiscursos = useCallback(async () => {
+    try {
+      await fetchDiscursos();
+    } catch {
+      toast.error(t("people.discursos.loadError"));
     }
-    init();
-  }, [fetchPeople, fetchCatalog, fetchDiscursos]);
+  }, [fetchDiscursos, t]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function initialize() {
+      setLoading(true);
+
+      try {
+        const results = await Promise.allSettled([
+          fetchPeople(),
+          fetchCatalog(),
+          fetchDiscursos(),
+        ]);
+
+        if (
+          !cancelled &&
+          results.some((result) => result.status === "rejected")
+        ) {
+          toast.error(t("people.discursos.loadError"));
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void initialize();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchPeople, fetchCatalog, fetchDiscursos, t]);
+
+  const resetAddDialog = () => {
+    setAddDialogOpen(false);
+    setAddDialogPersonId(null);
+    setAddDialogTalkId(null);
+    setAddDialogDate("");
+  };
 
   const handleAddTalk = async () => {
-    if (!addDialogPersonId || !addDialogTalkId) return;
+    if (!addDialogPersonId || !addDialogTalkId || isAddingTalk) {
+      return;
+    }
 
-    const res = await fetch("/api/person-talks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personId: addDialogPersonId,
-        meetingContentItemId: addDialogTalkId,
-        date: addDialogDate || null,
-      }),
-    });
+    setIsAddingTalk(true);
 
-    if (res.ok) {
+    try {
+      const response = await fetch("/api/person-talks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personId: addDialogPersonId,
+          meetingContentItemId: addDialogTalkId,
+          date: addDialogDate || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add talk");
+      }
+
       toast.success(t("people.discursos.addSuccess"));
-      setAddDialogOpen(false);
-      setAddDialogPersonId(null);
-      setAddDialogTalkId(null);
-      setAddDialogDate("");
-      fetchDiscursos();
-    } else {
+      resetAddDialog();
+      await refreshDiscursos();
+    } catch {
       toast.error(t("people.discursos.addError"));
+    } finally {
+      setIsAddingTalk(false);
     }
   };
 
   const handleRemoveTalk = async () => {
-    if (!confirmDelete || confirmDelete.type !== "talk") return;
-
-    const res = await fetch(`/api/person-talks/${confirmDelete.id}`, {
-      method: "DELETE",
-    });
-
-    if (res.ok) {
-      toast.success(t("people.discursos.removeSuccess"));
-      fetchDiscursos();
-    } else {
-      toast.error(t("people.discursos.removeError"));
+    if (!confirmDelete || confirmDelete.type !== "talk" || isDeleting) {
+      return;
     }
-    setConfirmDelete(null);
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(
+        `/api/person-talks/${encodeURIComponent(confirmDelete.id)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to remove talk");
+      }
+
+      toast.success(t("people.discursos.removeSuccess"));
+      setConfirmDelete(null);
+      await refreshDiscursos();
+    } catch {
+      toast.error(t("people.discursos.removeError"));
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleAddDate = async () => {
-    if (!editDialogTalk || !editDateValue) return;
+    if (!editDialogTalk || !editDateValue || isAddingDate) {
+      return;
+    }
 
-    const res = await fetch("/api/talk-dates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personTalkId: editDialogTalk.id,
-        date: editDateValue,
-      }),
-    });
+    setIsAddingDate(true);
 
-    if (res.ok) {
+    try {
+      const response = await fetch("/api/talk-dates", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personTalkId: editDialogTalk.id,
+          date: editDateValue,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add date");
+      }
+
       toast.success(t("people.discursos.dateAddSuccess"));
       setEditDateValue("");
-      fetchDiscursos();
-    } else {
+      await refreshDiscursos();
+    } catch {
       toast.error(t("people.discursos.dateAddError"));
+    } finally {
+      setIsAddingDate(false);
     }
   };
 
   const handleRemoveDate = async () => {
-    if (!confirmDelete || confirmDelete.type !== "date") return;
-
-    const res = await fetch(`/api/talk-dates/${confirmDelete.id}`, {
-      method: "DELETE",
-    });
-
-    if (res.ok) {
-      toast.success(t("people.discursos.dateRemoveSuccess"));
-      fetchDiscursos();
-    } else {
-      toast.error(t("people.discursos.dateRemoveError"));
+    if (!confirmDelete || confirmDelete.type !== "date" || isDeleting) {
+      return;
     }
-    setConfirmDelete(null);
+
+    setIsDeleting(true);
+
+    try {
+      const response = await fetch(
+        `/api/talk-dates/${encodeURIComponent(confirmDelete.id)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to remove date");
+      }
+
+      toast.success(t("people.discursos.dateRemoveSuccess"));
+      setConfirmDelete(null);
+      await refreshDiscursos();
+    } catch {
+      toast.error(t("people.discursos.dateRemoveError"));
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const openAddDialog = (personId: string) => {
     setAddDialogPersonId(personId);
+    setAddDialogTalkId(null);
+    setAddDialogDate("");
     setAddDialogOpen(true);
   };
 
@@ -261,6 +399,7 @@ export function DiscursosClient({
 
   const openEditDialog = (talk: Discurso) => {
     setEditDialogTalk(talk);
+    setEditDateValue("");
     setEditDialogOpen(true);
   };
 
@@ -268,20 +407,31 @@ export function DiscursosClient({
     setConfirmDelete({ type, id });
   };
 
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "—";
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("pt-BR");
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) {
+      return "—";
+    }
+
+    const date = new Date(dateString);
+
+    if (Number.isNaN(date.getTime())) {
+      return "—";
+    }
+
+    return date.toLocaleDateString("pt-BR");
   };
 
   const getAvailableTalks = useCallback(
     (personId: string) => {
-      const assignedIds = discursos
-        .filter((d) => d.personId === personId)
-        .map((d) => d.meetingContentItemId);
-      return catalog.filter((t) => !assignedIds.includes(t.id));
+      const assignedIds = new Set(
+        discursos
+          .filter((discurso) => discurso.personId === personId)
+          .map((discurso) => discurso.meetingContentItemId),
+      );
+
+      return catalog.filter((talk) => !assignedIds.has(talk.id));
     },
-    [discursos, catalog],
+    [catalog, discursos],
   );
 
   const availableTalks = useMemo(
@@ -289,178 +439,255 @@ export function DiscursosClient({
     [addDialogPersonId, getAvailableTalks],
   );
 
+  const sortedPeopleTalks = useCallback(
+    (personId: string) => {
+      return discursos
+        .filter((discurso) => discurso.personId === personId)
+        .sort((first, second) => {
+          if (first.number == null && second.number == null) {
+            return 0;
+          }
+
+          if (first.number == null) {
+            return 1;
+          }
+
+          if (second.number == null) {
+            return -1;
+          }
+
+          return first.number - second.number;
+        });
+    },
+    [discursos],
+  );
+
   if (loading) {
     return (
-      <div className="mx-auto w-full min-w-0 max-w-5xl px-4 py-8 sm:px-6">
-        <p className="text-muted-foreground">{t("common.loading")}</p>
-      </div>
+      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+        <output className="block text-sm text-muted-foreground">
+          {t("common.loading")}
+        </output>
+      </main>
     );
   }
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-5xl px-4 py-8 sm:px-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">
+    <main className="mx-auto w-full max-w-5xl overflow-x-clip px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <header className="mb-6 space-y-1 sm:mb-8">
+        <h1 className="wrap-break-word text-2xl font-semibold tracking-tight sm:text-3xl">
           {t("people.discursos.title")}
         </h1>
-        <p className="mt-1 text-muted-foreground">
+
+        <p className="wrap-break-word text-sm text-muted-foreground sm:text-base">
           {t("people.discursos.subtitle")}
         </p>
-      </div>
+      </header>
 
-      {people.length === 0 && (
-        <div className="rounded-2xl bg-card p-8 ring-1 ring-border text-center">
-          <p className="text-muted-foreground">
+      {people.length === 0 ? (
+        <section
+          aria-label={t("people.discursos.title")}
+          className="rounded-2xl bg-card p-6 text-center ring-1 ring-border sm:p-8"
+        >
+          <p className="text-sm text-muted-foreground">
             {t("people.discursos.noApprovedPeople")}
           </p>
-        </div>
+        </section>
+      ) : (
+        <section
+          aria-label={t("people.discursos.title")}
+          className="space-y-4 sm:space-y-6"
+        >
+          {people.map((person) => {
+            const personTalks = sortedPeopleTalks(person.id);
+            const availableForPerson = getAvailableTalks(person.id);
+
+            return (
+              <article
+                key={person.id}
+                className="min-w-0 overflow-hidden rounded-2xl bg-card ring-1 ring-border"
+              >
+                <header className="flex min-w-0 flex-col gap-4 border-b px-4 py-4 sm:px-5 sm:py-5 md:flex-row md:items-center md:justify-between">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div
+                      className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted"
+                      aria-hidden="true"
+                    >
+                      <CalendarDays className="size-5" />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h2 className="wrap-break-word text-base font-medium sm:text-lg">
+                        {person.name}
+                      </h2>
+
+                      <p className="mt-1 wrap-break-word text-xs leading-5 text-muted-foreground sm:text-sm">
+                        {person.sex === "MALE"
+                          ? t("people.form.sexMale")
+                          : t("people.form.sexFemale")}{" "}
+                        ·{" "}
+                        {person.batizado
+                          ? t("people.baptized")
+                          : t("people.notBaptized")}{" "}
+                        ·{" "}
+                        {person.privilegioServico
+                          ? t("people.approvedPublicTalk")
+                          : t("people.notApprovedPublicTalk")}
+                      </p>
+                    </div>
+                  </div>
+
+                  {canManage && availableForPerson.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full shrink-0 md:w-auto"
+                      onClick={() => openAddDialog(person.id)}
+                    >
+                      <Plus className="mr-1.5 size-4" aria-hidden="true" />
+                      {t("people.discursos.addTalk")}
+                    </Button>
+                  )}
+                </header>
+
+                <div className="p-4 sm:p-5">
+                  {personTalks.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-muted-foreground">
+                      {t("people.discursos.noTalksAssigned")}
+                    </p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {personTalks.map((talk) => (
+                        <li
+                          key={talk.id}
+                          className="min-w-0 rounded-xl bg-muted/50 p-3 sm:p-4"
+                        >
+                          <div className="flex min-w-0 flex-col gap-4">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="wrap-break-word text-sm font-medium leading-6 sm:text-base">
+                                {talk.number != null && (
+                                  <span className="mr-1.5 font-semibold text-primary">
+                                    {talk.number}.
+                                  </span>
+                                )}
+
+                                <span className="wrap-break-word">
+                                  {talk.theme || "—"}
+                                </span>
+                              </h3>
+
+                              <p className="mt-1 wrap-break-word text-xs leading-5 text-muted-foreground sm:text-sm">
+                                {t("people.discursos.lastDate")}:{" "}
+                                {formatDate(talk.lastDate)}
+                              </p>
+                            </div>
+
+                            <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start sm:w-auto sm:justify-center"
+                                onClick={() => openDatesDialog(talk)}
+                              >
+                                <CalendarDays
+                                  className="mr-1.5 size-4"
+                                  aria-hidden="true"
+                                />
+                                {t("people.discursos.viewDates")}
+                              </Button>
+
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start sm:w-auto sm:justify-center"
+                                onClick={() => openEditDialog(talk)}
+                              >
+                                <Edit
+                                  className="mr-1.5 size-4"
+                                  aria-hidden="true"
+                                />
+                                {t("people.discursos.editDates")}
+                              </Button>
+
+                              {canManage && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start text-destructive hover:text-destructive sm:w-auto sm:justify-center"
+                                  onClick={() =>
+                                    openConfirmDelete("talk", talk.id)
+                                  }
+                                >
+                                  <Trash2
+                                    className="mr-1.5 size-4"
+                                    aria-hidden="true"
+                                  />
+                                  {t("people.discursos.removeTalk")}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </section>
       )}
 
-      <div className="space-y-6">
-        {people.map((person) => {
-          const personTalks = discursos
-            .filter((d) => d.personId === person.id)
-            .sort((a, b) => {
-              const na = a.number;
-              const nb = b.number;
-              if (na == null && nb == null) return 0;
-              if (na == null) return 1;
-              if (nb == null) return -1;
-              return na - nb;
-            });
-          const availableTalks = getAvailableTalks(person.id);
+      <Dialog
+        open={addDialogOpen}
+        onOpenChange={(open) => {
+          setAddDialogOpen(open);
 
-          return (
-            <div
-              key={person.id}
-              className="rounded-2xl bg-card ring-1 ring-border"
-            >
-              <div className="px-5 py-4 border-b flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-muted">
-                    <CalendarDays className="h-5 w-5" aria-hidden="true" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{person.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {person.sex === "MALE"
-                        ? t("people.form.sexMale")
-                        : t("people.form.sexFemale")}{" "}
-                      ·{" "}
-                      {person.batizado
-                        ? t("people.baptized")
-                        : t("people.notBaptized")}{" "}
-                      ·{" "}
-                      {person.privilegioServico
-                        ? t("people.approvedPublicTalk")
-                        : t("people.notApprovedPublicTalk")}
-                    </p>
-                  </div>
-                </div>
-
-                {canManage && availableTalks.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openAddDialog(person.id)}
-                    className="w-full sm:w-auto"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    {t("people.discursos.addTalk")}
-                  </Button>
-                )}
-              </div>
-
-              <div className="p-5">
-                {personTalks.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">
-                    {t("people.discursos.noTalksAssigned")}
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {personTalks.map((talk) => (
-                      <div
-                        key={talk.id}
-                        className="rounded-xl bg-muted/50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">
-                            {talk.number != null ? (
-                              <span className="mr-1.5 font-semibold text-primary">
-                                {talk.number}.
-                              </span>
-                            ) : null}
-                            {talk.theme || "—"}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {t("people.discursos.lastDate")}:{" "}
-                            {formatDate(talk.lastDate)}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDatesDialog(talk)}
-                          >
-                            <CalendarDays className="h-4 w-4 mr-1" />
-                            {t("people.discursos.viewDates")}
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openEditDialog(talk)}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            {t("people.discursos.editDates")}
-                          </Button>
-
-                          {canManage && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => openConfirmDelete("talk", talk.id)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              {t("people.discursos.removeTalk")}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent>
+          if (!open) {
+            setAddDialogPersonId(null);
+            setAddDialogTalkId(null);
+            setAddDialogDate("");
+          }
+        }}
+      >
+        <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto overflow-x-hidden rounded-2xl sm:max-h-[90dvh]">
           <DialogHeader>
-            <DialogTitle>{t("people.discursos.addTalkTitle")}</DialogTitle>
+            <DialogTitle className="wrap-break-word">
+              {t("people.discursos.addTalkTitle")}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+
+          <div className="space-y-5 py-2 sm:py-4">
             <div className="space-y-2">
-              <Label>{t("people.discursos.selectTalk")}</Label>
+              <Label htmlFor="talk-select">
+                {t("people.discursos.selectTalk")}
+              </Label>
+
               <Select
                 value={addDialogTalkId ?? ""}
                 onValueChange={setAddDialogTalkId}
               >
-                <SelectTrigger>
+                <SelectTrigger id="talk-select" className="w-full">
                   <SelectValue
                     placeholder={t("people.discursos.selectTalkPlaceholder")}
                   />
                 </SelectTrigger>
-                <SelectContent>
+
+                <SelectContent className="max-w-[calc(100vw-2rem)]">
                   {availableTalks.map((talk) => (
-                    <SelectItem key={talk.id} value={talk.id}>
-                      {talk.number != null ? `${talk.number}. ` : ""}
-                      {talk.theme}
+                    <SelectItem
+                      key={talk.id}
+                      value={talk.id}
+                      className="max-w-full"
+                    >
+                      <span className="block max-w-[calc(100vw-5rem)] truncate">
+                        {talk.number != null ? `${talk.number}. ` : ""}
+                        {talk.theme || "—"}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -468,20 +695,37 @@ export function DiscursosClient({
             </div>
 
             <div className="space-y-2">
-              <Label>{t("people.discursos.initialDate")}</Label>
+              <Label htmlFor="initial-date">
+                {t("people.discursos.initialDate")}
+              </Label>
+
               <Input
+                id="initial-date"
                 type="date"
                 value={addDialogDate}
-                onChange={(e) => setAddDialogDate(e.target.value)}
-                placeholder={t("people.discursos.datePlaceholder")}
+                onChange={(event) => setAddDialogDate(event.target.value)}
+                className="w-full"
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={resetAddDialog}
+                disabled={isAddingTalk}
+              >
                 {t("common.cancel")}
               </Button>
-              <Button onClick={handleAddTalk} disabled={!addDialogTalkId}>
+
+              <Button
+                type="button"
+                className="w-full sm:w-auto"
+                onClick={handleAddTalk}
+                disabled={!addDialogTalkId || isAddingTalk}
+              >
+                <Plus className="mr-1.5 size-4" aria-hidden="true" />
                 {t("people.discursos.addTalk")}
               </Button>
             </div>
@@ -489,37 +733,53 @@ export function DiscursosClient({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={datesDialogOpen} onOpenChange={setDatesDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog
+        open={datesDialogOpen}
+        onOpenChange={(open) => {
+          setDatesDialogOpen(open);
+
+          if (!open) {
+            setDatesDialogTalk(null);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto overflow-x-hidden rounded-2xl sm:max-h-[90dvh]">
           <DialogHeader>
             <DialogTitle>{t("people.discursos.datesTitle")}</DialogTitle>
           </DialogHeader>
+
           {datesDialogTalk && (
-            <div className="space-y-4 py-4">
-              <p className="font-medium">
-                {datesDialogTalk.number != null
-                  ? `${datesDialogTalk.number}. `
-                  : ""}
-                {datesDialogTalk.theme}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {t("people.discursos.person")}: {datesDialogTalk.personName}
-              </p>
+            <div className="space-y-5 py-2 sm:py-4">
+              <div className="min-w-0">
+                <h3 className="wrap-break-word font-medium">
+                  {datesDialogTalk.number != null
+                    ? `${datesDialogTalk.number}. `
+                    : ""}
+                  {datesDialogTalk.theme || "—"}
+                </h3>
+
+                <p className="mt-1 wrap-break-word text-sm text-muted-foreground">
+                  {t("people.discursos.person")}: {datesDialogTalk.personName}
+                </p>
+              </div>
 
               {datesDialogTalk.dates.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
+                <p className="py-4 text-center text-sm text-muted-foreground">
                   {t("people.discursos.noDates")}
                 </p>
               ) : (
-                <ul className="space-y-2 max-h-60 overflow-y-auto">
+                <ul className="max-h-64 space-y-2 overflow-y-auto overscroll-contain">
                   {datesDialogTalk.dates.map((date) => (
                     <li
                       key={date.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
+                      className="flex min-w-0 flex-col gap-1 rounded-lg border p-3 sm:flex-row sm:items-start sm:justify-between"
                     >
-                      <span>{formatDate(date.date)}</span>
+                      <time dateTime={date.date} className="shrink-0 text-sm">
+                        {formatDate(date.date)}
+                      </time>
+
                       {date.notes && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="wrap-break-word text-xs text-muted-foreground sm:max-w-[65%] sm:text-right">
                           {date.notes}
                         </span>
                       )}
@@ -532,65 +792,96 @@ export function DiscursosClient({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog
+        open={editDialogOpen}
+        onOpenChange={(open) => {
+          setEditDialogOpen(open);
+
+          if (!open) {
+            setEditDialogTalk(null);
+            setEditDateValue("");
+          }
+        }}
+      >
+        <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto overflow-x-hidden rounded-2xl sm:max-h-[90dvh]">
           <DialogHeader>
             <DialogTitle>{t("people.discursos.editDatesTitle")}</DialogTitle>
           </DialogHeader>
+
           {editDialogTalk && (
-            <div className="space-y-4 py-4">
-              <p className="font-medium">
+            <div className="space-y-5 py-2 sm:py-4">
+              <h3 className="wrap-break-word font-medium">
                 {editDialogTalk.number != null
                   ? `${editDialogTalk.number}. `
                   : ""}
-                {editDialogTalk.theme}
-              </p>
+                {editDialogTalk.theme || "—"}
+              </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>{t("people.discursos.addNewDate")}</Label>
+                  <Label htmlFor="new-date">
+                    {t("people.discursos.addNewDate")}
+                  </Label>
+
                   <Input
+                    id="new-date"
                     type="date"
                     value={editDateValue}
-                    onChange={(e) => setEditDateValue(e.target.value)}
-                    placeholder={t("people.discursos.datePlaceholder")}
+                    onChange={(event) => setEditDateValue(event.target.value)}
+                    className="w-full"
                   />
-                  <Button onClick={handleAddDate} disabled={!editDateValue}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    {t("people.discursos.addDate")}
-                  </Button>
                 </div>
 
-                {editDialogTalk.dates.length > 0 && (
-                  <div className="space-y-2 border-t pt-4">
-                    <Label>{t("people.discursos.existingDates")}</Label>
-                    <ul className="space-y-2 max-h-48 overflow-y-auto">
-                      {editDialogTalk.dates.map((date) => (
-                        <li
-                          key={date.id}
-                          className="flex items-center justify-between rounded-lg border p-2"
-                        >
-                          <span className="text-sm">
-                            {formatDate(date.date)}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => openConfirmDelete("date", date.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                <Button
+                  type="button"
+                  className="w-full sm:w-auto"
+                  onClick={handleAddDate}
+                  disabled={!editDateValue || isAddingDate}
+                >
+                  <Plus className="mr-1.5 size-4" aria-hidden="true" />
+                  {t("people.discursos.addDate")}
+                </Button>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
+              {editDialogTalk.dates.length > 0 && (
+                <div className="space-y-3 border-t pt-4">
+                  <h3 className="text-sm font-medium">
+                    {t("people.discursos.existingDates")}
+                  </h3>
+
+                  <ul className="max-h-56 space-y-2 overflow-y-auto overscroll-contain">
+                    {editDialogTalk.dates.map((date) => (
+                      <li
+                        key={date.id}
+                        className="flex min-w-0 items-center justify-between gap-3 rounded-lg border p-2.5"
+                      >
+                        <time dateTime={date.date} className="text-sm">
+                          {formatDate(date.date)}
+                        </time>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`${t(
+                            "people.discursos.removeDate",
+                          )} ${formatDate(date.date)}`}
+                          className="shrink-0 text-destructive hover:text-destructive"
+                          onClick={() => openConfirmDelete("date", date.id)}
+                        >
+                          <X className="size-4" aria-hidden="true" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="flex justify-end border-t pt-4">
                 <Button
+                  type="button"
                   variant="outline"
+                  className="w-full sm:w-auto"
                   onClick={() => setEditDialogOpen(false)}
                 >
                   {t("common.cancel")}
@@ -602,37 +893,55 @@ export function DiscursosClient({
       </Dialog>
 
       <AlertDialog
-        open={confirmDelete != null}
-        onOpenChange={(open) => !open && setConfirmDelete(null)}
+        open={confirmDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setConfirmDelete(null);
+          }
+        }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-lg rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>
+            <AlertDialogTitle className="wrap-break-word">
               {confirmDelete?.type === "talk"
                 ? t("people.discursos.removeTalkConfirmTitle")
                 : t("people.discursos.removeDateConfirmTitle")}
             </AlertDialogTitle>
-            <AlertDialogDescription>
+
+            <AlertDialogDescription className="wrap-break-word">
               {confirmDelete?.type === "talk"
                 ? t("people.discursos.removeTalkConfirmDescription")
                 : t("people.discursos.removeDateConfirmDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+
+          <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <AlertDialogCancel
+              className="w-full sm:w-auto"
+              disabled={isDeleting}
+            >
+              {t("common.cancel")}
+            </AlertDialogCancel>
+
             <AlertDialogAction
               variant="destructive"
-              onClick={() =>
-                confirmDelete?.type === "talk"
-                  ? handleRemoveTalk()
-                  : handleRemoveDate()
-              }
+              className="w-full sm:w-auto"
+              disabled={isDeleting}
+              onClick={(event) => {
+                event.preventDefault();
+
+                if (confirmDelete?.type === "talk") {
+                  void handleRemoveTalk();
+                } else {
+                  void handleRemoveDate();
+                }
+              }}
             >
               {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </main>
   );
 }

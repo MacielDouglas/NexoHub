@@ -26,7 +26,23 @@
     "signingIn": "Iniciando...",
     "terms": "Al continuar, aceptas los términos de uso y la política de privacidad.",
     "subtitle": "Organiza reuniones y asignaciones de tu congregación con practicidad y seguridad.",
-    "greeting": "Bienvenido de nuevo"
+    "greeting": "Bienvenido de nuevo",
+    "demo": "Demo"
+  },
+  "demo": {
+    "badge": "Modo demostración",
+    "backToLogin": "Volver al inicio de sesión",
+    "nav": {
+      "label": "Navegación de demostración",
+      "home": "Inicio",
+      "meetings": "Reuniones",
+      "designacoes": "Asignaciones"
+    },
+    "meetings": {
+      "tesouros": "Tesoros de la Biblia",
+      "ministerio": "Seamos Mejores Maestros",
+      "vidaCrista": "Nuestra Vida Cristiana"
+    }
   },
   "nav": {
     "signOut": "Salir",
@@ -642,7 +658,7 @@
     "tabContent": "Contenido",
     "tabGroups": "Discursos",
     "tabMidweek": "Reunión de entre semana",
-    "tabWeekend": "Reunión de fin de semana",
+    "tabWeekend": "Reunión del fin de semana",
     "types": {
       "midweek": "Entre semana",
       "weekend": "Fin de semana",

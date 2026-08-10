@@ -1,8 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { authClient } from "@/lib/auth-client";
 
@@ -65,6 +65,27 @@ export function LoginClient() {
             </svg>
             {isSigningIn ? t("login.signingIn") : t("login.signInWithGoogle")}
           </button>
+
+          <div className="mt-4">
+            <Link
+              href="/demo"
+              className="flex h-13 w-full items-center justify-center gap-3 rounded-full bg-muted px-6 text-[17px] font-semibold text-muted-foreground transition-opacity hover:opacity-90 active:opacity-80"
+            >
+              <svg
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <path d="M18 16a6 6 0 0 0-6 6" />
+              </svg>
+              {t("login.demo")}
+            </Link>
+          </div>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
             {t("login.terms")}

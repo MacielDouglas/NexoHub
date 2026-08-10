@@ -26,7 +26,23 @@
     "signingIn": "Entrando...",
     "terms": "Ao continuar, você concorda com os termos de uso e política de privacidade.",
     "subtitle": "Organize reuniões e designações da sua congregação com praticidade e segurança.",
-    "greeting": "Bem-vindo de volta"
+    "greeting": "Bem-vindo de volta",
+    "demo": "Demo"
+  },
+  "demo": {
+    "badge": "Modo demonstração",
+    "backToLogin": "Voltar ao login",
+    "nav": {
+      "label": "Navegação de demonstração",
+      "home": "Início",
+      "meetings": "Reuniões",
+      "designacoes": "Designações"
+    },
+    "meetings": {
+      "tesouros": "Tesouros da Palavra de Deus",
+      "ministerio": "Melhore no Ministério",
+      "vidaCrista": "Nossa Vida Cristã"
+    }
   },
   "nav": {
     "signOut": "Sair",

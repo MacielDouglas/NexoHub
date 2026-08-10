@@ -397,7 +397,7 @@ export function SubOrgDetailClient({
                               <span className="shrink-0 font-semibold text-primary">
                                 {num.trim() ? `${item?.number} -` : ""}
                               </span>
-                              <span className="truncate">
+                              <span className="wrap">
                                 {theme}
                                 {date ? (
                                   <>
