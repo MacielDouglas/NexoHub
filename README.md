@@ -17,23 +17,35 @@ organização com papéis hierárquicos.
 
 ## 📌 Índice
 
-- [Sobre o projeto](#-sobre-o-projeto)
-- [Funcionalidades](#-funcionalidades)
-- [Arquitetura](#-arquitetura)
-- [Stack](#-stack)
-- [Estrutura do monorepo](#-estrutura-do-monorepo)
-- [Modelo de dados](#-modelo-de-dados)
-- [Primeiros passos](#-primeiros-passos)
-- [Deploy na Vercel](#-deploy-na-vercel)
-- [Variáveis de ambiente](#-variáveis-de-ambiente)
-- [Autenticação e RBAC](#-autenticação-e-rbac)
-- [i18n](#-i18n)
-- [Convenções de código](#-convenções-de-código)
-- [Verificação](#-verificação)
-- [Segurança](#-segurança)
-- [FAQ](#-faq)
-- [Contribuir](#-contribuir)
-- [Licença](#-licença)
+- [Nexohub](#nexohub)
+  - [📌 Índice](#-índice)
+  - [🔭 Sobre o projeto](#-sobre-o-projeto)
+    - [Como funciona](#como-funciona)
+  - [✨ Funcionalidades](#-funcionalidades)
+  - [🏗 Arquitetura](#-arquitetura)
+  - [🧰 Stack](#-stack)
+    - [Web (`apps/web`)](#web-appsweb)
+    - [Mobile (`apps/mobile`)](#mobile-appsmobile)
+  - [🗂 Estrutura do monorepo](#-estrutura-do-monorepo)
+  - [🧬 Modelo de dados](#-modelo-de-dados)
+  - [🚀 Primeiros passos](#-primeiros-passos)
+    - [Pré-requisitos](#pré-requisitos)
+    - [Instalação](#instalação)
+    - [Web](#web)
+    - [Mobile](#mobile)
+  - [🔐 Variáveis de ambiente](#-variáveis-de-ambiente)
+    - [Web (`apps/web/.env`)](#web-appswebenv)
+    - [Mobile (`apps/mobile/.env`)](#mobile-appsmobileenv)
+  - [🔑 Autenticação e RBAC](#-autenticação-e-rbac)
+    - [Papéis globais](#papéis-globais)
+    - [Papéis por organização](#papéis-por-organização)
+  - [🌐 i18n](#-i18n)
+  - [📏 Convenções de código](#-convenções-de-código)
+  - [✅ Verificação](#-verificação)
+  - [🛡 Segurança](#-segurança)
+  - [❓ FAQ](#-faq)
+  - [🤝 Contribuir](#-contribuir)
+  - [📄 Licença](#-licença)
 
 ---
 
@@ -200,49 +212,6 @@ cd apps/mobile
 cp .env.example .env
 bunx expo start   # escolha iOS, Android ou web
 ```
-
----
-
-## ▲ Deploy na Vercel
-
-O projeto está pronto para deploy contínuo na **Vercel**.
-
-### Opção 1 — Importar pelo dashboard (recomendado)
-
-1. Acesse [vercel.com/new](https://vercel.com/new) e importe o repositório
-   `MacielDouglas/NexoHub`.
-2. A Vercel detecta automaticamente o monorepo. Configure o **Root Directory** como
-   `apps/web`.
-3. Configure a variável `NEXT_PUBLIC_APP_URL` com a URL de produção
-   (ex.: `https://nexohub.vercel.app`).
-4. Preencha as demais variáveis de ambiente (veja [tabela](#-variáveis-de-ambiente)).
-5. Adicione um banco PostgreSQL (ex.: **Neon**, **Supabase** ou **Vercel Postgres**) e
-   informe a `DATABASE_URL`.
-6. Deploy! A cada push na `main` um novo deploy é disparado.
-
-### Opção 2 — Vercel CLI
-
-```bash
-cd apps/web
-vercel --prod
-```
-
-### Pré-deploy (banco)
-
-Na primeira vez, aplique as migrations no banco de produção:
-
-```bash
-cd apps/web
-bunx prisma migrate deploy
-```
-
-> 💡 Para CI, você pode rodar `bunx prisma migrate deploy` como passo antes do build
-> usando um hook de build na Vercel (`"build": "prisma generate && prisma migrate deploy && next build"`).
-
-### Pós-deploy
-
-- Adicione a URL de produção às **URIs de redirecionamento autorizadas** do Google OAuth.
-- Verifique `/robots.txt`, `/sitemap.xml` e a página 404 em produção.
 
 ---
 
