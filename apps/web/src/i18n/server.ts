@@ -17,4 +17,5 @@ export function getServerT(lang: string | null | undefined) {
   return i18next.getFixedT(normalizeLanguage(lang));
 }
 
+export { normalizeLanguage };
 export type { SupportedLanguage };

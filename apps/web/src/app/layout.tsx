@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { I18nProvider } from "@/components/i18n-provider";
 import { I18nSync } from "@/components/i18n-sync";
 import { Toaster } from "@/components/ui/sonner";
+import { normalizeLanguage } from "@/i18n/server";
 import { SITE_AUTHOR, SITE_NAME, SITE_TAGLINE_PT, SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({
@@ -73,14 +75,18 @@ export const viewport: Viewport = {
   themeColor: "#ec7000",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  const acceptLanguage = headersList.get("accept-language") || "";
+  const serverLanguage = normalizeLanguage(acceptLanguage);
+
   return (
     <html
-      lang="pt"
+      lang={serverLanguage}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background">
@@ -94,7 +100,7 @@ export default function RootLayout({
           }}
         />
         <I18nProvider>
-          <I18nSync />
+          <I18nSync lang={serverLanguage} />
           {children}
           <Toaster />
         </I18nProvider>
