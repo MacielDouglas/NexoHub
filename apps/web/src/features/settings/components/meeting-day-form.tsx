@@ -1,14 +1,17 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import { saveMeetingConfigAction } from "../actions/settings.actions";
 import { SubmitButton } from "./submit-button";
 
 const DAYS = [
-  { value: 0, label: "Domingo" },
-  { value: 1, label: "Segunda" },
-  { value: 2, label: "Terça" },
-  { value: 3, label: "Quarta" },
-  { value: 4, label: "Quinta" },
-  { value: 5, label: "Sexta" },
-  { value: 6, label: "Sábado" },
+  { value: 0, label: "sunday" },
+  { value: 1, label: "monday" },
+  { value: 2, label: "tuesday" },
+  { value: 3, label: "wednesday" },
+  { value: 4, label: "thursday" },
+  { value: 5, label: "friday" },
+  { value: 6, label: "saturday" },
 ] as const;
 
 type MeetingConfig = {
@@ -37,6 +40,8 @@ export function MeetingDayForm({
   config,
   conductorCandidates = [],
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <form action={saveMeetingConfigAction} className="mt-4 space-y-4">
       <input type="hidden" name="id" defaultValue={config?.id ?? ""} />
@@ -48,7 +53,7 @@ export function MeetingDayForm({
           htmlFor={`${type}-day`}
           className="mb-2 block text-sm font-medium"
         >
-          Dia da semana
+          {t("settings.dayOfWeek")}
         </label>
         <select
           id={`${type}-day`}
@@ -58,7 +63,7 @@ export function MeetingDayForm({
         >
           {DAYS.map((day) => (
             <option key={day.value} value={day.value}>
-              {day.label}
+              {t(`settings.days.${day.label}`)}
             </option>
           ))}
         </select>
@@ -69,7 +74,7 @@ export function MeetingDayForm({
           htmlFor={`${type}-time`}
           className="mb-2 block text-sm font-medium"
         >
-          Horário
+          {t("settings.startTime")}
         </label>
         <input
           id={`${type}-time`}
@@ -86,7 +91,7 @@ export function MeetingDayForm({
             htmlFor={`${type}-default-conductor`}
             className="mb-2 block text-sm font-medium"
           >
-            Dirigente da Sentinela padrão
+            {t("meetings.defaultConductor")}
           </label>
           <select
             id={`${type}-default-conductor`}
@@ -94,7 +99,7 @@ export function MeetingDayForm({
             defaultValue={config?.defaultSentinelaConductorId ?? ""}
             className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none"
           >
-            <option value="">Nenhum (escolher em cada reunião)</option>
+            <option value="">{t("settings.noDefaultConductor")}</option>
             {conductorCandidates.map((person) => (
               <option key={person.id} value={person.id}>
                 {person.name}
@@ -102,15 +107,13 @@ export function MeetingDayForm({
             ))}
           </select>
           <p className="mt-1.5 text-xs text-muted-foreground">
-            Essa pessoa ficará pré-selecionada como dirigente em todas as
-            reuniões de Fim de Semana. Você poderá trocá-la em uma reunião
-            específica quando quiser.
+            {t("settings.defaultConductorHint")}
           </p>
         </div>
       )}
 
-      <SubmitButton className="w-full rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90">
-        Salvar
+      <SubmitButton className="w-full rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
+        {t("common.save")}
       </SubmitButton>
     </form>
   );

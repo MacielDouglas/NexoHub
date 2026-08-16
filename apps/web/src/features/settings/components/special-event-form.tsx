@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import {
   ANNUAL_EVENT_TYPES,
   SPECIAL_EVENT_FIELDS,
@@ -23,6 +26,7 @@ type Props = {
 };
 
 export function SpecialEventForm({ event, eventTypeLabels }: Props) {
+  const { t } = useTranslation();
   const selectedType = (event?.type ?? "memorial") as SpecialEventType;
   const fields = SPECIAL_EVENT_FIELDS[selectedType];
   const isAnnual = (ANNUAL_EVENT_TYPES as readonly string[]).includes(
@@ -39,7 +43,7 @@ export function SpecialEventForm({ event, eventTypeLabels }: Props) {
           htmlFor={`type-${event?.id ?? "new"}`}
           className="mb-2 block text-sm font-medium"
         >
-          Tipo de evento
+          {t("settings.specialEventType")}
         </label>
         <select
           id={`type-${event?.id ?? "new"}`}
@@ -61,7 +65,9 @@ export function SpecialEventForm({ event, eventTypeLabels }: Props) {
             htmlFor={`date-${event?.id ?? "new"}`}
             className="mb-2 block text-sm font-medium"
           >
-            {fields.endDate ? "Data inicial" : "Data"}
+            {fields.endDate
+              ? t("settings.eventStartDate")
+              : t("settings.eventDate")}
           </label>
           <input
             id={`date-${event?.id ?? "new"}`}
@@ -78,7 +84,7 @@ export function SpecialEventForm({ event, eventTypeLabels }: Props) {
               htmlFor={`endDate-${event?.id ?? "new"}`}
               className="mb-2 block text-sm font-medium"
             >
-              Data final
+              {t("settings.eventEndDate")}
             </label>
             <input
               id={`endDate-${event?.id ?? "new"}`}
@@ -96,7 +102,7 @@ export function SpecialEventForm({ event, eventTypeLabels }: Props) {
               htmlFor={`time-${event?.id ?? "new"}`}
               className="mb-2 block text-sm font-medium"
             >
-              Horário
+              {t("settings.eventTime")}
             </label>
             <input
               id={`time-${event?.id ?? "new"}`}
@@ -114,7 +120,7 @@ export function SpecialEventForm({ event, eventTypeLabels }: Props) {
               htmlFor={`location-${event?.id ?? "new"}`}
               className="mb-2 block text-sm font-medium"
             >
-              Local
+              {t("settings.eventLocation")}
             </label>
             <input
               id={`location-${event?.id ?? "new"}`}
@@ -128,13 +134,13 @@ export function SpecialEventForm({ event, eventTypeLabels }: Props) {
       </div>
 
       {isAnnual ? (
-        <p className="text-xs font-medium text-amber-400">
-          Permitido apenas 1 por ano
+        <p className="text-xs font-medium text-muted-foreground">
+          {t("settings.onePerYear")}
         </p>
       ) : null}
 
-      <SubmitButton className="w-full rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90">
-        Salvar
+      <SubmitButton className="w-full rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90">
+        {t("common.save")}
       </SubmitButton>
     </form>
   );

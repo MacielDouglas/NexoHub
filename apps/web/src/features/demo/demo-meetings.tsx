@@ -16,8 +16,6 @@ import {
 } from "@/lib/cleaning-assignment";
 import { cn } from "@/lib/utils";
 
-const WEEKDAY_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-
 type MeetingType = "midweek" | "weekend";
 
 type Row = {
@@ -161,14 +159,14 @@ export function DemoMeetings() {
             type="button"
             onClick={() => setWeekStart((w) => addDays(w, -7))}
             aria-label={t("meetings.prevWeek")}
-            className="flex size-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex size-10 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <ChevronLeft className="size-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={() => setWeekStart(startOfWeek(new Date()))}
-            className="rounded-xl border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-md border border-border px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             {t("meetings.today")}
           </button>
@@ -176,12 +174,12 @@ export function DemoMeetings() {
             type="button"
             onClick={() => setWeekStart((w) => addDays(w, 7))}
             aria-label={t("meetings.nextWeek")}
-            className="flex size-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex size-10 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <ChevronRight className="size-4" aria-hidden="true" />
           </button>
         </div>
-        <p className="text-base font-semibold text-foreground">
+        <p className="text-base font-semibold text-foreground tabular-nums">
           {t("meetings.weekOf")} {formatWeekRange(weekStart, dateLocale)}
         </p>
       </div>
@@ -201,19 +199,19 @@ export function DemoMeetings() {
                 )}
               >
                 <span className="text-xs font-medium text-muted-foreground">
-                  {WEEKDAY_LABELS[i]}
+                  {t(`meetings.weekdays.${(i + 6) % 7}`)}
                 </span>
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-semibold text-foreground tabular-nums">
                   {day.getDate().toString().padStart(2, "0")}
                 </span>
                 <div className="flex min-h-5 flex-col items-center gap-0.5">
                   {isMidweek && (
-                    <span className="flex items-center gap-1 rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">
+                    <span className="flex items-center gap-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
                       <CalendarDays className="size-3" aria-hidden="true" />
                     </span>
                   )}
                   {isWeekend && (
-                    <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                    <span className="flex items-center gap-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
                       <CalendarCheck2 className="size-3" aria-hidden="true" />
                     </span>
                   )}
@@ -224,12 +222,12 @@ export function DemoMeetings() {
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
-            <CalendarDays className="size-3 text-blue-400" aria-hidden="true" />
+            <CalendarDays className="size-3 text-primary" aria-hidden="true" />
             {t("meetings.types.midweek")}
           </span>
           <span className="flex items-center gap-1">
             <CalendarCheck2
-              className="size-3 text-emerald-400"
+              className="size-3 text-primary"
               aria-hidden="true"
             />
             {t("meetings.types.weekend")}
@@ -240,7 +238,7 @@ export function DemoMeetings() {
       <div
         role="tablist"
         aria-label={t("meetings.title")}
-        className="flex w-fit max-w-full items-center gap-1 rounded-2xl border border-border bg-card p-1 shadow-sm"
+        className="flex w-fit max-w-full items-center gap-1 rounded-full bg-card p-1 ring-1 ring-white/10"
       >
         {(
           [
@@ -255,7 +253,7 @@ export function DemoMeetings() {
             aria-selected={cardTab === item.key}
             onClick={() => setCardTab(item.key)}
             className={cn(
-              "rounded-xl px-4 py-2 text-sm font-medium transition-colors",
+              "rounded-full px-4 py-2 text-sm font-medium transition-colors",
               cardTab === item.key
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:text-foreground",

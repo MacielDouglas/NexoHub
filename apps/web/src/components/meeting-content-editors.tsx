@@ -112,7 +112,7 @@ function SaveBar({
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="rounded-xl bg-primary px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
+        className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-85 disabled:opacity-50"
       >
         {saving ? t("common.loading") : t("common.save")}
       </button>
@@ -510,7 +510,7 @@ function ApostilaEditor({
                 <div
                   // biome-ignore lint/suspicious/noArrayIndexKey: parts have no stable id and are not reordered
                   key={pi}
-                  className="flex flex-wrap items-end gap-2 rounded-lg bg-card p-3 ring-1 ring-border"
+                  className="flex flex-wrap items-end gap-2 rounded-lg bg-card p-3 ring-1 ring-white/10"
                 >
                   <div className="w-16">
                     <Field

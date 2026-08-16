@@ -19,7 +19,7 @@ export function MeetingContentSideNav({ slug }: Props) {
 
   return (
     <SideNav
-      ariaLabel="Seções de conteúdo das reuniões"
+      ariaLabel="meetingContent.navAria"
       items={items}
       active={{
         mode: "query",

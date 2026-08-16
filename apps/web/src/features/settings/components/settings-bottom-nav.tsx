@@ -22,7 +22,7 @@ export function SettingsBottomNav({ slug, canManageSettings }: Props) {
 
   return (
     <BottomNav
-      ariaLabel="Seções de configuração"
+      ariaLabel="settings.navAria"
       items={items}
       active={{ mode: "query", param: "tab", defaultValue: "meetings" }}
     />

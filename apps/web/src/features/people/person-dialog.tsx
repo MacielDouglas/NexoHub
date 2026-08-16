@@ -277,7 +277,7 @@ export function PersonDialog({
 
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data?.error ?? "Erro");
+        setError(data?.error ?? t("common.error"));
         return;
       }
       onSaved();

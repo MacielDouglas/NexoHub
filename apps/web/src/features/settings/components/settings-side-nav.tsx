@@ -22,7 +22,7 @@ export function SettingsSideNav({ slug, canManageSettings }: Props) {
 
   return (
     <SideNav
-      ariaLabel="Seções de configuração"
+      ariaLabel="settings.navAria"
       items={items}
       active={{ mode: "query", param: "tab", defaultValue: "meetings" }}
     />

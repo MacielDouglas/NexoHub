@@ -2,229 +2,222 @@
 name: Nexohub
 description: Gerenciador de reuniões e escalas para congregações das Testemunhas de Jeová
 colors:
-  primary: "#2563EB"
-  secondary: "#7C3AED"
-  background: "#f8fafd"
-  surface: "#ffffff"
-  surface-selected: "#f1f5fb"
-  text: "#1F2937"
-  text-secondary: "#64748B"
-  border: "#e5eaf2"
-  danger: "#DC2626"
-  success: "#16A34A"
-  warning: "#D97706"
+  brand: "#ff6828"
+  brand-foreground: "#2a1405"
+  brand-muted: "#8a6a55"
+  background-light: "#faf8f5"
+  background-dark: "#161310"
+  surface-elevated-light: "#ffffff"
+  surface-elevated-dark: "#1d1a16"
+  surface-subtle-light: "#e8e3db"
+  surface-subtle-dark: "#23201b"
+  border-light: "#e5ded3"
+  border-dark: "rgb(255 255 255 / 0.12)"
+  map-default: "#ef4444"
+  map-selected: "#3b82f6"
+  map-confirmed: "#22c55e"
+  map-suggested: "#eab308"
+  map-cancelled: "#9ca3af"
 typography:
   display:
-    fontFamily: "Geist, system-ui, sans-serif"
-    fontSize: "48px"
+    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "3rem"
     fontWeight: 600
-    lineHeight: "52px"
-  headline:
-    fontFamily: "Geist, system-ui, sans-serif"
-    fontSize: "32px"
-    fontWeight: 600
-    lineHeight: "44px"
+    lineHeight: 1.1
   title:
-    fontFamily: "Geist, system-ui, sans-serif"
-    fontSize: "18px"
+    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1.5rem"
     fontWeight: 600
-    lineHeight: "28px"
+    lineHeight: 1.25
   body:
-    fontFamily: "Geist, system-ui, sans-serif"
-    fontSize: "16px"
-    fontWeight: 500
-    lineHeight: "24px"
+    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.5
   label:
-    fontFamily: "Geist, system-ui, sans-serif"
-    fontSize: "14px"
+    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.875rem"
     fontWeight: 500
-    lineHeight: "20px"
+    lineHeight: 1
+  micro:
+    fontFamily: "Outfit, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.625rem"
+    fontWeight: 500
+    lineHeight: 1.333
+  mono:
+    fontFamily: "Inconsolata, ui-monospace, monospace"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.5
 rounded:
-  sm: "6px"
-  md: "8px"
-  lg: "10px"
-  xl: "14px"
-  xxl: "18px"
+  md: "0.625rem"
+  lg: "0.75rem"
+  xl: "1rem"
+  2xl: "1.25rem"
+  full: "9999px"
 spacing:
-  half: "2px"
-  one: "4px"
-  two: "8px"
-  three: "16px"
-  four: "24px"
-  five: "32px"
-  six: "64px"
+  sm: "8px"
+  md: "16px"
+  lg: "24px"
+  xl: "40px"
 components:
   button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.surface}"
+    backgroundColor: "{colors.brand}"
+    textColor: "{colors.brand-foreground}"
     rounded: "{rounded.md}"
-    padding: "8px 12px"
-    height: "32px"
-  button-primary-hover:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.surface}"
+    padding: "8px 16px"
+  button-destructive:
+    backgroundColor: "#d93535"
+    textColor: "#ffffff"
     rounded: "{rounded.md}"
-    padding: "8px 12px"
-    height: "32px"
-    opacity: 0.85
-  button-outline:
-    backgroundColor: "{colors.background}"
-    textColor: "{colors.text}"
-    rounded: "{rounded.md}"
-    padding: "8px 12px"
-    height: "32px"
-    border: "1px solid {colors.border}"
-  input:
+    padding: "8px 16px"
+  input-default:
     backgroundColor: "transparent"
-    textColor: "{colors.text}"
+    textColor: "{colors.brand-foreground}"
     rounded: "{rounded.md}"
-    padding: "4px 10px"
-    height: "32px"
-    border: "1px solid {colors.border}"
-  card:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.text}"
+    padding: "8px 12px"
+  chip-status:
+    backgroundColor: "#eee9e1"
+    rounded: "{rounded.full}"
+    padding: "2px 10px"
+  card-surface:
+    backgroundColor: "{colors.surface-elevated-light}"
     rounded: "{rounded.xl}"
     padding: "16px"
-    border: "1px solid rgba(15,23,42,0.08)"
+  card-surface-dark:
+    backgroundColor: "{colors.surface-elevated-dark}"
+    rounded: "{rounded.xl}"
+    padding: "16px"
 ---
 
 # Design System: Nexohub
 
+> **STATUS:** redesign concluído. Este documento descreve o **novo** mundo visual — paleta centrada em `#ff6828`, tema claro/escuro com neutros quentes e suporte i18n pt/es. Referências históricas ao sistema incumbente foram removidas.
+
 ## Overview
 
-**Creative North Star: "A Sala do Reino Digital"**
+App **mobile-first** com estética de banco digital moderno (referência Nubank): superfícies planas e limpas, acento laranja vibrante como ação primária, muita respiração e tipografia clara (referência estapar.com.br). O alvo base é ~420 dpi (iPhone, Moto G, Galaxy S), com escalada confortável até desktop full-HD via breakpoints progressivos.
 
-O Nexohub se apresenta como o quadro de avisos da congregação digitalizado: organizado, sereno e digno de confiança. A metáfora governa tudo — é um lugar onde anciãos consultam o que vem a seguir na semana, conferem escalas e encontram a programação oficial da reunião sem esforço. Não é um dashboard frio de empresa; é um espaço institucional calmo que trata a informação da congregação com o respeito que ela merece.
-
-A superfície é clara (`#f8fafd`), os cards são brancos (`#ffffff`) em camadas tonais, e uma única cor de ação — o **Azul Congregacional** (`#2563EB`) — guia o olho para "o que fazer agora". O **Roxo Cerimonial** (`#7C3AED`) reserva-se para o sagrado e o administrativo: o header do login, o badge de acesso admin. A densidade é alta mas sem ruído: listas, cards compactos e navegação por abas nativas mantêm cada tela escaneável em segundos.
-
-A tipografia é Geist no web (sistema nos apps nativos), pesos médios (500–700), quase sem versaletes. A atmosfera é de **clareza institucional**: cada elemento existe para responder a uma pergunta do ancião — quando é a próxima reunião, quem é o membro, o que está programado.
+O laranja `#ff6828` é a cor de marca e de **ação primária** (botões principais, tab ativa, dia de hoje, badge do tipo). O tema claro usa fundo off-white quente (`#faf8f5`) e o escuro um quase-preto quente (`#161310`). Toda a UI é bilíngue (pt-BR / es) via dicionários em `lib/i18n`.
 
 **Key Characteristics:**
-- Um acento de ação (azul) + um acento cerimonial (roxo); todo o resto é neutro.
-- Camadas tonais claras com sombra azulada reservada a um único destaque (o hero "próxima reunião").
-- Cards brancos de cantos generosos (10–18px) separados por ritmo de 8/16px.
-- Botões compactos (32px) e inputs da mesma altura — aparato operacional discreto.
-- Navegação nativa por abas no mobile; links de texto no web, sempre com o item ativo em azul.
-- Dark mode apenas no web; o mobile é um tema claro único.
+- Acento laranja `#ff6828` como cor de ação, não de decoração — mas pintado com confiança nos pontos de conversão (botões, tab ativa, toggle).
+- Neutros quentes (off-white / quase-preto), nunca cinza-azulado frio.
+- Cards `rounded-2xl` com borda quente e `shadow-xs`; radius base `0.875rem`.
+- Header claro com blur (`bg-background/80 backdrop-blur-md`), sem moldura escura fixa.
+- Bottom tab bar fixa no mobile (`md:hidden`) com 5 rotas + i18n.
+- Tipografia Outfit (única família de UI; mono Inconsolata só para dados técnicos).
+- Fonte de inputs ≥ `16px` (anti-zoom iOS).
+- Semântica de mapa preservada: vermelho padrão/pendente, azul seleção, verde confirmado, amarelo sugerido, cinza cancelado.
 
 ## Colors
 
-A paleta é de clareza operacional: um azul de ação, um roxo cerimonial, e uma família neutra fria com leve matiz azulado que mantém a calma institucional.
+Paleta dual-theme com neutros quentes e um acento de marca que também é a ação primária.
 
 ### Primary
-- **Azul Congregacional** (#2563EB): a única cor de ação. Botões primários, links, números e destaques de item, o item ativo da navegação, o texto de "editar/ver". É o tom de "o que você deve fazer a seguir".
-- **Azul Congregacional / 85%** (hover): o mesmo azul com 85% de opacidade em hover, mais calmo que um escurecimento.
-
-### Secondary
-- **Roxo Cerimonial** (#7C3AED): reservado ao cerimonial e administrativo — header do login, badge de super-user no web, acentos da marca. Nunca compete com o azul na mesma tela.
+- **Laranja Direcciones** (`#ff6828`): marca + ação primária. Usado em botões `default`, foco (`--ring`), tab bar ativa, dia "hoje" no calendário, badge de tipo, item admin do menu. **Foreground** em laranja é sempre `#2a1405` (marrom-escuro de alto contraste) — nunca `text-white`.
 
 ### Neutral
-- **Fundo da Sala** (#f8fafd): o background global. Branco quase-puro com matiz azulado que evita o cinza frio.
-- **Superfície** (#ffffff): cards, painéis, nav. É o nível acima do fundo.
-- **Superfície Selecionada** (#f1f5fb): aba ativa dos tabs e áreas de seleção — um passo entre o card e o fundo.
-- **Tinta** (#1F2937): texto principal e títulos.
-- **Tinta Secundária** (#64748B): metadados, descrições, datas, legendas.
-- **Divisa** (#e5eaf2): bordas de inputs, separadores, ring de cards. Leve, nunca escura.
-- **Sinal Vermelho** (#DC2626): erro, exclusão, perigo — sempre em textos de ação destrutiva ou mensagens.
-- **Sinal Verde** (#16A34A): confirmação/sucesso (mobile).
-- **Sinal Âmbar** (#D97706): aviso (mobile).
+- **Off-white** (`#faf8f5`): fundo claro de página (`--background`).
+- **Quase-preto quente** (`#161310`): fundo escuro de página.
+- **Card claro** (`#ffffff`) / **Card escuro** (`#1f1b17`): superfícies elevadas.
+- **Borda quente**: `#e5ded3` (claro) / `rgb(255 255 255 / 0.12)` (escuro).
+- **Muted**: `#eee9e1` (claro) / `#2a2620` (escuro); texto `--muted-foreground` `#6b6357` / `#a49a8d`.
+- **Destrutivo**: `#d93535` (claro) / `#f05b5b` (escuro).
 
 ### Named Rules
-**A Regra do Acento Único.** O azul aparece em no máximo uma ação por contexto — nunca dois botões primários na mesma área de ação. Sua raridade é o que o torna direcional.
+**The Warm Neutral Rule.** Fundos e bordas usam neutros quentes (amarelados/marrom-sujo), nunca cinzas frios ou azulados.
 
-**A Regra do Roxo Cerimonial.** Roxo é para o sagrado e o institucional (login, admin). Em telas de trabalho ele não aparece; dezenas de acentos roxos matariam a hierarquia que o azul constrói.
+**The Orange Action Rule.** `#ff6828` é reservado para ações e estados ativos. Texto sobre laranja usa `--color-brand-foreground` (`#2a1405`); `text-white` sobre laranja é proibido por baixo contraste.
 
 ## Typography
 
-**Display Font:** Geist (web) / system-ui (mobile) — com fallback `system-ui, sans-serif`
-**Body Font:** Geist (web) / system-ui (mobile)
-**Label/Mono Font:** Geist Mono (web), ui-monospace (mobile) — apenas para código/valores técnicos
+**UI Font:** Outfit (pesos 400 / 500 / 600 / 700; fallback: ui-sans-serif, system-ui).
+**Mono Font:** Inconsolata (fallback: ui-monospace) — apenas dados técnicos.
 
-**Character:** A tipografia é utilitária e confiante: pesos médios (500) para corpo, 600–700 para títulos, quase sem caixa-alta. Nada de display exuberante — a informação da congregação fala por si.
+**Character:** sans geométrica amigável e neutra, com títulos em peso 600/700 e tracking levemente apertado (`tracking-tight`) para a leitura de títulos; corpo em 400.
 
 ### Hierarchy
-- **Display** (600, 48px, 52px): somente a marca ("Nexohub") na tela de login.
-- **Headline** (600, 32px, 44px): subtítulos de seção no login e o número de estatística no dashboard (24px no card).
-- **Title** (600, 18px, 28px): títulos de card, nomes de membros, tipos de reunião.
-- **Body** (500, 16px, 24px): conteúdo padrão, listas, labels de item.
-- **Label** (500, 14px, 20px): metadados, descrições, botões de texto, data/hora.
-- **Micro** (500, 11–12px): notas de rodapé e metadados de eventos (mobile).
-
-### Named Rules
-**A Regra do Peso de Tarefa.** Corpo nunca abaixo de 500; títulos nunca acima de 700. O peso carrega hierarquia, não o tamanho.
+- **Display** (600, 3rem, 1.1): títulos hero; logo do login.
+- **Title** (600, 1.5rem, 1.25): títulos de página (`text-2xl font-semibold tracking-tight`).
+- **Heading** (600/700, 1.25rem, 1.25): subtítulos e cabeçalhos de card.
+- **Body** (400, 1rem, 1.5): texto principal.
+- **Label** (500, 0.875rem, 1): rótulos de campo; tab bar em `text-xs`.
+- **Micro** (500, 0.625rem, 1.333): micro-rótulos de resumo e rótulos de estado em caixa alta com `tracking-widest` (ex.: hero de saldo, agrupadores de filtro).
+- **Mono** (400, 1rem, 1.5): dados técnicos.
 
 ## Layout
 
-O conteúdo vive em uma coluna central com largura máxima de 800px (`MaxContentWidth`), tanto no web quanto no mobile — no web `max-w-5xl`, no mobile um container centralizado com `justify-content: center`.
+Mobile-first. Conteúdo centralizado em `max-w-5xl` (listagens) ou `max-w-md` (telas centrais), padding lateral `px-4` no mobile crescendo para `sm:px-6`/`lg:px-8`. Grids de listagem 1 coluna no mobile → 2+ em `sm`. Header `h-16` (mobile) → `h-20` (desktop). Respeita `safe-area-insets` (`env(safe-area-inset-*)`) em elementos fixos (bottom tab bar, drawer, footer).
 
-O ritmo é uma escala de 4px: `half=2, one=4, two=8, three=16, four=24, five=32, six=64`. A densidade operacional usa 8px para gaps internos de card (`Spacing.two`) e 16px entre cards (`Spacing.three`). Títulos de seção usam 16px de margem inferior; seções grandes separam por 24px.
-
-No mobile, o conteúdo respeita as safe areas do sistema e o inset do bottom tab (`BottomTabInset`: 50 iOS, 80 Android). No dashboard, uma grelha de estatísticas de 3 colunas (`flexDirection: row`) quebra em cards empilhados; listas de reunião são linhas com rótulo à direita.
+Espaçamento rítmico base: `gap-4`/`space-y-4` entre blocos; cards internos `p-4`.
 
 ## Elevation & Depth
 
-O sistema usa **camadas tonais** como profundidade principal e **sombra como exceção cerimonial**. Em repouso, a hierarquia vem do tom (fundo claro → card branco → seleção `#f1f5fb`), nunca de sombras.
+Sistema predominantemente plano; profundidade vem do contraste de superfícies e de sombras leves de estado.
 
 ### Shadow Vocabulary
-- **Sombras de Destaque** (`shadowColor: #2563EB, offset 0 6, opacity 0.30, radius 12, elevation 6`): aplicadas ao hero card "próxima reunião" e ao botão primário do login. A sombra é **azulada** — ela prolonga o acento, não cria profundidade neutra.
-- **Logo** (`shadowColor: #000, offset 0 6, opacity 0.30, radius 12, elevation 8`): exclusiva do logotipo no login.
+- **Ambient-weak** (`shadow-xs`): repouso de cards e containers.
+- **Hover** (`hover:shadow-md`): elevação no hover de cards interativos.
+- **Drawer / Modal** (`shadow-2xl`): camadas flutuantes.
+- **Marker** (`box-shadow: 0 2px 6px rgba(0,0,0,0.3)`): pins do mapa.
 
-### Named Rules
-**A Regra da Sombra Cerimonial.** Sombras aparecem apenas onde a marca precisa se destacar (hero, login, logo). Em telas de trabalho, superfícies são planas; a profundidade é tonal.
+**The Flat-By-Default Rule.** Superfícies são planas em repouso; sombra aparece como resposta de estado (hover) ou em camadas flutuantes, nunca como decoração permanente.
 
 ## Shapes
 
-A linguagem de formas é **suavemente arredondada e consistente**: cada nível de elevação tem seu próprio raio. Cards usam 10px (web `rounded-xl`) a 18px (`rounded-2xl`); em mobile, cards usam 16px (`Spacing.three`), com o hero card em 24px (`Spacing.four`).
-
-- **Botões:** 8px (`rounded-md` / `Spacing.two`).
-- **Inputs:** 8px, mesma altura dos botões (32px).
-- **Cards padrão:** 10–18px, dependendo do nível de destaque.
-- **Hero card:** 24px — o único card com raio máximo e sombra.
-- **Header do login:** 32px nos cantos inferiores — a maior forma do sistema, transmitindo o espaço cerimonial.
-- **Logotipo:** 24px de raio em um quadrado de 80px.
-
-Bordas são sempre leves (`#e5eaf2` ou `ring-foreground/10`); o sistema nunca recorre a contornos fortes ou cortes agudos.
+Cantos generosos: radius base `0.875rem` (`--radius`). Botões e controles `rounded-md`, cards `rounded-2xl`, chips/badges/pills `rounded-full`. Pins do mapa são circulares (`border-radius: 50%`) com borda branca de 2px. Botões de destaque de entrada (login) usam `rounded-full` estilo app bancário.
 
 ## Components
 
 ### Buttons
-- **Shape:** cantos suavemente arredondados (8px), compactos.
-- **Primary:** fundo Azul Congregacional, texto branco, altura 32px, padding 8×12px. Hover: 85% de opacidade. Usado para a ação principal de cada tela (importar, salvar, entrar, adicionar item).
-- **Hover / Focus:** transição de opacidade `transition-opacity`; foco com ring azul (`focus-visible:ring-ring/50`). No mobile, `opacity 0.7–0.8` quando pressionado.
-- **Outline / Secondary:** fundo claro, borda de input, texto normal — para ações secundárias (criar vazio, assinar saída).
-- **Destructive / Ghost:** o destrutivo é texto vermelho sobre fundo claro; o ghost é apenas texto que ganha fundo muted no hover.
-- **Link:** texto azul com underline no hover, para ações inline (editar, ver, excluir).
+- **Shape:** `rounded-md`, altura `h-9` (padrão); `rounded-full` nos CTAs de alta ênfase (login).
+- **Primary (default):** `bg-primary text-primary-foreground` — laranja `#ff6828` com texto `#2a1405` (`hover:bg-primary/90`).
+- **Destructive:** vermelho `--destructive`, texto branco.
+- **Outline / Secondary / Ghost:** variantes utilitárias shadcn.
+- **Focus:** `focus-visible:ring-[3px] focus-visible:ring-ring/50`.
+
+### Chips / Badges
+- **Style:** pílula `rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium`; variantes semânticas (verde confirmado/ativo, vermelho pendente/erro, âmbar sugerido).
+- **State:** toggle ativo = `border-brand bg-brand text-brand-foreground shadow-md`.
 
 ### Cards / Containers
-- **Corner Style:** cantos generosos — 10px (web), 16px (mobile), 24px (hero).
-- **Background:** branco (`#ffffff`) sobre fundo `#f8fafd`; áreas internas usam `bg-muted/50` (web) ou `background` (mobile).
-- **Shadow Strategy:** planos por padrão (ver Elevation); apenas o hero usa sombra azulada.
-- **Border:** ring de 1px `foreground/10` no web; nenhuma borda no mobile.
-- **Internal Padding:** 16px padrão; cards compactos 8–12px.
+- **Corner Style:** `rounded-2xl` (1.25rem) padrão.
+- **Background:** `bg-card` (`#ffffff` / `#1f1b17` no escuro).
+- **Shadow Strategy:** `shadow-xs` repouso, `hover:shadow-md`; ver Elevation.
+- **Border:** `border` com `--border` (quente).
+- **Internal Padding:** `p-4` (16px) padrão.
 
 ### Inputs / Fields
-- **Style:** sem fundo próprio (transparente sobre o card), borda 1px `#e5eaf2`, raio 8px, altura 32px.
-- **Focus:** borda azul + ring de foco azul translúcido (`focus-visible:border-ring ring-3 ring-ring/50`).
-- **Error / Disabled:** borda/ring vermelha em `aria-invalid`; desabilitado a 50% de opacidade com fundo muted.
+- **Style:** `h-9 rounded-md border border-input bg-transparent px-3 py-1 shadow-xs`; fonte `16px` (anti-zoom iOS).
+- **Focus:** ring laranja (`focus-visible:ring-ring/50`).
+- **Error / Disabled:** `aria-invalid:border-destructive`; disabled com `opacity-50`.
 
 ### Navigation
-- **Mobile:** bottom tabs nativas (Expo NativeTabs) com 4 destinos — Início, Membros, Conteúdo, Ajustes — ícones PNG template monocolor e label, item ativo em azul.
-- **Web:** links de texto no topo; o item ativo em Azul Congregacional com `font-medium`, os demais em cinza secundário que escurece no hover.
+- **Desktop header:** `bg-background/80 backdrop-blur-md`, logo "Direcciones" sem moldura, LanguageSelector + toggle de tema + botão de menu.
+- **Mobile:** drawer deslizante (superfícies do tema) com itens `rounded-2xl`, LanguageSelector e LogoutButton; haptic + overlay `bg-black/60 backdrop-blur-sm`.
+- **Bottom tab bar (mobile):** fixa na base, `bg-background/95 backdrop-blur-md`, 5 itens (home, my-cards, addresses, agenda, user); ativo `text-brand` com ícone `scale-110`.
+- **Home menu:** tiles grandes `rounded-2xl p-4 pl-6 shadow-xs`; item admin em `bg-brand text-brand-foreground`, demais em `bg-card`.
+
+### Signature Component — Card visual de endereço
+Link-imagem em `aspect-video` com overlay gradiente `from-black/85 via-black/35 to-black/5`, tipo no canto superior em badge `bg-black/60 backdrop-blur-sm`, nome em `text-white` e endereço com `MapPin` em `text-white/90`, badges de status (confirmada/ativa). Hover: `scale-105` na imagem + overlay escurece.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** usar o Azul Congregacional para uma única ação primária por área; o resto fica outline ou ghost.
-- **Do** manter os cards planos em telas de trabalho; a sombra azulada é só para o hero e o login.
-- **Do** usar a escala de espaçamento de 4px (8/16/24) para manter o ritmo consistente.
-- **Do** dar ao item de navegação ativo o azul primário — é o único indicador de estado da nav.
-- **Do** usar o roxo apenas em superfícies cerimoniais/institucionais (login, admin).
+- **Do** usar `#ff6828` como ação primária (botões default, tab ativa, toggle) e foco (`--ring`).
+- **Do** usar `text-brand-foreground` (`#2a1405`) sobre laranja — nunca `text-white`.
+- **Do** manter neutros quentes em fundos e bordas (Warm Neutral Rule).
+- **Do** usar `rounded-2xl` para cards e `rounded-full` para chips/pins.
+- **Do** usar `shadow-xs` em repouso e `hover:shadow-md` em interação.
+- **Do** aplicar `font-size: 16px` em inputs para evitar zoom no iOS.
+- **Do** respeitar safe-area-insets em elementos fixos.
+- **Do** manter header claro/blur sem moldura escura fixa.
 
 ### Don't:
-- **Don't** empilhar dois botões primários na mesma área de ação.
-- **Don't** adicionar sombras genéricas pretas em cards de lista; use tom de fundo para hierarquia.
-- **Don't** introduzir uma segunda cor de ação no conteúdo de trabalho — o roxo não compete com o azul em telas operacionais.
-- **Don't** quebrar o raio de 8px nos controles de formulário; a consistência das formas é o que dá a calma institucional.
-- **Don't** usar caixa-alta para títulos ou labels — a hierarquia vem de peso e tamanho, não de versalete.
+- **Don't** usar `text-white` sobre fundo laranja (contraste insuficiente).
+- **Don't** usar o shell escuro `#0c232a` como moldura fixa de header/footer.
+- **Don't** usar neutros frios/azulados em superfícies e bordas.
+- **Don't** remover o ring de foco (`ring-[3px]`) dos controles.
+- **Don't** usar sombras pesadas em repouso — profundidade vem de contraste de superfícies.
+- **Don't** misturar texto espanhol e português na mesma UI — sempre via dicionários i18n.

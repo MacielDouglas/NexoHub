@@ -104,7 +104,7 @@ export function DiscursosClient({
   role?: string;
   organizationId: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const canManage = role === "owner" || role === "admin";
 
@@ -418,7 +418,7 @@ export function DiscursosClient({
       return "—";
     }
 
-    return date.toLocaleDateString("pt-BR");
+    return date.toLocaleDateString(i18n.language);
   };
 
   const getAvailableTalks = useCallback(
@@ -487,7 +487,7 @@ export function DiscursosClient({
       {people.length === 0 ? (
         <section
           aria-label={t("people.discursos.title")}
-          className="rounded-2xl bg-card p-6 text-center ring-1 ring-border sm:p-8"
+          className="rounded-2xl bg-card p-6 text-center ring-1 ring-white/10 sm:p-8"
         >
           <p className="text-sm text-muted-foreground">
             {t("people.discursos.noApprovedPeople")}
@@ -505,7 +505,7 @@ export function DiscursosClient({
             return (
               <article
                 key={person.id}
-                className="min-w-0 overflow-hidden rounded-2xl bg-card ring-1 ring-border"
+                className="min-w-0 overflow-hidden rounded-2xl bg-card ring-1 ring-white/10"
               >
                 <header className="flex min-w-0 flex-col gap-4 border-b px-4 py-4 sm:px-5 sm:py-5 md:flex-row md:items-center md:justify-between">
                   <div className="flex min-w-0 items-start gap-3">
@@ -567,7 +567,7 @@ export function DiscursosClient({
                             <div className="min-w-0 flex-1">
                               <h3 className="wrap-break-word text-sm font-medium leading-6 sm:text-base">
                                 {talk.number != null && (
-                                  <span className="mr-1.5 font-semibold text-primary">
+                                  <span className="mr-1.5 font-semibold text-primary tabular-nums">
                                     {talk.number}.
                                   </span>
                                 )}
@@ -774,7 +774,10 @@ export function DiscursosClient({
                       key={date.id}
                       className="flex min-w-0 flex-col gap-1 rounded-lg border p-3 sm:flex-row sm:items-start sm:justify-between"
                     >
-                      <time dateTime={date.date} className="shrink-0 text-sm">
+                      <time
+                        dateTime={date.date}
+                        className="shrink-0 text-sm tabular-nums"
+                      >
                         {formatDate(date.date)}
                       </time>
 

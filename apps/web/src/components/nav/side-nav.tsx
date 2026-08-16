@@ -7,6 +7,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import type { ComponentType } from "react";
+import { useTranslation } from "react-i18next";
 import {
   HiOutlineBookOpen,
   HiOutlineBuildingOffice2,
@@ -109,9 +110,10 @@ export function SideNav({
 }: SideNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   return (
-    <nav aria-label={ariaLabel} className={cn("hidden md:block", className)}>
+    <nav aria-label={t(ariaLabel)} className={cn("hidden md:block", className)}>
       <ul className={cn("space-y-1", listClassName)}>
         {items.map((item) => {
           const href =
@@ -150,7 +152,7 @@ export function SideNav({
                 <Icon aria-hidden className="h-5 w-5 shrink-0" />
 
                 <span className="min-w-0">
-                  <span className="block">{item.label}</span>
+                  <span className="block">{t(item.label)}</span>
                   {item.description ? (
                     <span
                       className={cn(
@@ -160,7 +162,7 @@ export function SideNav({
                           : "text-muted-foreground",
                       )}
                     >
-                      {item.description}
+                      {t(item.description)}
                     </span>
                   ) : null}
                 </span>

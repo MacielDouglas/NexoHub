@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FaLink, FaUser } from "react-icons/fa6";
 import { toast } from "sonner";
 
@@ -36,6 +37,7 @@ type Props = {
 };
 
 export function ProfileClient({ initialProfile, labels }: Props) {
+  const { t } = useTranslation();
   const [profile, setProfile] = useState(initialProfile);
   const [personName, setPersonName] = useState(initialProfile.personName ?? "");
   const [saving, setSaving] = useState(false);
@@ -59,7 +61,7 @@ export function ProfileClient({ initialProfile, labels }: Props) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data?.error ?? "Erro");
+        setError(data?.error ?? t("common.error"));
         return;
       }
       setProfile(data.profile);

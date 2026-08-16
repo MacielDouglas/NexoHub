@@ -394,7 +394,7 @@ export function MeetingContentClient({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-85 disabled:opacity-50"
               >
                 {" "}
                 {uploading
@@ -450,7 +450,7 @@ export function MeetingContentClient({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-85 disabled:opacity-50"
               >
                 {" "}
                 {uploading
@@ -460,7 +460,7 @@ export function MeetingContentClient({
               <button
                 type="button"
                 onClick={handleCreateEmpty}
-                className="rounded-xl bg-background px-5 py-2.5 text-sm font-medium text-foreground ring-1 ring-border transition-colors hover:bg-muted"
+                className="rounded-full bg-background px-5 py-2.5 text-sm font-medium text-foreground ring-1 ring-white/10 transition-colors hover:bg-muted"
               >
                 {" "}
                 {t("meetingContent.createEmpty")}{" "}
@@ -474,7 +474,7 @@ export function MeetingContentClient({
             </div>
           )}{" "}
           {tabContents.length === 0 ? (
-            <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-5 py-12 ring-1 ring-border">
+            <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-5 py-12 ring-1 ring-white/10">
               {" "}
               <p className="text-muted-foreground">
                 {" "}
@@ -626,7 +626,7 @@ function ContentCard({
   const { t } = useTranslation();
   const issue = formatContentIssue(type, content);
   return (
-    <div className="rounded-2xl bg-card ring-1 ring-border">
+    <div className="rounded-2xl bg-card ring-1 ring-white/10">
       {" "}
       <div className="flex items-center justify-between gap-3 px-5 py-4">
         {" "}
@@ -639,7 +639,7 @@ function ContentCard({
             {" "}
             {content.title || t("meetingContent.untitled")}{" "}
           </p>{" "}
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground tabular-nums">
             {" "}
             {[
               type === "apostila" ? content.coverTitle : null,
@@ -736,7 +736,7 @@ function SelectedView({
           <button
             type="button"
             onClick={onAddItem}
-            className="shrink-0 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
+            className="shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-85"
           >
             {" "}
             + {t("meetingContent.addItem")}{" "}
@@ -754,7 +754,7 @@ function SelectedView({
             return (
               <div
                 key={item.id}
-                className="rounded-2xl bg-card p-5 ring-1 ring-border"
+                className="rounded-2xl bg-card p-5 ring-1 ring-white/10"
               >
                 {" "}
                 <div className="mb-3 flex items-start justify-between gap-3">
@@ -866,7 +866,7 @@ function FlatView({
     <button
       type="button"
       onClick={onAdd}
-      className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
+      className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-85"
     >
       {" "}
       + {t("meetingContent.addItem")}{" "}
@@ -874,7 +874,7 @@ function FlatView({
   ) : null;
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-5 py-12 ring-1 ring-border">
+      <div className="flex flex-col items-center gap-4 rounded-2xl bg-card px-5 py-12 ring-1 ring-white/10">
         {" "}
         <p className="text-muted-foreground">{t("meetingContent.empty")}</p>{" "}
         {canManage && addButton}{" "}
@@ -899,7 +899,7 @@ function FlatView({
         onChange={(e) => setQuery(e.target.value)}
         placeholder={t("meetingContent.searchPlaceholder")}
         aria-label={t("meetingContent.searchLabel")}
-        className="mb-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
+        className="mb-3 w-full rounded-full border border-border bg-card px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/30"
       />{" "}
       {filtered.length === 0 ? (
         <p className="text-muted-foreground">
@@ -907,7 +907,7 @@ function FlatView({
           {t("meetingContent.noSearchResults")}{" "}
         </p>
       ) : (
-        <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-border">
+        <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-white/10">
           {" "}
           <ul className="divide-y divide-border">
             {" "}
@@ -922,7 +922,7 @@ function FlatView({
                     <p className="min-w-0 truncate font-medium">
                       {" "}
                       {d.number != null ? (
-                        <span className="mr-1.5 font-semibold text-primary">
+                        <span className="mr-1.5 font-semibold text-primary tabular-nums">
                           {" "}
                           {d.number}.{" "}
                         </span>
@@ -1031,7 +1031,7 @@ function ItemSummary({
   return (
     <div className="min-w-0">
       {" "}
-      <p className="truncate font-medium">
+      <p className="truncate font-medium tabular-nums">
         {" "}
         {d.number != null ? `${d.number}. ` : ""} {d.theme || "—"}{" "}
       </p>{" "}
@@ -1091,7 +1091,7 @@ function ItemDetail({
                 {" "}
                 <p className="font-semibold">{sec.secao || "—"}</p>{" "}
                 {sec.cancionMedia != null && (
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground tabular-nums">
                     {" "}
                     {t("meetingContent.middleSong")}: {sec.cancionMedia}{" "}
                   </span>
@@ -1145,7 +1145,7 @@ function ItemDetail({
           <span className="font-medium">{t("meetingContent.week")}: </span>{" "}
           {d.week || "—"}{" "}
         </p>{" "}
-        <p>
+        <p className="tabular-nums">
           {" "}
           <span className="font-medium">
             {" "}
@@ -1156,7 +1156,7 @@ function ItemDetail({
             ? ` — ${songTitle(d.songs?.opening?.number)}`
             : ""}{" "}
         </p>{" "}
-        <p>
+        <p className="tabular-nums">
           {" "}
           <span className="font-medium">
             {" "}

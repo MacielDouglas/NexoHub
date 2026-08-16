@@ -193,16 +193,6 @@ type MeetingRecord = {
 
 type MeetingType = "midweek" | "weekend" | "memorial";
 
-const WEEKDAY_LABELS = [
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
-  "Domingo",
-];
-
 const EVENT_ICONS: Record<
   string,
   React.ComponentType<{ className?: string }>
@@ -216,16 +206,6 @@ const EVENT_ICONS: Record<
   specialMeeting: Sparkles,
 };
 
-const EVENT_COLORS: Record<string, string> = {
-  memorial: "text-amber-400",
-  specialTalk: "text-blue-400",
-  circuitVisit: "text-emerald-400",
-  convention: "text-purple-400",
-  assemblyTraveling: "text-orange-400",
-  assemblyRepresentative: "text-indigo-400",
-  specialMeeting: "text-rose-400",
-};
-
 const MEETING_ICONS: Record<
   MeetingType,
   React.ComponentType<{ className?: string }>
@@ -233,12 +213,6 @@ const MEETING_ICONS: Record<
   midweek: CalendarDays,
   weekend: CalendarCheck2,
   memorial: Wine,
-};
-
-const MEETING_COLORS: Record<MeetingType, string> = {
-  midweek: "text-blue-400",
-  weekend: "text-emerald-400",
-  memorial: "text-amber-400",
 };
 
 type DerivedMeeting = {
@@ -592,7 +566,7 @@ export function MeetingsClient({
         <p className="mt-1 text-muted-foreground">{t("meetings.subtitle")}</p>
       </div>
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 ring-1 ring-border">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-card p-4 ring-1 ring-white/10">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -618,7 +592,7 @@ export function MeetingsClient({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <p className="text-base font-semibold">
+        <p className="text-base font-semibold tabular-nums">
           {t("meetings.weekOf")} {formatWeekRange(weekStart)}
         </p>
         <Button
@@ -662,7 +636,7 @@ export function MeetingsClient({
             <div
               role="tablist"
               aria-label={t("meetings.title")}
-              className="flex max-w-full items-center gap-1 overflow-x-auto rounded-2xl border border-border bg-card p-1"
+              className="flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-full bg-card p-1 ring-1 ring-white/10"
             >
               {(
                 [
@@ -677,7 +651,7 @@ export function MeetingsClient({
                   aria-selected={cardTab === item.key}
                   onClick={() => setCardTab(item.key)}
                   className={cn(
-                    "shrink-0 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-medium transition-colors",
+                    "shrink-0 rounded-full px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap",
                     cardTab === item.key
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground",
@@ -768,7 +742,7 @@ function WeekDaysGrid({
   }
 
   return (
-    <div className="rounded-2xl bg-card p-3 ring-1 ring-border sm:p-4">
+    <div className="rounded-2xl bg-card p-3 ring-1 ring-white/10 sm:p-4">
       <div className="grid grid-cols-7 gap-1.5">
         {days.map((day, i) => {
           const key = toDateKey(day);
@@ -779,14 +753,14 @@ function WeekDaysGrid({
             <div
               key={key}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-xl border border-border/70 px-1 py-2 text-center",
+                "flex flex-col items-center gap-1 rounded-xl ring-1 ring-white/5 px-1 py-2 text-center",
                 isToday && "bg-primary/10",
               )}
             >
               <span className="text-xs font-medium text-muted-foreground">
-                {WEEKDAY_LABELS[i].slice(0, 3)}
+                {t(`meetings.weekdays.${i}`).slice(0, 3)}
               </span>
-              <span className="text-sm font-semibold">
+              <span className="text-sm font-semibold tabular-nums">
                 {day.getDate().toString().padStart(2, "0")}
               </span>
               <div className="flex min-h-5 flex-col items-center gap-0.5">
@@ -794,12 +768,7 @@ function WeekDaysGrid({
                   <span
                     className={cn(
                       "flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                      meeting.type === "midweek" &&
-                        "bg-blue-500/15 text-blue-400",
-                      meeting.type === "weekend" &&
-                        "bg-emerald-500/15 text-emerald-400",
-                      meeting.type === "memorial" &&
-                        "bg-amber-500/15 text-amber-400",
+                      "bg-primary/15 text-primary",
                     )}
                   >
                     {(() => {
@@ -816,9 +785,7 @@ function WeekDaysGrid({
                   >
                     {(() => {
                       const Icon = EVENT_ICONS[ev.type];
-                      return (
-                        <Icon className={`h-3 w-3 ${EVENT_COLORS[ev.type]}`} />
-                      );
+                      return <Icon className="h-3 w-3" />;
                     })()}
                   </span>
                 ))}
@@ -834,7 +801,7 @@ function WeekDaysGrid({
             <span key={`meeting-${type}`} className="flex items-center gap-1">
               {(() => {
                 const Icon = MEETING_ICONS[type];
-                return <Icon className={`h-3 w-3 ${MEETING_COLORS[type]}`} />;
+                return <Icon className="h-3 w-3 text-primary" />;
               })()}
               {t(`meetings.types.${type}`)}
             </span>
@@ -845,7 +812,7 @@ function WeekDaysGrid({
               <span key={`event-${type}`} className="flex items-center gap-1">
                 {(() => {
                   const Icon = EVENT_ICONS[type];
-                  return <Icon className={`h-3 w-3 ${EVENT_COLORS[type]}`} />;
+                  return <Icon className="h-3 w-3" />;
                 })()}
                 {t(`settings.specialEventTypes.${type}`)}
               </span>
@@ -884,7 +851,7 @@ function BlockedWeekBanner({ events }: { events: SpecialEvent[] }) {
           return (
             <li
               key={ev.id}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-border bg-muted/60 px-4 py-3"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl bg-muted/40 px-4 py-3 ring-1 ring-white/5"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Icon className="h-4 w-4" aria-hidden="true" />
@@ -892,7 +859,7 @@ function BlockedWeekBanner({ events }: { events: SpecialEvent[] }) {
               <span className="font-semibold text-foreground">
                 {t(`settings.specialEventTypes.${ev.type}`)}
               </span>
-              <span className="min-w-0 text-sm text-muted-foreground">
+              <span className="min-w-0 text-sm text-muted-foreground tabular-nums">
                 {formatFullDate(parseDateKey(ev.date))}
                 {ev.endDate
                   ? ` – ${formatFullDate(parseDateKey(ev.endDate))}`
@@ -900,8 +867,9 @@ function BlockedWeekBanner({ events }: { events: SpecialEvent[] }) {
                 {ev.time ? ` · ${ev.time}` : ""}
               </span>
               {ev.location ? (
-                <span className="w-full text-sm text-muted-foreground sm:w-auto">
-                  📍 {ev.location}
+                <span className="flex w-full items-center gap-1.5 text-sm text-muted-foreground sm:w-auto">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {ev.location}
                 </span>
               ) : null}
             </li>
@@ -2559,13 +2527,13 @@ function MeetingCard({
   };
 
   return (
-    <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border sm:p-6">
+    <div className="rounded-2xl bg-card p-4 ring-1 ring-white/10 sm:p-6">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold">
             {t(`meetings.types.${type}`)}
           </h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">
             {formatFullDate(date)}
             {time ? ` · ${time}` : ""}
           </p>
@@ -2603,7 +2571,6 @@ function MeetingCard({
         <div className="mb-4 flex flex-wrap gap-2">
           {cardEvents.map((ev) => {
             const Icon = EVENT_ICONS[ev.type] ?? CalendarDays;
-            const color = EVENT_COLORS[ev.type] ?? "text-primary";
             const label = t(`settings.specialEventTypes.${ev.type}`);
             const when = ev.endDate
               ? `${formatFullDate(parseDateKey(ev.date))} – ${formatFullDate(parseDateKey(ev.endDate))}`
@@ -2611,11 +2578,13 @@ function MeetingCard({
             return (
               <span
                 key={ev.id}
-                className="inline-flex items-center gap-1.5 rounded-full border border-current/20 bg-white/5 px-3 py-1 text-xs font-semibold"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold ring-1 ring-white/10"
               >
-                <Icon className={cn("h-3.5 w-3.5", color)} />
-                <span className={color}>{label}</span>
-                <span className="text-muted-foreground">{when}</span>
+                <Icon className="h-3.5 w-3.5 text-primary" />
+                <span className="text-foreground">{label}</span>
+                <span className="text-muted-foreground tabular-nums">
+                  {when}
+                </span>
               </span>
             );
           })}
@@ -2623,7 +2592,7 @@ function MeetingCard({
       )}
 
       {type === "weekend" && editable && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-muted/40 p-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/40 p-3 ring-1 ring-white/5">
           <div className="text-sm">
             <span className="font-medium">
               {t("meetings.defaultConductor")}:
@@ -2975,7 +2944,7 @@ function PersonMultiSlot({
             return (
               <li
                 key={d.personId}
-                className="flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-sm ring-1 ring-border"
+                className="flex items-center gap-1 rounded-full bg-background px-3 py-1 text-sm ring-1 ring-white/5"
               >
                 <span className="truncate">{person.name}</span>
                 {canManage && (
@@ -2983,7 +2952,7 @@ function PersonMultiSlot({
                     type="button"
                     onClick={() => d.personId && onRemove(d.personId)}
                     aria-label={`${t("common.remove")}: ${person.name}`}
-                    className="text-muted-foreground transition-colors hover:text-destructive"
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -3188,10 +3157,10 @@ function MidweekProgramView({
   let clock = parseTimeToMinutes(time || "19:00");
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border">
+    <div className="overflow-x-auto overflow-y-hidden rounded-xl ring-1 ring-white/10">
       <div
         className={cn(
-          "grid items-center border-b border-border bg-muted/50 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+          "grid min-w-[460px] items-center border-b border-border bg-muted/50 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground",
           cols,
         )}
       >
@@ -3202,8 +3171,8 @@ function MidweekProgramView({
         {editable && <span />}
       </div>
       {sections?.map((section) => (
-        <div key={section.key}>
-          <div className="border-b border-border/70 bg-background px-3 py-2 text-sm font-semibold">
+        <div key={section.key} className="min-w-[460px]">
+          <div className="border-b border-border/70 bg-muted/40 px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {section.title}
           </div>
           {section.rows.map((row) => {
@@ -3244,8 +3213,8 @@ function MidweekProgramView({
                           : row.title}
                       </span>
                       {!editable && row.tempoMin > 0 && (
-                        <span className="shrink-0 text-xs text-muted-foreground sm:text-sm">
-                          · {row.tempoMin} min
+                        <span className="shrink-0 text-xs text-muted-foreground tabular-nums sm:text-sm">
+                          · {row.tempoMin} {t("meetings.minUnit")}
                         </span>
                       )}
                     </span>
@@ -3329,7 +3298,7 @@ function MidweekProgramView({
                       type="button"
                       onClick={() => onRemovePart(section.key, row.key)}
                       aria-label={t("common.remove")}
-                      className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -3346,7 +3315,7 @@ function MidweekProgramView({
               <button
                 type="button"
                 onClick={() => onAddPart(section.key)}
-                className="flex w-full items-center justify-center gap-1 border-b border-border/60 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                className="flex w-full items-center justify-center gap-1 border-b border-border/60 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
               >
                 <Plus className="h-4 w-4" />
                 {t("meetings.addPart")}

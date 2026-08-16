@@ -40,7 +40,7 @@ export default async function SettingsLayout({ children, params }: Props) {
     <div className="mx-auto w-full max-w-6xl space-y-5 pb-24 md:pb-8">
       <div className="grid gap-5 md:grid-cols-[260px_minmax(0,1fr)] md:items-start">
         <aside className="md:sticky md:top-4">
-          <div className="rounded-[28px] border border-border bg-card p-3 shadow-sm">
+          <div className="rounded-3xl bg-card p-3 ring-1 ring-white/10">
             <SettingsSideNav
               slug={slug}
               canManageSettings={canManageSettings}

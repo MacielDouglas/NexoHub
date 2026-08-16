@@ -7,6 +7,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import type { ComponentType, CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import {
   HiOutlineBookOpen,
   HiOutlineBuildingOffice2,
@@ -111,11 +112,12 @@ export function BottomNav({
 }: BottomNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const cols = columns ?? items.length;
 
   return (
     <nav
-      aria-label={ariaLabel}
+      aria-label={t(ariaLabel)}
       className={cn(
         "fixed inset-x-0 bottom-0 z-40 border-t border-border",
         "bg-background/95 backdrop-blur-md",
@@ -158,7 +160,7 @@ export function BottomNav({
               <Link
                 href={href}
                 aria-current={itemActive ? "page" : undefined}
-                aria-label={item.label ?? item.shortLabel}
+                aria-label={item.label ? t(item.label) : t(item.shortLabel)}
                 className={cn(
                   "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-4xl px-1 py-2",
                   "text-[11px] font-medium leading-none transition-colors",
@@ -172,7 +174,9 @@ export function BottomNav({
                   aria-hidden
                   className={cn("h-5 w-5", itemActive && "text-primary")}
                 />
-                <span className="max-w-full truncate">{item.shortLabel}</span>
+                <span className="max-w-full truncate">
+                  {t(item.shortLabel)}
+                </span>
               </Link>
             </li>
           );

@@ -10,9 +10,9 @@ export default function DesignacoesLoading() {
         </div>
       </div>
 
-      <div className="flex w-fit max-w-full gap-1 rounded-2xl border border-border bg-card p-1 shadow-sm">
+      <div className="flex w-fit max-w-full gap-1 rounded-full bg-card p-1 ring-1 ring-white/10">
         {(["a", "b"] as const).map((k) => (
-          <Skeleton key={k} className="h-9 w-28 rounded-xl" />
+          <Skeleton key={k} className="h-9 w-28 rounded-full" />
         ))}
       </div>
 

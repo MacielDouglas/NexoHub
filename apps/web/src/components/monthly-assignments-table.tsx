@@ -1,11 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  addDays,
-  parseDateKey,
-  startOfWeek,
-} from "@/lib/cleaning-assignment";
+import { useTranslation } from "react-i18next";
+import { addDays, parseDateKey, startOfWeek } from "@/lib/cleaning-assignment";
 import { cn } from "@/lib/utils";
 
 type Column = {
@@ -69,10 +66,7 @@ function getDateClasses(status: DateStatus): string {
 }
 
 function getCellClasses(status: DateStatus): string {
-  return cn(
-    "min-w-0 wrap-break-word",
-    status === "past" && "opacity-40",
-  );
+  return cn("min-w-0 wrap-break-word", status === "past" && "opacity-40");
 }
 
 function AssignmentNames({
@@ -82,11 +76,14 @@ function AssignmentNames({
   names: string[];
   status: DateStatus;
 }) {
+  const { t } = useTranslation();
+
   if (names.length === 0) {
     return (
       <span
+        role="img"
         className="text-sm text-muted-foreground/40"
-        aria-label="Sem atribuições"
+        aria-label={t("cleaningAssignment.noAssignments")}
       >
         —
       </span>
@@ -97,6 +94,7 @@ function AssignmentNames({
     <ul className="min-w-0 space-y-1">
       {names.map((name, index) => (
         <li
+          // biome-ignore lint/suspicious/noArrayIndexKey: names may repeat, index disambiguates
           key={`${name}-${index}`}
           className={cn(
             "wrap-break-word text-sm leading-5",
@@ -115,10 +113,12 @@ function MobileAssignmentCard({
   row,
   columns,
   dateLocale,
+  dateLabel,
 }: {
   row: Row;
   columns: Column[];
   dateLocale: string;
+  dateLabel: string;
 }) {
   const status = dateStatus(row.date);
 
@@ -130,8 +130,8 @@ function MobileAssignmentCard({
       )}
     >
       <header className="mb-4 flex min-w-0 items-center justify-between gap-3 border-b border-white/10 pb-3">
-        <span className="min-w-0 truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Data
+        <span className="min-w-0 truncate text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {dateLabel}
         </span>
 
         <time
@@ -151,15 +151,12 @@ function MobileAssignmentCard({
               key={column.id}
               className="grid min-w-0 grid-cols-1 gap-2 py-3 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,40%)_minmax(0,1fr)] sm:gap-4"
             >
-              <dt className="min-w-0 wrap-break-word text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <dt className="min-w-0 wrap-break-word text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {column.label}
               </dt>
 
               <dd className={getCellClasses(status)}>
-                <AssignmentNames
-                  names={names}
-                  status={status}
-                />
+                <AssignmentNames names={names} status={status} />
               </dd>
             </div>
           );
@@ -187,11 +184,7 @@ export function MonthlyAssignmentsTable({
   );
 
   if (columns.length === 0 || sortedRows.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        {emptyMessage}
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">{emptyMessage}</p>;
   }
 
   return (
@@ -205,12 +198,11 @@ export function MonthlyAssignmentsTable({
               row={row}
               columns={columns}
               dateLocale={dateLocale}
+              dateLabel={dateLabel}
             />
           ))
         ) : (
-          <p className="text-sm text-muted-foreground">
-            {emptyMessage}
-          </p>
+          <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         )}
       </div>
 
@@ -229,7 +221,7 @@ export function MonthlyAssignmentsTable({
             <tr className="border-b border-white/10">
               <th
                 scope="col"
-                className="bg-card px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:px-4"
+                className="bg-card px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground lg:px-4"
               >
                 {dateLabel}
               </th>
@@ -238,7 +230,7 @@ export function MonthlyAssignmentsTable({
                 <th
                   key={column.id}
                   scope="col"
-                  className="min-w-0 wrap-break-word px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:px-4"
+                  className="min-w-0 wrap-break-word px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground lg:px-4"
                 >
                   {column.label}
                 </th>
@@ -281,10 +273,7 @@ export function MonthlyAssignmentsTable({
                           getCellClasses(status),
                         )}
                       >
-                        <AssignmentNames
-                          names={names}
-                          status={status}
-                        />
+                        <AssignmentNames names={names} status={status} />
                       </td>
                     );
                   })}

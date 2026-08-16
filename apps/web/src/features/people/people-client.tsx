@@ -156,7 +156,7 @@ export function PeopleClient({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Erro");
+        toast.error(data?.error ?? t("common.error"));
         return;
       }
       toast.success(t("people.deleted"));
@@ -182,7 +182,7 @@ export function PeopleClient({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Erro");
+        toast.error(data?.error ?? t("common.error"));
         return;
       }
       toast.success(t("people.migrateSuccess", { name: migrating.name }));

@@ -86,7 +86,7 @@ export function AdminClient() {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Erro");
+        toast.error(data?.error ?? t("common.error"));
         return;
       }
       toast.success(t("admin.tokenCreated"));
@@ -100,7 +100,7 @@ export function AdminClient() {
     const res = await fetch(`/api/tokens/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      toast.error(data?.error ?? "Erro");
+      toast.error(data?.error ?? t("common.error"));
       return;
     }
     toast.success(t("admin.tokenRevoked"));
@@ -111,7 +111,7 @@ export function AdminClient() {
     const res = await fetch(`/api/admin/orgs/${id}/enter`, { method: "POST" });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      toast.error(data?.error ?? "Erro");
+      toast.error(data?.error ?? t("common.error"));
       return;
     }
     router.push("/app");
@@ -122,7 +122,7 @@ export function AdminClient() {
     const res = await fetch(`/api/admin/orgs/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      toast.error(data?.error ?? "Erro");
+      toast.error(data?.error ?? t("common.error"));
       return;
     }
     toast.success(t("admin.orgDeleted"));
@@ -140,7 +140,7 @@ export function AdminClient() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-8">
-      <header className="mb-8 flex items-center justify-between">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
@@ -205,10 +205,10 @@ export function AdminClient() {
                     {tokens.map((token) => (
                       <li
                         key={token.id}
-                        className="flex items-center justify-between rounded-xl bg-background px-4 py-3 ring-1 ring-border"
+                        className="flex items-center justify-between rounded-xl bg-background px-4 py-3 ring-1 ring-white/5"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="font-mono text-lg tracking-widest">
+                          <span className="font-mono text-lg tracking-widest tabular-nums">
                             {token.code}
                           </span>
                           <Badge
@@ -298,11 +298,11 @@ export function AdminClient() {
                     {orgs.map((org) => (
                       <li
                         key={org.id}
-                        className="flex items-center justify-between rounded-xl bg-background px-4 py-3 ring-1 ring-border"
+                        className="flex items-center justify-between rounded-xl bg-background px-4 py-3 ring-1 ring-white/5"
                       >
                         <div>
                           <p className="font-medium">{org.name}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-muted-foreground tabular-nums">
                             {org.slug} ·{" "}
                             {t("admin.memberCount", {
                               count: org._count.members,

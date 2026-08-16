@@ -36,7 +36,7 @@ export function CreateOrgClient({ lang }: { lang?: string | null }) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Erro");
+        toast.error(data?.error ?? t("common.error"));
         return;
       }
       toast.success(t("createOrg.success"));

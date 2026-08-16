@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import type { SettingsSectionId } from "@/features/settings/nav/settings-nav";
 import { AccountSection } from "./account-section";
 import { CleaningClient } from "./cleaning-client";
@@ -60,6 +63,8 @@ export function SettingsPageView({
   labels,
   eventTypeLabels,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
       <div className="mb-6">
@@ -72,8 +77,8 @@ export function SettingsPageView({
           {tab === "meetings" ? (
             <>
               <SettingsSectionShell
-                title="Dias de reuniões"
-                description="Configure os dois dias fixos de reunião da congregação. Todo o aplicativo usa essas informações como referência."
+                title={t("settings.meetingDays")}
+                description={t("settings.meetingDaysSubtitle")}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <MeetingDayCard
@@ -91,8 +96,8 @@ export function SettingsPageView({
               </SettingsSectionShell>
 
               <SettingsSectionShell
-                title="Eventos especiais"
-                description="Cadastre os eventos especiais opcionais do ano."
+                title={t("settings.specialEvents")}
+                description={t("settings.specialEventsSubtitle")}
               >
                 <SpecialEventsSection
                   slug={slug}
@@ -105,8 +110,8 @@ export function SettingsPageView({
 
           {tab === "cleaning" ? (
             <SettingsSectionShell
-              title="Limpeza"
-              description="Configure os tipos de limpeza e os setores da congregação."
+              title={t("cleaning.title")}
+              description={t("cleaning.subtitle")}
             >
               <CleaningClient />
             </SettingsSectionShell>
@@ -114,11 +119,11 @@ export function SettingsPageView({
 
           {tab === "assignments" ? (
             <SettingsSectionShell
-              title="Designações"
-              description="Atribuição de tarefas em breve."
+              title={t("settings.nav.assignments")}
+              description={t("settings.nav.assignmentsDesc")}
             >
               <p className="text-sm text-muted-foreground">
-                Esta área ainda está em construção.
+                {t("settings.assignmentsPlaceholder")}
               </p>
             </SettingsSectionShell>
           ) : null}
@@ -126,8 +131,7 @@ export function SettingsPageView({
       ) : isMember ? (
         <div className="rounded-2xl bg-card p-6 ring-1 ring-white/10">
           <p className="text-sm text-muted-foreground">
-            Você não tem permissão para alterar as configurações da organização.
-            Entre em contato com um administrador.
+            {t("settings.noPermission")}
           </p>
         </div>
       ) : null}

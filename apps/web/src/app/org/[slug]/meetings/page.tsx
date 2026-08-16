@@ -17,43 +17,40 @@ export default async function MeetingsPage({
   params,
   searchParams,
 }: PageProps) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const requestHeaders = await headers();
+  const session = await auth.api.getSession({ headers: requestHeaders });
 
-  if (!session) {
-    redirect("/login");
-  }
+  if (!session) redirect("/login");
 
-  const member = await getUserOrg(await headers());
+  const member = await getUserOrg(requestHeaders);
 
   if (!member) {
-    if (session.user.globalRole === "super_user") {
-      redirect("/admin");
-    }
-    if (session.user.globalRole === "owner") {
-      redirect("/create-org");
-    }
+    if (session.user.globalRole === "super_user") redirect("/admin");
+    if (session.user.globalRole === "owner") redirect("/create-org");
     redirect("/welcome");
   }
 
-  const { slug } = await params;
-  const sp = await searchParams;
-  const rawView = Array.isArray(sp.view) ? sp.view[0] : sp.view;
+  const [{ slug }, sp] = await Promise.all([params, searchParams]);
+  const firstParam = (value: string | string[] | undefined) =>
+    Array.isArray(value) ? value[0] : value;
+
   const canManage = member.role === "owner" || member.role === "admin";
+  const rawView = firstParam(sp.view);
   const view: "meetings" | "content" | "groups" = !canManage
     ? "meetings"
-    : rawView === "content"
-      ? "content"
-      : rawView === "groups"
-        ? "groups"
-        : "meetings";
-  const rawTab = Array.isArray(sp.tab) ? sp.tab[0] : sp.tab;
+    : rawView === "content" || rawView === "groups"
+      ? rawView
+      : "meetings";
+
+  const rawTab = firstParam(sp.tab);
   const tab: MeetingContentSectionId =
     rawTab && isMeetingContentTab(rawTab) ? rawTab : "apostila";
-  const rawSubOrg = Array.isArray(sp.subOrg) ? sp.subOrg[0] : sp.subOrg;
+
+  const rawSubOrg = firstParam(sp.subOrg);
   const subOrg = rawSubOrg ? decodeURIComponent(rawSubOrg) : null;
 
   return (
-    <div className="min-w-0 space-y-5 p-2 md:p-0">
+    <main className="min-w-0 px-3 py-4 sm:px-5 sm:py-6 lg:px-0 lg:py-0">
       <MeetingsPageClient
         slug={slug}
         role={member.role}
@@ -63,6 +60,6 @@ export default async function MeetingsPage({
         tab={tab}
         subOrg={subOrg}
       />
-    </div>
+    </main>
   );
 }

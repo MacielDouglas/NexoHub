@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -9,12 +10,9 @@ type Props = {
   pendingLabel?: string;
 };
 
-export function SubmitButton({
-  children,
-  className,
-  pendingLabel = "Carregando...",
-}: Props) {
+export function SubmitButton({ children, className, pendingLabel }: Props) {
   const { pending } = useFormStatus();
+  const { t } = useTranslation();
 
   return (
     <button
@@ -22,7 +20,7 @@ export function SubmitButton({
       disabled={pending}
       className={cn(className, pending && "opacity-50")}
     >
-      {pending ? pendingLabel : children}
+      {pending ? (pendingLabel ?? t("common.loading")) : children}
     </button>
   );
 }

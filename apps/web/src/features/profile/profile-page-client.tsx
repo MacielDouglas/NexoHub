@@ -50,7 +50,7 @@ export function ProfilePageClient({
       <div
         role="tablist"
         aria-label={t("profile.title")}
-        className="flex w-fit max-w-full items-center gap-1 rounded-2xl border border-border bg-card p-1 shadow-sm"
+        className="flex w-fit max-w-full items-center gap-1 rounded-full bg-card p-1 ring-1 ring-white/10"
       >
         {tabs.map((tab) => {
           const active = tab.key === "people" ? peopleActive : !peopleActive;
@@ -61,7 +61,7 @@ export function ProfilePageClient({
               aria-selected={active}
               href={tab.href}
               className={cn(
-                "rounded-xl px-4 py-2 text-sm font-medium transition-colors",
+                "rounded-full px-4 py-2 text-sm font-medium transition-colors",
                 active
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground",

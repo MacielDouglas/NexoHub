@@ -203,7 +203,7 @@ export function CleaningClient() {
           />
         ) : (
           <>
-            <div className="mb-4 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
+            <div className="mb-4 rounded-2xl bg-card p-6 ring-1 ring-white/10">
               <WeeklySettings
                 config={config}
                 saving={savingConfig}
@@ -350,7 +350,7 @@ function WeeklySettings({
             })
           }
           disabled={saving}
-          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {t("common.save")}
         </button>
@@ -358,7 +358,7 @@ function WeeklySettings({
           type="button"
           onClick={() => onUpdate({ weeklyEnabled: false })}
           disabled={saving}
-          className="rounded-xl border border-destructive px-5 py-2.5 text-sm font-medium text-destructive transition-opacity hover:opacity-80 disabled:opacity-50"
+          className="rounded-full border border-destructive px-5 py-2.5 text-sm font-medium text-destructive transition-opacity hover:opacity-80 disabled:opacity-50"
         >
           {t("cleaning.disable")}
         </button>
@@ -402,7 +402,7 @@ function SectorList({
       <button
         type="button"
         onClick={onAdd}
-        className="rounded-xl bg-secondary px-5 py-2.5 text-sm font-medium text-secondary-foreground transition-opacity hover:opacity-90"
+        className="rounded-full bg-secondary px-5 py-2.5 text-sm font-medium text-secondary-foreground transition-opacity hover:opacity-90"
       >
         {t("cleaning.addSector")}
       </button>
@@ -428,7 +428,7 @@ function SectorCard({
         <p className="mt-0.5 text-sm text-muted-foreground">
           {sectorDisplayTask(sector, t)}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-muted-foreground tabular-nums">
           {t(`cleaning.units.${sector.unit}`)}
           {sector.type === "meeting" && sector.peopleCount
             ? ` · ${sector.peopleCount} ${t("common.people")}`
@@ -558,7 +558,7 @@ function SectorModal({
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setError(data?.error ?? "Erro");
+        setError(data?.error ?? t("common.error"));
         return;
       }
       onSaved();
@@ -579,7 +579,7 @@ function SectorModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6 shadow-xl ring-1 ring-border">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-card p-6 ring-1 ring-white/10">
         <h3 className="mb-4 text-lg font-semibold">
           {sector ? t("cleaning.editSector") : t("cleaning.newSector")}
         </h3>
@@ -705,7 +705,7 @@ function SectorModal({
                 type="button"
                 onClick={handleRestore}
                 disabled={restoring}
-                className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {t("cleaning.restoreDefault")}
               </button>
@@ -714,14 +714,14 @@ function SectorModal({
               type="button"
               onClick={handleSubmit}
               disabled={saving}
-              className="flex-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="flex-1 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {t("common.save")}
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background"
+              className="flex-1 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-medium transition-colors hover:bg-background"
             >
               {t("common.cancel")}
             </button>
@@ -754,10 +754,10 @@ function UnitPicker({
             type="button"
             onClick={() => onSelect(unit)}
             className={cn(
-              "rounded-lg border border-primary px-3 py-1.5 text-center text-sm",
+              "rounded-full border border-border px-3 py-1.5 text-center text-sm",
               active
-                ? "bg-primary font-medium text-primary-foreground"
-                : "bg-background text-foreground hover:bg-primary/10",
+                ? "border-primary bg-primary font-medium text-primary-foreground"
+                : "bg-background text-muted-foreground hover:bg-primary/10 hover:text-foreground",
             )}
           >
             {t(`cleaning.units.${unit}`)}
@@ -787,10 +787,10 @@ function GenderPicker({
             type="button"
             onClick={() => onSelect(gender)}
             className={cn(
-              "rounded-lg border border-primary px-3 py-1.5 text-center text-sm",
+              "rounded-full border border-border px-3 py-1.5 text-center text-sm",
               active
-                ? "bg-primary font-medium text-primary-foreground"
-                : "bg-background text-foreground hover:bg-primary/10",
+                ? "border-primary bg-primary font-medium text-primary-foreground"
+                : "bg-background text-muted-foreground hover:bg-primary/10 hover:text-foreground",
             )}
           >
             {t(`cleaning.genders.${gender}`)}

@@ -19,7 +19,7 @@ export function MeetingContentBottomNav({ slug }: Props) {
 
   return (
     <BottomNav
-      ariaLabel="Seções de conteúdo das reuniões"
+      ariaLabel="meetingContent.navAria"
       items={items}
       active={{
         mode: "query",

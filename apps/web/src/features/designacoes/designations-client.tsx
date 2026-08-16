@@ -506,7 +506,7 @@ export function DesignationsClient({ role, orgName }: Props) {
       </header>
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {t("designations.currentMonth")}
         </h2>
         <MonthlyAssignmentsTable
@@ -728,7 +728,7 @@ function CreateProgramModal({
                     onChange={(e) =>
                       toggleSector(role, e.target.value === "on")
                     }
-                    className="w-40 rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30 sm:w-40"
                   >
                     <option value="on">
                       {t("designations.sectorEnabled")}
@@ -934,7 +934,7 @@ function ProgramsSection({
                 })}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"

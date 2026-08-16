@@ -19,23 +19,23 @@ export type SettingsSection = {
 export const SETTINGS_SECTIONS = [
   {
     id: "meetings",
-    label: "Reuniões",
-    shortLabel: "Reuniões",
-    description: "Horários semanais e eventos especiais",
+    label: "settings.nav.meetings",
+    shortLabel: "settings.nav.meetings",
+    description: "settings.nav.meetingsDesc",
     iconName: "calendar",
   },
   {
     id: "cleaning",
-    label: "Limpeza",
-    shortLabel: "Limpeza",
-    description: "Tipos de limpeza e setores",
+    label: "settings.nav.cleaning",
+    shortLabel: "settings.nav.cleaning",
+    description: "settings.nav.cleaningDesc",
     iconName: "sparkles",
   },
   {
     id: "assignments",
-    label: "Designações",
-    shortLabel: "Designações",
-    description: "Atribuição de tarefas em breve",
+    label: "settings.nav.assignments",
+    shortLabel: "settings.nav.assignments",
+    description: "settings.nav.assignmentsDesc",
     iconName: "clipboard",
   },
 ] as const satisfies readonly SettingsSection[];

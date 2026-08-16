@@ -142,7 +142,7 @@ export function SubOrgListClient({
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">{t("people.subOrg.title")}</h1>
           <p className="mt-1 text-muted-foreground">
@@ -194,7 +194,7 @@ export function SubOrgListClient({
       </div>
 
       {subOrgs.length === 0 ? (
-        <div className="rounded-2xl bg-card p-8 ring-1 ring-border text-center">
+        <div className="rounded-2xl bg-card p-8 ring-1 ring-white/10 text-center">
           <Users className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
           <p className="text-muted-foreground">{t("people.subOrg.empty")}</p>
           {canManage && (
@@ -209,7 +209,7 @@ export function SubOrgListClient({
             <Link
               key={subOrg.id}
               href={`/org/${organizationId}/sub-org/${subOrg.id}`}
-              className="flex items-center justify-between rounded-2xl bg-card p-5 ring-1 ring-border hover:ring-primary/50 transition-colors"
+              className="flex items-center justify-between rounded-2xl bg-card p-5 ring-1 ring-white/10 hover:ring-primary/50 transition-colors"
             >
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl border bg-muted">
@@ -217,7 +217,7 @@ export function SubOrgListClient({
                 </div>
                 <div>
                   <p className="font-medium">{subOrg.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground tabular-nums">
                     {t("people.subOrg.peopleCount", {
                       count: subOrg._count.people,
                     })}

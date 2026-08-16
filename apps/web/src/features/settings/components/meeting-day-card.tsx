@@ -1,13 +1,16 @@
+"use client";
+
+import { useTranslation } from "react-i18next";
 import { MeetingDayForm } from "./meeting-day-form";
 
-const DAY_LABELS = [
-  "Domingo",
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
+const DAY_KEYS = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
 ] as const;
 
 type MeetingConfig = {
@@ -37,19 +40,20 @@ export function MeetingDayCard({
   config,
   conductorCandidates = [],
 }: Props) {
-  const title =
-    type === "midweek"
-      ? "Reunião de Meio de Semana"
-      : "Reunião de Fim de Semana";
+  const { t } = useTranslation();
+
+  const title = t(`settings.meetingType.${type}`);
 
   const summary = config
-    ? `${DAY_LABELS[config.dayOfWeek]} às ${config.startTime}`
-    : "Não configurado";
+    ? `${t(`settings.days.${DAY_KEYS[config.dayOfWeek]}`)} ${t("settings.at")} ${config.startTime}`
+    : t("settings.notConfigured");
 
   return (
-    <div className="rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
+    <div className="rounded-2xl bg-card p-6 ring-1 ring-white/10">
       <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="mt-0.5 text-sm text-muted-foreground">{summary}</p>
+      <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">
+        {summary}
+      </p>
       <MeetingDayForm
         slug={slug}
         type={type}

@@ -13,7 +13,7 @@ export default function SettingsLoading() {
       </div>
 
       <div className="space-y-5">
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl bg-card p-6 ring-1 ring-white/10">
           <div className="mb-3 h-6 w-52 animate-pulse rounded bg-muted" />
           <div className="mb-6 h-4 w-72 animate-pulse rounded bg-muted" />
           <div className="grid gap-4 sm:grid-cols-2">
@@ -22,7 +22,7 @@ export default function SettingsLoading() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-2xl bg-card p-6 ring-1 ring-white/10">
           <div className="mb-3 h-6 w-40 animate-pulse rounded bg-muted" />
           <div className="mb-6 h-4 w-64 animate-pulse rounded bg-muted" />
           <div className="space-y-3">

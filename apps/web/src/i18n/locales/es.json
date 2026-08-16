@@ -3,6 +3,7 @@
     "appName": "Nexohub",
     "appTagline": "Gestor de Reuniones",
     "loading": "Cargando...",
+    "error": "Error",
     "save": "Guardar",
     "cancel": "Cancelar",
     "create": "Crear",
@@ -84,6 +85,12 @@
     "enter": "Entrar",
     "codeHint": "Escribe el código de 6 dígitos de tu invitación",
     "success": "¡Invitación aceptada! Bienvenido."
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe, se ha movido o no está disponible.",
+    "home": "Ir al inicio",
+    "login": "Iniciar sesión"
   },
   "createOrg": {
     "title": "Crea tu congregación",
@@ -221,11 +228,35 @@
     "signOut": "Salir",
     "signingOut": "Saliendo...",
     "adminAccess": "Acceso de Super-User",
-    "exitOrg": "Volver al Admin"
+    "exitOrg": "Volver al Admin",
+    "nav": {
+      "meetings": "Reuniones",
+      "meetingsDesc": "Horarios semanales y eventos especiales",
+      "cleaning": "Limpieza",
+      "cleaningDesc": "Tipos de limpieza y sectores",
+      "assignments": "Asignaciones",
+      "assignmentsDesc": "Asignación de tareas próximamente",
+      "navAria": "Secciones de configuración"
+    },
+    "assignmentsPlaceholder": "Esta área aún está en construcción.",
+    "noPermission": "No tienes permiso para modificar la configuración de la organización. Contacta con un administrador.",
+    "noDefaultConductor": "Ninguno (elegir en cada reunión)",
+    "defaultConductorHint": "Esta persona quedará preseleccionada como director en todas las reuniones de Fin de Semana. Podrás cambiarla en una reunión específica cuando quieras."
   },
   "meetingContent": {
     "title": "Contenido de las Reuniones",
     "subtitle": "Analiza archivos .jwpub y administra el contenido de las reuniones de la congregación.",
+    "nav": {
+      "apostila": "Apostilla",
+      "apostilaDesc": "Reunión de la semana",
+      "sentinela": "Atalaya",
+      "sentinelaDesc": "Estudio de la Atalaya",
+      "discursos": "Discursos",
+      "discursosDesc": "Discursos públicos",
+      "canticos": "Cánticos",
+      "canticosDesc": "Cánticos",
+      "navAria": "Secciones de contenido de las reuniones"
+    },
     "tabs": {
       "apostila": "Apostilla",
       "sentinela": "Atalaya",
@@ -685,6 +716,16 @@
       "memorial": "Conmemoración"
     },
     "noMeetingsHint": "Configura las reuniones en Configuración o registra eventos especiales para esta semana.",
+    "weekdays": [
+      "Domingo",
+      "Lunes",
+      "Martes",
+      "Miércoles",
+      "Jueves",
+      "Viernes",
+      "Sábado"
+    ],
+    "minUnit": "min",
     "blockedTitle": "Semana sin reuniones",
     "blockedDescription": "Esta semana contiene un evento especial que sustituye las reuniones de la congregación.",
     "apostilaWeek": "Guía de actividades",

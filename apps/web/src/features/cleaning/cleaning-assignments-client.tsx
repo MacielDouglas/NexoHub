@@ -666,7 +666,7 @@ export function CleaningAssignmentsClient({ role }: Props) {
       <TypePicker value={activeType} onChange={setActiveType} />
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {t("cleaningAssignment.currentMonth")}
         </h2>
         <MonthlyAssignmentsTable
@@ -679,7 +679,7 @@ export function CleaningAssignmentsClient({ role }: Props) {
       </section>
 
       {canManage && (
-        <div className="mt-6 mb-8 rounded-2xl bg-card p-6 shadow-sm ring-1 ring-border">
+        <div className="mt-6 mb-8 rounded-2xl bg-card p-6 ring-1 ring-white/10">
           <Button
             onClick={openCreateModal}
             disabled={typeSectors.length === 0 || people.length === 0}
@@ -804,10 +804,10 @@ function TypePicker({
             aria-selected={active}
             onClick={() => onChange(type)}
             className={cn(
-              "rounded-lg border border-primary px-3 py-1.5 text-center text-sm",
+              "min-h-9 rounded-full border border-border px-3 py-1.5 text-center text-sm",
               active
-                ? "bg-primary font-medium text-primary-foreground"
-                : "bg-background text-foreground hover:bg-primary/10",
+                ? "border-primary bg-primary font-medium text-primary-foreground"
+                : "bg-background text-muted-foreground hover:bg-primary/10 hover:text-foreground",
             )}
           >
             {t(`cleaningAssignment.${type}Title`)}
@@ -1077,14 +1077,14 @@ function SchedulesSection({
             if (list.length === 0) return null;
             return (
               <div key={type}>
-                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+                <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {t(`cleaningAssignment.${type}Title`)}
                 </h3>
                 <div className="space-y-2">
                   {list.map((schedule) => (
                     <div
                       key={schedule.id}
-                      className="flex flex-col gap-3 rounded-2xl bg-card px-5 py-4 ring-1 ring-border sm:flex-row sm:items-center sm:justify-between"
+                      className="flex flex-col gap-3 rounded-2xl bg-card px-5 py-4 ring-1 ring-white/10 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="min-w-0">
                         <p className="font-medium">
@@ -1097,7 +1097,7 @@ function SchedulesSection({
                           })}
                         </p>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="flex shrink-0 flex-wrap items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -1274,7 +1274,7 @@ function AssignmentEditor({
                                 return (
                                   <li
                                     key={personId}
-                                    className="flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-sm ring-1 ring-border"
+                                    className="flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-sm ring-1 ring-white/5"
                                   >
                                     <span className="truncate">
                                       {person.name}

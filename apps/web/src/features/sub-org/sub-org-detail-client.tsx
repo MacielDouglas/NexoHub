@@ -70,11 +70,11 @@ type SelectedTalk = {
 
 const EMPTY_TALK: SelectedTalk = { meetingContentItemId: "", date: "" };
 
-function formatDate(dateStr: string | null): string {
+function formatDate(dateStr: string | null, locale: string): string {
   if (!dateStr) return "";
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("pt-BR");
+  return d.toLocaleDateString(locale);
 }
 
 function talkLabel(item: CatalogItem): string {
@@ -93,7 +93,7 @@ export function SubOrgDetailClient({
   subOrgId: string;
   backHref: string;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const canManage = role === "owner" || role === "admin";
 
   const [subOrg, setSubOrg] = useState<SubOrg | null>(null);
@@ -340,7 +340,7 @@ export function SubOrgDetailClient({
           {subOrg.description && (
             <p className="mt-1 text-muted-foreground">{subOrg.description}</p>
           )}
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground tabular-nums">
             {t("people.subOrg.peopleCount", { count: subOrg.people.length })}
           </p>
         </div>
@@ -353,7 +353,7 @@ export function SubOrgDetailClient({
       </div>
 
       {subOrg.people.length === 0 ? (
-        <div className="rounded-2xl bg-card p-8 ring-1 ring-border text-center">
+        <div className="rounded-2xl bg-card p-8 ring-1 ring-white/10 text-center">
           <p className="text-muted-foreground">{t("people.subOrg.noPeople")}</p>
           {canManage && (
             <p className="text-sm text-muted-foreground mt-2">
@@ -366,7 +366,7 @@ export function SubOrgDetailClient({
           {subOrg.people.map((person) => (
             <div
               key={person.id}
-              className="rounded-2xl bg-card p-5 ring-1 ring-border"
+              className="rounded-2xl bg-card p-5 ring-1 ring-white/10"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -387,14 +387,14 @@ export function SubOrgDetailClient({
                           item?.theme ??
                           talk.meetingContentItem.data.theme ??
                           "";
-                        const date = formatDate(talk.date);
+                        const date = formatDate(talk.date, i18n.language);
                         return (
                           <li
                             key={talk.id}
                             className="flex items-center gap-1.5 text-sm text-muted-foreground"
                           >
                             <span className="flex items-center gap-1.5 min-w-0">
-                              <span className="shrink-0 font-semibold text-primary">
+                              <span className="shrink-0 font-semibold text-primary tabular-nums">
                                 {num.trim() ? `${item?.number} -` : ""}
                               </span>
                               <span className="wrap">
